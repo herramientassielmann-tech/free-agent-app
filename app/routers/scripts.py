@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -15,12 +15,12 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 def _scripts_this_month(user: User, db: Session) -> int:
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     return (
         db.query(Script)
         .filter(
             Script.user_id == user.id,
-            Script.created_at >= datetime(now.year, now.month, 1, tzinfo=timezone.utc),
+            Script.created_at >= datetime(now.year, now.month, 1),
         )
         .count()
     )

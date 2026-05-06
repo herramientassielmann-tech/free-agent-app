@@ -1,9 +1,14 @@
+import logging
+import traceback
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse
+from fastapi.exceptions import HTTPException
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from app.database import engine, SessionLocal
 from app.models import Base, User
@@ -25,11 +30,11 @@ def _create_admin_if_missing(db: Session):
         )
         db.add(admin_user)
         db.commit()
-        print(f"[INFO] Cuenta de administrador creada: {ADMIN_EMAIL}")
+        logger.info("Cuenta de administrador creada: %s", ADMIN_EMAIL)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
@@ -55,5 +60,12 @@ app.include_router(admin.router)
 
 
 @app.exception_handler(303)
-async def redirect_handler(request: Request, exc):
-    return RedirectResponse(url=exc.headers.get("Location", "/login"), status_code=303)
+async def redirect_handler(_request: Request, exc: HTTPException):
+    location = (exc.headers or {}).get("Location", "/login")
+    return RedirectResponse(url=location, status_code=303)
+
+
+@app.exception_handler(Exception)
+async def generic_error_handler(_request: Request, exc: Exception):
+    logger.error("Unhandled exception: %s\n%s", exc, traceback.format_exc())
+    return JSONResponse(status_code=500, content={"detail": str(exc)})

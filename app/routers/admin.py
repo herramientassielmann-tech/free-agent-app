@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -12,8 +12,8 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 def _user_stats(user: User, db: Session) -> dict:
-    now = datetime.now(timezone.utc)
-    month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+    now = datetime.utcnow()
+    month_start = datetime(now.year, now.month, 1)
     scripts_month = db.query(Script).filter(Script.user_id == user.id, Script.created_at >= month_start).count()
     scripts_total = db.query(Script).filter(Script.user_id == user.id).count()
     return {"scripts_month": scripts_month, "scripts_total": scripts_total}
@@ -26,9 +26,9 @@ async def admin_dashboard(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    now = datetime.now(timezone.utc)
-    month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
-    today_start = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+    now = datetime.utcnow()
+    month_start = datetime(now.year, now.month, 1)
+    today_start = datetime(now.year, now.month, now.day)
 
     total_scripts_month = db.query(Script).filter(Script.created_at >= month_start).count()
     total_scripts_today = db.query(Script).filter(Script.created_at >= today_start).count()
