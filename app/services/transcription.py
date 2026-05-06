@@ -57,54 +57,25 @@ def _whisper_transcribe(audio_path: str) -> str:
     return result.text
 
 
-def _find_ffmpeg() -> str | None:
-    import shutil
-    # Buscar en PATH primero
-    path = shutil.which("ffmpeg")
-    if path:
-        return path
-    # Rutas comunes en Railway/Nix
-    candidates = [
-        "/usr/bin/ffmpeg",
-        "/usr/local/bin/ffmpeg",
-        "/nix/var/nix/profiles/default/bin/ffmpeg",
-    ]
-    for c in candidates:
-        if os.path.isfile(c):
-            return c
-    # Buscar recursivamente en /nix si existe
-    nix_root = Path("/nix/store")
-    if nix_root.exists():
-        for p in nix_root.glob("*/bin/ffmpeg"):
-            if p.is_file():
-                return str(p)
-    return None
-
-
 def _yt_dlp_audio_then_whisper(url: str) -> str:
     import yt_dlp
 
     with tempfile.TemporaryDirectory() as tmpdir:
+        # Sin postprocesador FFmpeg: descargamos el audio nativo (m4a/webm/mp4)
+        # Whisper acepta todos esos formatos directamente.
         ydl_opts = {
             "format": "bestaudio/best",
             "outtmpl": os.path.join(tmpdir, "audio.%(ext)s"),
-            "postprocessors": [{
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
-                "preferredquality": "128",
-            }],
             "quiet": True,
             "no_warnings": True,
         }
-        ffmpeg_path = _find_ffmpeg()
-        if ffmpeg_path:
-            ydl_opts["ffmpeg_location"] = str(Path(ffmpeg_path).parent)
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
-        # yt-dlp puede usar extensiones diferentes, buscamos el archivo descargado
+        # Whisper acepta: mp3, mp4, mpeg, mpga, m4a, wav, webm, ogg
+        WHISPER_EXTS = {".mp3", ".mp4", ".mpeg", ".mpga", ".m4a", ".wav", ".webm", ".ogg"}
         for f in Path(tmpdir).iterdir():
-            if f.suffix in (".mp3", ".m4a", ".webm", ".ogg"):
+            if f.suffix.lower() in WHISPER_EXTS:
                 return _whisper_transcribe(str(f))
 
         raise ValueError("No se pudo descargar el audio del vídeo.")
