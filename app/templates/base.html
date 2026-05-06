@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Free Agent Academy{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  {% if user is defined and user %}
+  <nav class="navbar">
+    <a href="/" class="logo">
+      <span class="logo-free">Free</span><span class="logo-agent">Agent</span><span class="logo-academy">Academy</span>
+    </a>
+    <div class="nav-links">
+      <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">Generar</a>
+      <a href="/history" class="nav-link {% if request.url.path == '/history' %}active{% endif %}">Historial</a>
+      <a href="/profile" class="nav-link {% if request.url.path == '/profile' %}active{% endif %}">Mi Perfil</a>
+      {% if user.is_admin %}
+      <a href="/admin" class="nav-link {% if '/admin' in request.url.path %}active{% endif %}">Admin</a>
+      {% endif %}
+      <a href="/logout" class="nav-link nav-logout">Salir</a>
+    </div>
+  </nav>
+  {% endif %}
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

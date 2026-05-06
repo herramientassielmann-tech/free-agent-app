@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Nuevo Realtor — Admin — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Nuevo Realtor</h1>
+    <p class="page-subtitle">Crea una cuenta para un nuevo miembro de la academia.</p>
+  </div>
+  <a href="/admin/users" class="btn btn-secondary">Volver</a>
+</div>
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+<div class="card" style="max-width:560px;">
+  <form method="POST" action="/admin/users/new">
+    <div class="form-group">
+      <label class="form-label" for="name">Nombre completo</label>
+      <input class="form-input" type="text" id="name" name="name" required placeholder="María García" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="email">Email</label>
+      <input class="form-input" type="email" id="email" name="email" required placeholder="maria@ejemplo.com" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="password">Contraseña temporal</label>
+      <input class="form-input" type="password" id="password" name="password" required placeholder="Mínimo 8 caracteres" minlength="8" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="monthly_limit">
+        Límite mensual de guiones
+        <span class="form-hint">deja vacío para ilimitado</span>
+      </label>
+      <input class="form-input" type="number" id="monthly_limit" name="monthly_limit" placeholder="Ej: 50" min="1" />
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Crear cuenta</button>
+      <a href="/admin/users" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

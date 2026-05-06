@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Panel Admin — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Panel de Administración</h1>
+    <p class="page-subtitle">Monitoriza el uso de la plataforma en tiempo real.</p>
+  </div>
+  <a href="/admin/users/new" class="btn btn-primary">+ Nuevo Realtor</a>
+</div>
+
+<div class="stats-grid">
+  <div class="card stat-card">
+    <p class="stat-label">Guiones hoy</p>
+    <p class="stat-value">{{ total_scripts_today }}</p>
+  </div>
+  <div class="card stat-card">
+    <p class="stat-label">Guiones este mes</p>
+    <p class="stat-value">{{ total_scripts_month }}</p>
+  </div>
+  <div class="card stat-card">
+    <p class="stat-label">Total histórico</p>
+    <p class="stat-value">{{ total_scripts_all }}</p>
+  </div>
+  <div class="card stat-card">
+    <p class="stat-label">Realtors activos</p>
+    <p class="stat-value">{{ active_users }} / {{ total_users }}</p>
+  </div>
+</div>
+
+<div class="card" style="margin-top:24px;">
+  <h2 class="section-title" style="margin-bottom:16px;">Top Realtors este mes</h2>
+  {% if top_realtors %}
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Realtor</th>
+        <th>Email</th>
+        <th>Guiones (mes)</th>
+        <th>Total</th>
+        <th>Límite</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in top_realtors %}
+      <tr>
+        <td class="td-name">{{ r.user.name }}</td>
+        <td class="td-muted">{{ r.user.email }}</td>
+        <td><strong>{{ r.scripts_month }}</strong></td>
+        <td class="td-muted">{{ r.scripts_total }}</td>
+        <td class="td-muted">{% if r.user.monthly_limit %}{{ r.user.monthly_limit }}{% else %}∞{% endif %}</td>
+        <td><a href="/admin/users/{{ r.user.id }}" class="table-link">Ver</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty-text">No hay actividad este mes todavía.</p>
+  {% endif %}
+  <div style="margin-top:16px;">
+    <a href="/admin/users" class="btn btn-secondary">Ver todos los realtors</a>
+  </div>
+</div>
+{% endblock %}

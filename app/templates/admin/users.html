@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Realtors — Admin — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Realtors</h1>
+    <p class="page-subtitle">{{ realtors|length }} cuenta{% if realtors|length != 1 %}s{% endif %} registrada{% if realtors|length != 1 %}s{% endif %}.</p>
+  </div>
+  <a href="/admin/users/new" class="btn btn-primary">+ Nuevo Realtor</a>
+</div>
+
+<div class="card">
+  {% if realtors %}
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Guiones (mes)</th>
+        <th>Total</th>
+        <th>Límite mensual</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in realtors %}
+      <tr class="{% if not r.user.is_active %}row-inactive{% endif %}">
+        <td class="td-name">{{ r.user.name }}</td>
+        <td class="td-muted">{{ r.user.email }}</td>
+        <td><strong>{{ r.scripts_month }}</strong></td>
+        <td class="td-muted">{{ r.scripts_total }}</td>
+        <td class="td-muted">
+          {% if r.user.monthly_limit %}
+            {{ r.scripts_month }} / {{ r.user.monthly_limit }}
+          {% else %}
+            Ilimitado
+          {% endif %}
+        </td>
+        <td>
+          <span class="status-badge {% if r.user.is_active %}status-active{% else %}status-inactive{% endif %}">
+            {% if r.user.is_active %}Activo{% else %}Inactivo{% endif %}
+          </span>
+        </td>
+        <td><a href="/admin/users/{{ r.user.id }}" class="table-link">Ver / Editar</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <p class="empty-title">No hay realtors todavía.</p>
+    <a href="/admin/users/new" class="btn btn-primary">Crear el primero</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

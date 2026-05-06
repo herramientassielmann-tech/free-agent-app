@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Historial — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Historial de Guiones</h1>
+    <p class="page-subtitle">Tus últimos 50 guiones generados.</p>
+  </div>
+  <a href="/" class="btn btn-primary">Nuevo guión</a>
+</div>
+
+{% if not scripts %}
+<div class="empty-state">
+  <p class="empty-icon">🎬</p>
+  <p class="empty-title">Aún no has generado ningún guión</p>
+  <a href="/" class="btn btn-primary">Generar mi primer guión</a>
+</div>
+{% else %}
+<div class="history-list">
+  {% for script in scripts %}
+  <div class="card history-item">
+    <div class="history-item-header">
+      <div class="history-meta">
+        <span class="history-date">{{ script.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+        <a href="{{ script.source_url }}" target="_blank" rel="noopener" class="history-url">{{ script.source_url[:60] }}{% if script.source_url|length > 60 %}…{% endif %}</a>
+      </div>
+      <button class="btn btn-secondary btn-sm history-toggle" data-id="{{ script.id }}">Ver guión</button>
+    </div>
+
+    {% if script.custom_instructions %}
+    <p class="history-instructions"><span class="label-chip">Instrucciones:</span> {{ script.custom_instructions }}</p>
+    {% endif %}
+
+    <div id="script-{{ script.id }}" class="history-script hidden">
+      <div class="history-section">
+        <div class="script-badge hook-badge">HOOK</div>
+        <p>{{ script.hook }}</p>
+      </div>
+      <div class="history-section">
+        <div class="script-badge dev-badge">DESARROLLO</div>
+        <p>{{ script.development }}</p>
+      </div>
+      <div class="history-section">
+        <div class="script-badge conc-badge">CONCLUSIÓN</div>
+        <p>{{ script.conclusion }}</p>
+      </div>
+      <div class="history-section">
+        <div class="script-badge cap-badge">CAPTION</div>
+        <p class="caption-content">{{ script.caption }}</p>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll('.history-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const section = document.getElementById('script-' + id);
+      section.classList.toggle('hidden');
+      btn.textContent = section.classList.contains('hidden') ? 'Ver guión' : 'Ocultar';
+    });
+  });
+</script>
+{% endblock %}

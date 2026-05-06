@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}{{ realtor.name }} — Admin — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ realtor.name }}</h1>
+    <p class="page-subtitle">{{ realtor.email }}</p>
+  </div>
+  <a href="/admin/users" class="btn btn-secondary">Volver</a>
+</div>
+
+<div class="two-col-grid">
+  <div class="card">
+    <h2 class="section-title" style="margin-bottom:20px;">Estadísticas</h2>
+    <div class="stat-row">
+      <span class="stat-row-label">Guiones este mes</span>
+      <strong>{{ scripts_month }}</strong>
+    </div>
+    <div class="stat-row">
+      <span class="stat-row-label">Total histórico</span>
+      <strong>{{ scripts_total }}</strong>
+    </div>
+    <div class="stat-row">
+      <span class="stat-row-label">Límite mensual</span>
+      <strong>{% if realtor.monthly_limit %}{{ realtor.monthly_limit }}{% else %}Ilimitado{% endif %}</strong>
+    </div>
+    <div class="stat-row">
+      <span class="stat-row-label">Estado</span>
+      <span class="status-badge {% if realtor.is_active %}status-active{% else %}status-inactive{% endif %}">
+        {% if realtor.is_active %}Activo{% else %}Inactivo{% endif %}
+      </span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-row-label">Cuenta creada</span>
+      <span class="td-muted">{{ realtor.created_at.strftime('%d/%m/%Y') }}</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title" style="margin-bottom:20px;">Editar cuenta</h2>
+    <form method="POST" action="/admin/users/{{ realtor.id }}/edit">
+      <div class="form-group">
+        <label class="form-label" for="name">Nombre</label>
+        <input class="form-input" type="text" id="name" name="name" value="{{ realtor.name }}" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="monthly_limit">Límite mensual <span class="form-hint">vacío = ilimitado</span></label>
+        <input class="form-input" type="number" id="monthly_limit" name="monthly_limit" value="{{ realtor.monthly_limit if realtor.monthly_limit else '' }}" min="1" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="new_password">Nueva contraseña <span class="form-hint">vacío = no cambiar</span></label>
+        <input class="form-input" type="password" id="new_password" name="new_password" placeholder="••••••••" minlength="8" />
+      </div>
+      <div class="form-group checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" name="is_active" value="on" {% if realtor.is_active %}checked{% endif %} />
+          Cuenta activa
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card" style="margin-top:24px;">
+  <h2 class="section-title" style="margin-bottom:16px;">Últimos guiones generados</h2>
+  {% if scripts %}
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>URL fuente</th>
+        <th>Instrucciones</th>
+        <th>Hook</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for script in scripts %}
+      <tr>
+        <td class="td-muted">{{ script.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td>
+          <a href="{{ script.source_url }}" target="_blank" rel="noopener" class="table-link">
+            {{ script.source_url[:45] }}{% if script.source_url|length > 45 %}…{% endif %}
+          </a>
+        </td>
+        <td class="td-muted">{{ script.custom_instructions[:40] if script.custom_instructions else '—' }}{% if script.custom_instructions and script.custom_instructions|length > 40 %}…{% endif %}</td>
+        <td class="td-muted">{{ script.hook[:60] if script.hook else '—' }}{% if script.hook and script.hook|length > 60 %}…{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty-text">Este realtor aún no ha generado guiones.</p>
+  {% endif %}
+</div>
+{% endblock %}
