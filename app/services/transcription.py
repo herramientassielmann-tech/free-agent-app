@@ -1,4 +1,5 @@
 import shutil
+import subprocess
 import tempfile
 import os
 import uuid
@@ -86,34 +87,38 @@ def _instagram_download(url: str) -> dict:
 # ── TikTok via yt-dlp ────────────────────────────────────────────────────────
 
 def _tiktok_download(url: str) -> dict:
-    """Descarga audio y thumbnail de un vídeo de TikTok con yt-dlp."""
+    """Descarga vídeo de TikTok y extrae frame con ffmpeg para thumbnail."""
     import yt_dlp
 
     THUMBNAILS_DIR.mkdir(parents=True, exist_ok=True)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         ydl_opts = {
-            "format": "bestaudio/best",
+            "format": "best[ext=mp4]/best",
             "outtmpl": os.path.join(tmpdir, "media.%(ext)s"),
-            "writethumbnail": True,
             "quiet": True,
             "no_warnings": True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
-        transcript = None
-        thumbnail_tmp = None
-        for f in Path(tmpdir).iterdir():
-            if f.suffix.lower() in WHISPER_EXTS and transcript is None:
-                transcript = _whisper_transcribe(str(f))
-            elif f.suffix.lower() in THUMB_EXTS and thumbnail_tmp is None:
-                thumbnail_tmp = f
+        video_file = next(
+            (f for f in Path(tmpdir).iterdir() if f.suffix.lower() in WHISPER_EXTS),
+            None,
+        )
+        if video_file is None:
+            raise ValueError("No se pudo descargar el vídeo de TikTok.")
 
-        if transcript is None:
-            raise ValueError("No se pudo descargar el audio del vídeo de TikTok.")
+        thumb_tmp = Path(tmpdir) / "thumb.jpg"
+        subprocess.run(
+            ["ffmpeg", "-i", str(video_file), "-ss", "00:00:01",
+             "-vframes", "1", "-q:v", "2", str(thumb_tmp), "-y", "-loglevel", "quiet"],
+            check=False,
+            capture_output=True,
+        )
 
-        thumbnail_path = _save_thumbnail(thumbnail_tmp)
+        transcript = _whisper_transcribe(str(video_file))
+        thumbnail_path = _save_thumbnail(thumb_tmp if thumb_tmp.exists() else None)
 
     return {"transcript": transcript, "thumbnail_path": thumbnail_path}
 
