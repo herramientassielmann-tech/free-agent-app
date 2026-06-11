@@ -24,6 +24,8 @@ ADMIN_PASSWORD = get_env("ADMIN_PASSWORD")
 DATABASE_URL = get_env("DATABASE_URL", default="sqlite:///./freeagent.db", required=False)
 ENV = get_env("ENV", default="development", required=False)
 INSTAGRAM_COOKIES_FILE = get_env("INSTAGRAM_COOKIES_FILE", default=None, required=False)
+INSTAGRAM_USERNAME = get_env("INSTAGRAM_USERNAME", default=None, required=False)
+INSTAGRAM_PASSWORD = get_env("INSTAGRAM_PASSWORD", default=None, required=False)
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 8
