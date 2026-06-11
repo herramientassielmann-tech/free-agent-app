@@ -53,8 +53,8 @@ async def lifespan(_app: FastAPI):
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
+        _migrate_db(db)          # primero columnas nuevas
         _create_admin_if_missing(db)
-        _migrate_db(db)
     finally:
         db.close()
     yield
