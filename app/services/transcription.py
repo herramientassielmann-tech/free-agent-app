@@ -96,8 +96,8 @@ def get_transcript(url: str) -> str:
             raise ValueError("No se pudo extraer el ID del vídeo de YouTube.")
         try:
             return _youtube_transcript(video_id)
-        except ValueError:
-            # Fallback: descargar audio y transcribir con Whisper
+        except Exception:
+            # Fallback: IP bloqueada por YouTube o sin transcripción → Whisper
             return _yt_dlp_audio_then_whisper(url)
 
     # TikTok e Instagram: siempre via yt-dlp + Whisper
