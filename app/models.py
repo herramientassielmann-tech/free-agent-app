@@ -38,15 +38,27 @@ class User(Base):
     temp_password: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    profile: Mapped[Optional["RealtorProfile"]] = relationship("RealtorProfile", back_populates="user", uselist=False)
+    profiles: Mapped[List["RealtorProfile"]] = relationship(
+        "RealtorProfile", back_populates="user", order_by="RealtorProfile.id"
+    )
     scripts: Mapped[List["Script"]] = relationship("Script", back_populates="user")
+
+    @property
+    def profile(self) -> Optional["RealtorProfile"]:
+        """Devuelve el perfil activo (compatibilidad con el resto del código)."""
+        for p in self.profiles:
+            if p.is_active:
+                return p
+        return self.profiles[0] if self.profiles else None
 
 
 class RealtorProfile(Base):
     __tablename__ = "realtor_profiles"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    profile_name: Mapped[str] = mapped_column(String(100), default="Mi Perfil", nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     display_name: Mapped[Optional[str]] = mapped_column(String(100))
     market: Mapped[Optional[str]] = mapped_column(String(100))
     tone: Mapped[str] = mapped_column(
@@ -58,7 +70,7 @@ class RealtorProfile(Base):
     )
     about_me: Mapped[Optional[str]] = mapped_column(Text)
 
-    user: Mapped["User"] = relationship("User", back_populates="profile")
+    user: Mapped["User"] = relationship("User", back_populates="profiles")
 
 
 class Script(Base):

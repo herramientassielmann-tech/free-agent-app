@@ -5,16 +5,12 @@
 
 <div class="page-header">
   <div>
-    <h1 class="page-title">Mi Perfil</h1>
-    <p class="page-subtitle">Cuanto más completo esté tu perfil, más personalizados serán tus guiones.</p>
+    <h1 class="page-title">Mis Perfiles</h1>
+    <p class="page-subtitle">Cada perfil personaliza el tono y estilo de tus guiones.</p>
   </div>
 </div>
 
-{% if saved %}
-<div class="alert alert-success">✅ Perfil guardado correctamente.</div>
-{% endif %}
-
-{# Avatar card #}
+{# ── Avatar ── #}
 <div class="profile-header-card">
   <div class="profile-avatar-lg">{{ (user.name[:2] if user.name else user.email[:2]).upper() }}</div>
   <div>
@@ -23,18 +19,59 @@
   </div>
 </div>
 
+{# ── Selector de perfiles ── #}
+<div class="profile-tabs-row">
+  {% for p in profiles %}
+  <a
+    href="/profile?pid={{ p.id }}"
+    class="profile-tab {% if p.id == selected.id %}profile-tab--selected{% endif %}"
+  >
+    <span class="profile-tab-name">{{ p.profile_name }}</span>
+    {% if p.is_active %}
+    <span class="profile-tab-badge">Activo</span>
+    {% endif %}
+  </a>
+  {% endfor %}
+
+  <form method="POST" action="/profile/new" style="display:inline">
+    <button type="submit" class="profile-tab profile-tab--new" title="Añadir perfil">
+      + Nuevo
+    </button>
+  </form>
+</div>
+
+{# ── Alertas ── #}
+{% if saved %}
+<div class="alert alert-success" style="margin-bottom:20px;">Perfil guardado correctamente.</div>
+{% endif %}
+
+{# ── Formulario del perfil seleccionado ── #}
 <div class="card">
-  <form method="POST" action="/profile">
+  <form method="POST" action="/profile/{{ selected.id }}">
+
+    <div class="form-group">
+      <label class="form-label" for="profile_name">Nombre del perfil</label>
+      <input
+        class="form-input"
+        type="text"
+        id="profile_name"
+        name="profile_name"
+        placeholder="Ej: Perfil Lujo, Perfil Inversores…"
+        value="{{ selected.profile_name }}"
+        required
+      />
+    </div>
+
     <div class="form-grid">
       <div class="form-group">
-        <label class="form-label" for="display_name">Nombre para tus guiones</label>
+        <label class="form-label" for="display_name">Nombre para los guiones</label>
         <input
           class="form-input"
           type="text"
           id="display_name"
           name="display_name"
           placeholder="Ej: Carlos López"
-          value="{{ profile.display_name if profile and profile.display_name else '' }}"
+          value="{{ selected.display_name if selected.display_name else '' }}"
         />
       </div>
 
@@ -45,29 +82,29 @@
           type="text"
           id="market"
           name="market"
-          placeholder="Ej: Madrid, Miami, Barcelona..."
-          value="{{ profile.market if profile and profile.market else '' }}"
+          placeholder="Ej: Madrid, Miami, Barcelona…"
+          value="{{ selected.market if selected.market else '' }}"
         />
       </div>
 
       <div class="form-group">
         <label class="form-label" for="tone">Tono de comunicación</label>
         <select class="form-input form-select" id="tone" name="tone">
-          <option value="cercano"       {% if not profile or profile.tone == 'cercano' %}selected{% endif %}>Cercano y natural</option>
-          <option value="formal"        {% if profile and profile.tone == 'formal' %}selected{% endif %}>Profesional y formal</option>
-          <option value="energetico"    {% if profile and profile.tone == 'energetico' %}selected{% endif %}>Energético y dinámico</option>
-          <option value="inspiracional" {% if profile and profile.tone == 'inspiracional' %}selected{% endif %}>Inspiracional y motivador</option>
+          <option value="cercano"       {% if selected.tone == 'cercano' %}selected{% endif %}>Cercano y natural</option>
+          <option value="formal"        {% if selected.tone == 'formal' %}selected{% endif %}>Profesional y formal</option>
+          <option value="energetico"    {% if selected.tone == 'energetico' %}selected{% endif %}>Energético y dinámico</option>
+          <option value="inspiracional" {% if selected.tone == 'inspiracional' %}selected{% endif %}>Inspiracional y motivador</option>
         </select>
       </div>
 
       <div class="form-group">
         <label class="form-label" for="specialization">Especialización</label>
         <select class="form-input form-select" id="specialization" name="specialization">
-          <option value="todo_tipo"       {% if not profile or profile.specialization == 'todo_tipo' %}selected{% endif %}>Todo tipo de propiedades</option>
-          <option value="primera_vivienda" {% if profile and profile.specialization == 'primera_vivienda' %}selected{% endif %}>Primera vivienda</option>
-          <option value="lujo"            {% if profile and profile.specialization == 'lujo' %}selected{% endif %}>Propiedades de lujo</option>
-          <option value="inversion"       {% if profile and profile.specialization == 'inversion' %}selected{% endif %}>Inversión inmobiliaria</option>
-          <option value="comercial"       {% if profile and profile.specialization == 'comercial' %}selected{% endif %}>Inmuebles comerciales</option>
+          <option value="todo_tipo"        {% if selected.specialization == 'todo_tipo' %}selected{% endif %}>Todo tipo de propiedades</option>
+          <option value="primera_vivienda" {% if selected.specialization == 'primera_vivienda' %}selected{% endif %}>Primera vivienda</option>
+          <option value="lujo"             {% if selected.specialization == 'lujo' %}selected{% endif %}>Propiedades de lujo</option>
+          <option value="inversion"        {% if selected.specialization == 'inversion' %}selected{% endif %}>Inversión inmobiliaria</option>
+          <option value="comercial"        {% if selected.specialization == 'comercial' %}selected{% endif %}>Inmuebles comerciales</option>
         </select>
       </div>
     </div>
@@ -83,7 +120,7 @@
         name="speaking_notes"
         placeholder='Ej: "Soy muy directo, uso mucho el humor, no me gustan los tecnicismos"'
         rows="3"
-      >{{ profile.speaking_notes if profile and profile.speaking_notes else '' }}</textarea>
+      >{{ selected.speaking_notes if selected.speaking_notes else '' }}</textarea>
     </div>
 
     <div class="form-group" style="margin-bottom:0">
@@ -97,14 +134,38 @@
         name="about_me"
         placeholder='Ej: "Llevo 10 años en el sector, me centro en familias que buscan su primer piso"'
         rows="4"
-      >{{ profile.about_me if profile and profile.about_me else '' }}</textarea>
+      >{{ selected.about_me if selected.about_me else '' }}</textarea>
     </div>
 
-    <div class="form-actions" style="margin-top:24px">
+    <div class="form-actions" style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
       <button type="submit" class="btn btn-primary">Guardar Perfil</button>
-      <a href="/" class="btn btn-ghost">Cancelar</a>
+
+      {% if not selected.is_active %}
+      <button
+        type="button"
+        onclick="document.getElementById('form-activate-{{ selected.id }}').submit()"
+        class="btn btn-secondary"
+      >Usar este perfil</button>
+      {% else %}
+      <span class="status-badge status-active" style="font-size:0.75rem;">Perfil activo</span>
+      {% endif %}
+
+      <a href="/" class="btn btn-ghost" style="margin-left:auto;">Cancelar</a>
+
+      {% if profiles|length > 1 %}
+      <button
+        type="button"
+        onclick="if(confirm('¿Eliminar el perfil «{{ selected.profile_name }}»? Esta acción no se puede deshacer.')) document.getElementById('form-delete-{{ selected.id }}').submit()"
+        class="btn"
+        style="background:rgba(255,69,58,0.12);color:#FF453A;border:1px solid rgba(255,69,58,0.25);"
+      >Eliminar perfil</button>
+      {% endif %}
     </div>
   </form>
 </div>
+
+{# Formularios auxiliares ocultos para activate y delete #}
+<form id="form-activate-{{ selected.id }}" method="POST" action="/profile/{{ selected.id }}/activate" style="display:none"></form>
+<form id="form-delete-{{ selected.id }}"   method="POST" action="/profile/{{ selected.id }}/delete"   style="display:none"></form>
 
 {% endblock %}

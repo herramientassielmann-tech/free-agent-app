@@ -827,6 +827,68 @@ a:hover { color: #3d9eff; }
 .profile-meta-name { font-size: 1.1rem; font-weight: 700; color: var(--t1); }
 .profile-meta-email { font-size: 0.82rem; color: var(--t2); margin-top: 2px; }
 
+/* ── Profile tabs ───────────────────────────────── */
+.profile-tabs-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.profile-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+  background: var(--s2);
+  border: 1px solid var(--border);
+  color: var(--t2);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  text-decoration: none;
+}
+.profile-tab:hover {
+  background: var(--s3);
+  color: var(--t1);
+  border-color: var(--border-hover);
+}
+.profile-tab--selected {
+  background: var(--blue-dim);
+  border-color: rgba(10,132,255,0.4);
+  color: var(--blue);
+}
+.profile-tab--selected:hover { color: var(--blue); }
+
+.profile-tab--new {
+  background: transparent;
+  border: 1px dashed var(--border-hover);
+  color: var(--t3);
+  font-size: 0.82rem;
+}
+.profile-tab--new:hover {
+  background: var(--s2);
+  color: var(--t2);
+  border-color: var(--border-hover);
+}
+
+.profile-tab-name { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.profile-tab-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: rgba(48,209,88,0.15);
+  color: var(--green);
+  border-radius: var(--r-pill);
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+
 /* ════════════════════════════════════════════════
    PROCESSING MODAL
    ════════════════════════════════════════════════ */

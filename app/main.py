@@ -35,17 +35,47 @@ def _create_admin_if_missing(db: Session):
 
 def _migrate_db(db: Session):
     """Agrega columnas nuevas a tablas existentes sin romper datos previos."""
-    migrations = [
+    from sqlalchemy import text, inspect as sa_inspect
+    simple = [
         "ALTER TABLE scripts ADD COLUMN thumbnail_path VARCHAR(500)",
         "ALTER TABLE users ADD COLUMN must_change_password BOOLEAN DEFAULT 0",
         "ALTER TABLE users ADD COLUMN temp_password VARCHAR(255)",
     ]
-    for sql in migrations:
+    for sql in simple:
         try:
-            db.execute(__import__("sqlalchemy").text(sql))
+            db.execute(text(sql))
             db.commit()
         except Exception:
             db.rollback()
+
+    # Migración de perfiles: quitar UNIQUE(user_id) y añadir profile_name + is_active
+    cols = {c["name"] for c in sa_inspect(engine).get_columns("realtor_profiles")}
+    if "profile_name" not in cols:
+        db.execute(text("""
+            CREATE TABLE realtor_profiles_new (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    INTEGER NOT NULL REFERENCES users(id),
+                profile_name VARCHAR(100) NOT NULL DEFAULT 'Mi Perfil',
+                is_active  BOOLEAN NOT NULL DEFAULT 1,
+                display_name VARCHAR(100),
+                market     VARCHAR(100),
+                tone       VARCHAR(20) NOT NULL DEFAULT 'cercano',
+                speaking_notes TEXT,
+                specialization VARCHAR(30) NOT NULL DEFAULT 'todo_tipo',
+                about_me   TEXT
+            )
+        """))
+        db.execute(text("""
+            INSERT INTO realtor_profiles_new
+                (id, user_id, profile_name, is_active, display_name, market,
+                 tone, speaking_notes, specialization, about_me)
+            SELECT id, user_id, 'Mi Perfil', 1, display_name, market,
+                   tone, speaking_notes, specialization, about_me
+            FROM realtor_profiles
+        """))
+        db.execute(text("DROP TABLE realtor_profiles"))
+        db.execute(text("ALTER TABLE realtor_profiles_new RENAME TO realtor_profiles"))
+        db.commit()
 
 
 @asynccontextmanager
