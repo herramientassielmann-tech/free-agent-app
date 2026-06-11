@@ -26,6 +26,7 @@ ENV = get_env("ENV", default="development", required=False)
 INSTAGRAM_USERNAME = get_env("INSTAGRAM_USERNAME", default=None, required=False)
 INSTAGRAM_PASSWORD = get_env("INSTAGRAM_PASSWORD", default=None, required=False)
 INSTAGRAM_SESSION_FILE = get_env("INSTAGRAM_SESSION_FILE", default="/var/www/freeagent/insta_session", required=False)
+INSTAGRAM_COOKIES_FILE = get_env("INSTAGRAM_COOKIES_FILE", default="/var/www/freeagent/instagram_cookies.txt", required=False)
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 8
