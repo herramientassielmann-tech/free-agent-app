@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Script
-from app.auth import get_current_user
+from app.auth import get_current_user, hash_password
 from app.services.transcription import get_transcript
 from app.services.generator import generate_script
 
@@ -54,6 +54,7 @@ async def dashboard(
             "remaining": remaining,
             "limit": current_user.monthly_limit,
             "recent_scripts": recent_scripts,
+            "must_change_password": current_user.must_change_password,
         },
     )
 
@@ -127,6 +128,29 @@ async def generate(
         "remaining": remaining,
         "limit": current_user.monthly_limit,
     })
+
+
+class ChangePasswordRequest(BaseModel):
+    new_password: str
+    confirm_password: str
+
+
+@router.post("/change-password")
+async def change_password(
+    payload: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if len(payload.new_password) < 8:
+        raise HTTPException(status_code=422, detail="La contraseña debe tener al menos 8 caracteres.")
+    if payload.new_password != payload.confirm_password:
+        raise HTTPException(status_code=422, detail="Las contraseñas no coinciden.")
+
+    current_user.password_hash = hash_password(payload.new_password)
+    current_user.must_change_password = False
+    current_user.temp_password = None
+    db.commit()
+    return JSONResponse({"ok": True})
 
 
 @router.get("/history", response_class=HTMLResponse)

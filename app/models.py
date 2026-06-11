@@ -34,6 +34,8 @@ class User(Base):
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     monthly_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    must_change_password: Mapped[bool] = mapped_column(Boolean, default=False)
+    temp_password: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     profile: Mapped[Optional["RealtorProfile"]] = relationship("RealtorProfile", back_populates="user", uselist=False)

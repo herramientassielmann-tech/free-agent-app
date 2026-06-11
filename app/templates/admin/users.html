@@ -21,6 +21,7 @@
         <th>Total</th>
         <th>Límite mensual</th>
         <th>Estado</th>
+        <th>Contraseña</th>
         <th></th>
       </tr>
     </thead>
@@ -42,6 +43,13 @@
           <span class="status-badge {% if r.user.is_active %}status-active{% else %}status-inactive{% endif %}">
             {% if r.user.is_active %}Activo{% else %}Inactivo{% endif %}
           </span>
+        </td>
+        <td>
+          {% if r.user.must_change_password %}
+            <span class="status-badge" style="background:rgba(255,159,10,0.15);color:var(--orange)">Pendiente ⚠</span>
+          {% else %}
+            <span class="status-badge status-active">Cambiada ✓</span>
+          {% endif %}
         </td>
         <td><a href="/admin/users/{{ r.user.id }}" class="table-link">Ver / Editar</a></td>
       </tr>

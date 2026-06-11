@@ -37,6 +37,8 @@ def _migrate_db(db: Session):
     """Agrega columnas nuevas a tablas existentes sin romper datos previos."""
     migrations = [
         "ALTER TABLE scripts ADD COLUMN thumbnail_path VARCHAR(500)",
+        "ALTER TABLE users ADD COLUMN must_change_password BOOLEAN DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN temp_password VARCHAR(255)",
     ]
     for sql in migrations:
         try:

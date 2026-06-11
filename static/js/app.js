@@ -198,6 +198,56 @@ function buildScriptText(hook, dev, conc, caption) {
   return `🎯 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CONCLUSIÓN\n${conc}\n\n📲 CAPTION\n${caption}`;
 }
 
+/* ── Password change modal ──────────────────── */
+const pwdSubmit = document.getElementById('pwd-submit');
+if (pwdSubmit) {
+  pwdSubmit.addEventListener('click', async () => {
+    const newPwd     = document.getElementById('pwd-new').value.trim();
+    const confirmPwd = document.getElementById('pwd-confirm').value.trim();
+    const errEl      = document.getElementById('pwd-error');
+
+    errEl.classList.add('hidden');
+
+    if (newPwd.length < 8) {
+      errEl.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      errEl.textContent = 'Las contraseñas no coinciden.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    pwdSubmit.disabled = true;
+    pwdSubmit.textContent = 'Guardando…';
+
+    try {
+      const res  = await fetch('/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ new_password: newPwd, confirm_password: confirmPwd }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        errEl.textContent = data.detail || 'Error al guardar la contraseña.';
+        errEl.classList.remove('hidden');
+        pwdSubmit.disabled = false;
+        pwdSubmit.textContent = 'Guardar contraseña';
+        return;
+      }
+
+      document.getElementById('pwd-modal').remove();
+    } catch {
+      errEl.textContent = 'Error de conexión. Inténtalo de nuevo.';
+      errEl.classList.remove('hidden');
+      pwdSubmit.disabled = false;
+      pwdSubmit.textContent = 'Guardar contraseña';
+    }
+  });
+}
+
 function copyText(text, btn) {
   const original = btn.textContent;
   navigator.clipboard.writeText(text).then(() => {

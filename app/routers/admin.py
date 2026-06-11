@@ -108,6 +108,8 @@ async def create_user(
         is_admin=False,
         is_active=True,
         monthly_limit=limit,
+        must_change_password=True,
+        temp_password=password,
     )
     db.add(new_user)
     db.commit()
@@ -164,6 +166,8 @@ async def edit_user(
     realtor.is_active = is_active == "on"
     if new_password.strip():
         realtor.password_hash = hash_password(new_password.strip())
+        realtor.temp_password = new_password.strip()
+        realtor.must_change_password = True
 
     db.commit()
     return RedirectResponse(url=f"/admin/users/{user_id}", status_code=303)

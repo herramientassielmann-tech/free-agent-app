@@ -32,6 +32,26 @@
       </span>
     </div>
     <div class="stat-row">
+      <span class="stat-row-label">Contraseña</span>
+      {% if realtor.must_change_password and realtor.temp_password %}
+        <span style="display:flex;align-items:center;gap:8px">
+          <span id="pwd-display" style="font-family:monospace;font-size:0.85rem;color:var(--orange);letter-spacing:1px">••••••••</span>
+          <button onclick="togglePwd()" style="font-size:0.75rem;color:var(--t3);background:none;border:none;cursor:pointer;text-decoration:underline">Revelar</button>
+        </span>
+        <script>
+          const raw = {{ realtor.temp_password | tojson }};
+          let visible = false;
+          function togglePwd() {
+            visible = !visible;
+            document.getElementById('pwd-display').textContent = visible ? raw : '••••••••';
+            document.querySelector('[onclick="togglePwd()"]').textContent = visible ? 'Ocultar' : 'Revelar';
+          }
+        </script>
+      {% else %}
+        <span class="status-badge status-active" style="font-size:0.72rem">Cambiada por el usuario ✓</span>
+      {% endif %}
+    </div>
+    <div class="stat-row">
       <span class="stat-row-label">Cuenta creada</span>
       <span class="td-muted">{{ realtor.created_at.strftime('%d/%m/%Y') }}</span>
     </div>
