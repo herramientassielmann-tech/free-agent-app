@@ -32,7 +32,8 @@ def _extract_youtube_id(url: str):
 
 def _youtube_transcript(video_id: str) -> str:
     try:
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+        api = YouTubeTranscriptApi()
+        transcript_list = api.list_transcripts(video_id)
         # Intentar en español primero, luego cualquier idioma
         try:
             transcript = transcript_list.find_transcript(["es", "es-419", "es-ES"])
