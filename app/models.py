@@ -71,6 +71,7 @@ class Script(Base):
     conclusion: Mapped[Optional[str]] = mapped_column(Text)
     caption: Mapped[Optional[str]] = mapped_column(Text)
     custom_instructions: Mapped[Optional[str]] = mapped_column(Text)
+    thumbnail_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     user: Mapped["User"] = relationship("User", back_populates="scripts")

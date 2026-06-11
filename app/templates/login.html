@@ -9,46 +9,49 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/css/style.css" />
 </head>
-<body class="login-body">
-  <div class="login-container">
-    <div class="login-card">
-      <div class="login-logo">
-        <span class="logo-free">Free</span><span class="logo-agent">Agent</span><span class="logo-academy">Academy</span>
-      </div>
-      <p class="login-subtitle">Generador de Guiones para Realtors</p>
-
-      {% if error %}
-      <div class="alert alert-error">{{ error }}</div>
-      {% endif %}
-
-      <form method="POST" action="/login" class="login-form">
-        <div class="form-group">
-          <label class="form-label" for="email">Email</label>
-          <input
-            class="form-input"
-            type="email"
-            id="email"
-            name="email"
-            placeholder="tu@email.com"
-            required
-            autocomplete="email"
-          />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="password">Contraseña</label>
-          <input
-            class="form-input"
-            type="password"
-            id="password"
-            name="password"
-            placeholder="••••••••"
-            required
-            autocomplete="current-password"
-          />
-        </div>
-        <button type="submit" class="btn btn-primary btn-full">Entrar</button>
-      </form>
+<body>
+<div class="auth-shell">
+  <div class="auth-glow"></div>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="logo-free">Free</span><span class="logo-agent">Agent</span><span class="logo-academy"> Academy</span>
     </div>
+    <p class="auth-subtitle">Generador de Guiones para Realtors</p>
+
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/login">
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <input
+          class="form-input"
+          type="email"
+          id="email"
+          name="email"
+          placeholder="tu@email.com"
+          required
+          autocomplete="email"
+        />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Contraseña</label>
+        <input
+          class="form-input"
+          type="password"
+          id="password"
+          name="password"
+          placeholder="••••••••"
+          required
+          autocomplete="current-password"
+        />
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px">
+        Iniciar sesión
+      </button>
+    </form>
   </div>
+</div>
 </body>
 </html>

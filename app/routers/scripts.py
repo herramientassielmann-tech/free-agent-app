@@ -27,11 +27,24 @@ def _scripts_this_month(user: User, db: Session) -> int:
 
 
 @router.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def dashboard(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     used = _scripts_this_month(current_user, db)
     remaining = None
     if current_user.monthly_limit is not None:
         remaining = max(0, current_user.monthly_limit - used)
+
+    recent_scripts = (
+        db.query(Script)
+        .filter(Script.user_id == current_user.id)
+        .order_by(Script.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
     return templates.TemplateResponse(
         "dashboard.html",
         {
@@ -40,6 +53,7 @@ async def dashboard(request: Request, current_user: User = Depends(get_current_u
             "used": used,
             "remaining": remaining,
             "limit": current_user.monthly_limit,
+            "recent_scripts": recent_scripts,
         },
     )
 
@@ -55,24 +69,23 @@ async def generate(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Verificar límite mensual
     if current_user.monthly_limit is not None:
         used = _scripts_this_month(current_user, db)
         if used >= current_user.monthly_limit:
             raise HTTPException(
                 status_code=429,
-                detail=f"Has alcanzado tu límite de {current_user.monthly_limit} guiones este mes. Contacta con el administrador para ampliar tu cuota.",
+                detail=f"Has alcanzado tu límite de {current_user.monthly_limit} guiones este mes. Contacta con el administrador.",
             )
 
-    # Transcribir
     try:
-        transcript = get_transcript(payload.url.strip())
+        result_trans = get_transcript(payload.url.strip())
+        transcript = result_trans["transcript"]
+        thumbnail_path = result_trans["thumbnail_path"]
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener la transcripción: {str(e)}")
 
-    # Generar guión
     try:
         result = generate_script(
             transcript=transcript,
@@ -83,7 +96,6 @@ async def generate(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al generar el guión: {str(e)}")
 
-    # Guardar en DB
     script = Script(
         user_id=current_user.id,
         source_url=payload.url.strip(),
@@ -93,12 +105,12 @@ async def generate(
         conclusion=result["conclusion"],
         caption=result["caption"],
         custom_instructions=payload.custom_instructions.strip() or None,
+        thumbnail_path=thumbnail_path,
     )
     db.add(script)
     db.commit()
     db.refresh(script)
 
-    # Calcular cuota actualizada
     used_now = _scripts_this_month(current_user, db)
     remaining = None
     if current_user.monthly_limit is not None:
@@ -110,6 +122,7 @@ async def generate(
         "conclusion": result["conclusion"],
         "caption": result["caption"],
         "script_id": script.id,
+        "thumbnail_path": thumbnail_path,
         "used": used_now,
         "remaining": remaining,
         "limit": current_user.monthly_limit,
@@ -117,7 +130,11 @@ async def generate(
 
 
 @router.get("/history", response_class=HTMLResponse)
-async def history(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def history(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     scripts = (
         db.query(Script)
         .filter(Script.user_id == current_user.id)

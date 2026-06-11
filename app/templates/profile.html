@@ -2,6 +2,7 @@
 {% block title %}Mi Perfil — Free Agent Academy{% endblock %}
 
 {% block content %}
+
 <div class="page-header">
   <div>
     <h1 class="page-title">Mi Perfil</h1>
@@ -10,8 +11,17 @@
 </div>
 
 {% if saved %}
-<div class="alert alert-success">Perfil guardado correctamente.</div>
+<div class="alert alert-success">✅ Perfil guardado correctamente.</div>
 {% endif %}
+
+{# Avatar card #}
+<div class="profile-header-card">
+  <div class="profile-avatar-lg">{{ (user.name[:2] if user.name else user.email[:2]).upper() }}</div>
+  <div>
+    <div class="profile-meta-name">{{ user.name or 'Sin nombre' }}</div>
+    <div class="profile-meta-email">{{ user.email }}</div>
+  </div>
+</div>
 
 <div class="card">
   <form method="POST" action="/profile">
@@ -43,9 +53,9 @@
       <div class="form-group">
         <label class="form-label" for="tone">Tono de comunicación</label>
         <select class="form-input form-select" id="tone" name="tone">
-          <option value="cercano" {% if not profile or profile.tone == 'cercano' %}selected{% endif %}>Cercano y natural</option>
-          <option value="formal" {% if profile and profile.tone == 'formal' %}selected{% endif %}>Profesional y formal</option>
-          <option value="energetico" {% if profile and profile.tone == 'energetico' %}selected{% endif %}>Energético y dinámico</option>
+          <option value="cercano"       {% if not profile or profile.tone == 'cercano' %}selected{% endif %}>Cercano y natural</option>
+          <option value="formal"        {% if profile and profile.tone == 'formal' %}selected{% endif %}>Profesional y formal</option>
+          <option value="energetico"    {% if profile and profile.tone == 'energetico' %}selected{% endif %}>Energético y dinámico</option>
           <option value="inspiracional" {% if profile and profile.tone == 'inspiracional' %}selected{% endif %}>Inspiracional y motivador</option>
         </select>
       </div>
@@ -53,11 +63,11 @@
       <div class="form-group">
         <label class="form-label" for="specialization">Especialización</label>
         <select class="form-input form-select" id="specialization" name="specialization">
-          <option value="todo_tipo" {% if not profile or profile.specialization == 'todo_tipo' %}selected{% endif %}>Todo tipo de propiedades</option>
+          <option value="todo_tipo"       {% if not profile or profile.specialization == 'todo_tipo' %}selected{% endif %}>Todo tipo de propiedades</option>
           <option value="primera_vivienda" {% if profile and profile.specialization == 'primera_vivienda' %}selected{% endif %}>Primera vivienda</option>
-          <option value="lujo" {% if profile and profile.specialization == 'lujo' %}selected{% endif %}>Propiedades de lujo</option>
-          <option value="inversion" {% if profile and profile.specialization == 'inversion' %}selected{% endif %}>Inversión inmobiliaria</option>
-          <option value="comercial" {% if profile and profile.specialization == 'comercial' %}selected{% endif %}>Inmuebles comerciales</option>
+          <option value="lujo"            {% if profile and profile.specialization == 'lujo' %}selected{% endif %}>Propiedades de lujo</option>
+          <option value="inversion"       {% if profile and profile.specialization == 'inversion' %}selected{% endif %}>Inversión inmobiliaria</option>
+          <option value="comercial"       {% if profile and profile.specialization == 'comercial' %}selected{% endif %}>Inmuebles comerciales</option>
         </select>
       </div>
     </div>
@@ -76,7 +86,7 @@
       >{{ profile.speaking_notes if profile and profile.speaking_notes else '' }}</textarea>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" style="margin-bottom:0">
       <label class="form-label" for="about_me">
         Sobre ti
         <span class="form-hint">contexto adicional para personalizar mejor los guiones</span>
@@ -85,14 +95,16 @@
         class="form-input form-textarea"
         id="about_me"
         name="about_me"
-        placeholder='Ej: "Llevo 10 años en el sector, me centro en familias que buscan su primer piso, mis clientes son de clase media"'
+        placeholder='Ej: "Llevo 10 años en el sector, me centro en familias que buscan su primer piso"'
         rows="4"
       >{{ profile.about_me if profile and profile.about_me else '' }}</textarea>
     </div>
 
-    <div class="form-actions">
+    <div class="form-actions" style="margin-top:24px">
       <button type="submit" class="btn btn-primary">Guardar Perfil</button>
+      <a href="/" class="btn btn-ghost">Cancelar</a>
     </div>
   </form>
 </div>
+
 {% endblock %}

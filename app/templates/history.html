@@ -2,69 +2,144 @@
 {% block title %}Historial — Free Agent Academy{% endblock %}
 
 {% block content %}
+
 <div class="page-header">
   <div>
-    <h1 class="page-title">Historial de Guiones</h1>
-    <p class="page-subtitle">Tus últimos 50 guiones generados.</p>
+    <h1 class="page-title">Historial</h1>
+    <p class="page-subtitle">
+      {{ scripts|length }} guión{{ 'es' if scripts|length != 1 else '' }} generado{{ 's' if scripts|length != 1 else '' }}.
+    </p>
   </div>
-  <a href="/" class="btn btn-primary">Nuevo guión</a>
+  <a href="/" class="btn btn-primary">⚡&nbsp; Nuevo guión</a>
 </div>
 
 {% if not scripts %}
 <div class="empty-state">
-  <p class="empty-icon">🎬</p>
+  <span class="empty-icon">🎬</span>
   <p class="empty-title">Aún no has generado ningún guión</p>
+  <p class="empty-text">Ve al generador, pega una URL de TikTok o Instagram y obtén tu guión en segundos.</p>
   <a href="/" class="btn btn-primary">Generar mi primer guión</a>
 </div>
+
 {% else %}
-<div class="history-list">
+<div class="history-grid">
   {% for script in scripts %}
-  <div class="card history-item">
-    <div class="history-item-header">
-      <div class="history-meta">
-        <span class="history-date">{{ script.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
-        <a href="{{ script.source_url }}" target="_blank" rel="noopener" class="history-url">{{ script.source_url[:60] }}{% if script.source_url|length > 60 %}…{% endif %}</a>
+  {% set is_tiktok = 'tiktok.com' in script.source_url %}
+
+  <div class="history-card">
+    {# Thumbnail #}
+    <div class="history-thumb">
+      {% if script.thumbnail_path %}
+      <img src="{{ script.thumbnail_path }}" alt="Thumbnail del vídeo" loading="lazy" />
+      {% else %}
+      <div class="history-thumb-placeholder">🎬</div>
+      {% endif %}
+      <div class="history-platform">
+        <span class="platform-badge {% if is_tiktok %}platform-tiktok{% else %}platform-instagram{% endif %}">
+          {{ 'TikTok' if is_tiktok else 'Instagram' }}
+        </span>
       </div>
-      <button class="btn btn-secondary btn-sm history-toggle" data-id="{{ script.id }}">Ver guión</button>
     </div>
 
-    {% if script.custom_instructions %}
-    <p class="history-instructions"><span class="label-chip">Instrucciones:</span> {{ script.custom_instructions }}</p>
-    {% endif %}
+    {# Body #}
+    <div class="history-body">
+      <span class="history-date">{{ script.created_at.strftime('%d/%m/%Y · %H:%M') }}</span>
+      <p class="history-hook">{{ script.hook or '—' }}</p>
+    </div>
 
-    <div id="script-{{ script.id }}" class="history-script hidden">
+    {# Actions #}
+    <div class="history-actions">
+      <button class="btn btn-ghost history-toggle" data-id="{{ script.id }}">Ver guión</button>
+      <button class="btn btn-primary history-copy-btn"
+              data-hook="{{ script.hook or '' }}"
+              data-dev="{{ script.development or '' }}"
+              data-conc="{{ script.conclusion or '' }}"
+              data-caption="{{ script.caption or '' }}">
+        Copiar
+      </button>
+    </div>
+
+    {# Expandable script #}
+    <div id="script-{{ script.id }}" class="history-expand hidden">
+      {% if script.hook %}
       <div class="history-section">
-        <div class="script-badge hook-badge">HOOK</div>
-        <p>{{ script.hook }}</p>
+        <div class="history-section-label">🎯 Hook</div>
+        <div class="history-section-text">{{ script.hook }}</div>
       </div>
+      {% endif %}
+      {% if script.development %}
       <div class="history-section">
-        <div class="script-badge dev-badge">DESARROLLO</div>
-        <p>{{ script.development }}</p>
+        <div class="history-section-label">📖 Desarrollo</div>
+        <div class="history-section-text">{{ script.development }}</div>
       </div>
+      {% endif %}
+      {% if script.conclusion %}
       <div class="history-section">
-        <div class="script-badge conc-badge">CONCLUSIÓN</div>
-        <p>{{ script.conclusion }}</p>
+        <div class="history-section-label">✅ Conclusión</div>
+        <div class="history-section-text">{{ script.conclusion }}</div>
       </div>
+      {% endif %}
+      {% if script.caption %}
       <div class="history-section">
-        <div class="script-badge cap-badge">CAPTION</div>
-        <p class="caption-content">{{ script.caption }}</p>
+        <div class="history-section-label">📲 Caption</div>
+        <div class="history-section-text caption-content">{{ script.caption }}</div>
       </div>
+      {% endif %}
+      {% if script.source_url %}
+      <div class="history-section" style="margin-top:8px">
+        <a href="{{ script.source_url }}" target="_blank" rel="noopener" style="font-size:0.75rem;color:var(--t3)">
+          🔗 {{ script.source_url[:55] }}{% if script.source_url|length > 55 %}…{% endif %}
+        </a>
+      </div>
+      {% endif %}
     </div>
   </div>
   {% endfor %}
 </div>
 {% endif %}
+
 {% endblock %}
 
 {% block scripts %}
 <script>
+  // Toggle expand
   document.querySelectorAll('.history-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.id;
-      const section = document.getElementById('script-' + id);
-      section.classList.toggle('hidden');
-      btn.textContent = section.classList.contains('hidden') ? 'Ver guión' : 'Ocultar';
+      const panel = document.getElementById('script-' + id);
+      const open = !panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', open);
+      btn.textContent = open ? 'Ver guión' : 'Ocultar';
     });
   });
+
+  // Copy full script
+  document.querySelectorAll('.history-copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = buildScript(btn.dataset.hook, btn.dataset.dev, btn.dataset.conc, btn.dataset.caption);
+      copyToClipboard(text, btn, 'Copiar', '¡Copiado!');
+    });
+  });
+
+  function buildScript(hook, dev, conc, caption) {
+    return `🎯 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CONCLUSIÓN\n${conc}\n\n📲 CAPTION\n${caption}`;
+  }
+
+  function copyToClipboard(text, btn, original, done) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = done;
+      setTimeout(() => { btn.textContent = original; }, 2000);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.textContent = done;
+      setTimeout(() => { btn.textContent = original; }, 2000);
+    });
+  }
 </script>
 {% endblock %}

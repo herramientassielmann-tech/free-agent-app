@@ -33,12 +33,26 @@ def _create_admin_if_missing(db: Session):
         logger.info("Cuenta de administrador creada: %s", ADMIN_EMAIL)
 
 
+def _migrate_db(db: Session):
+    """Agrega columnas nuevas a tablas existentes sin romper datos previos."""
+    migrations = [
+        "ALTER TABLE scripts ADD COLUMN thumbnail_path VARCHAR(500)",
+    ]
+    for sql in migrations:
+        try:
+            db.execute(__import__("sqlalchemy").text(sql))
+            db.commit()
+        except Exception:
+            db.rollback()
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
         _create_admin_if_missing(db)
+        _migrate_db(db)
     finally:
         db.close()
     yield

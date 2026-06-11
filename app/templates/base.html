@@ -10,27 +10,70 @@
   <link rel="stylesheet" href="/static/css/style.css" />
 </head>
 <body>
-  {% if user is defined and user %}
-  <nav class="navbar">
-    <a href="/" class="logo">
-      <span class="logo-free">Free</span><span class="logo-agent">Agent</span><span class="logo-academy">Academy</span>
-    </a>
-    <div class="nav-links">
-      <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">Generar</a>
-      <a href="/history" class="nav-link {% if request.url.path == '/history' %}active{% endif %}">Historial</a>
-      <a href="/profile" class="nav-link {% if request.url.path == '/profile' %}active{% endif %}">Mi Perfil</a>
-      {% if user.is_admin %}
-      <a href="/admin" class="nav-link {% if '/admin' in request.url.path %}active{% endif %}">Admin</a>
-      {% endif %}
-      <a href="/logout" class="nav-link nav-logout">Salir</a>
+
+{% if user is defined and user %}
+{# ── Authenticated: sidebar + main ── #}
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <a href="/">
+        <span class="logo-free">Free</span><span class="logo-agent">Agent</span><span class="logo-academy"> Academy</span>
+      </a>
     </div>
-  </nav>
-  {% endif %}
 
-  <main class="main-content">
-    {% block content %}{% endblock %}
-  </main>
+    <nav class="sidebar-nav">
+      <a href="/" class="nav-item {% if request.url.path == '/' %}active{% endif %}">
+        <span class="nav-icon">⚡</span>
+        Generador
+      </a>
+      <a href="/history" class="nav-item {% if request.url.path == '/history' %}active{% endif %}">
+        <span class="nav-icon">📋</span>
+        Historial
+      </a>
+      <a href="/profile" class="nav-item {% if request.url.path == '/profile' %}active{% endif %}">
+        <span class="nav-icon">👤</span>
+        Mi Perfil
+      </a>
+      {% if user.is_admin %}
+      <div class="nav-divider"></div>
+      <a href="/admin" class="nav-item {% if '/admin' in request.url.path %}active{% endif %}">
+        <span class="nav-icon">🛠</span>
+        Admin
+      </a>
+      {% endif %}
+    </nav>
 
-  {% block scripts %}{% endblock %}
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">{{ (user.name[:2] if user.name else user.email[:2]).upper() }}</div>
+        <div class="user-info">
+          <div class="user-name">{{ user.name or user.email.split('@')[0] }}</div>
+          <div class="user-quota {% block quota_class %}{% endblock %}">{% block quota_text %}{% endblock %}</div>
+        </div>
+      </div>
+      <a href="/logout" class="logout-link">
+        <span>↩</span> Cerrar sesión
+      </a>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <div class="page-wrap">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+</div>
+
+{% else %}
+{# ── Unauthenticated: auth layout ── #}
+<div class="auth-shell">
+  <div class="auth-glow"></div>
+  {% block content %}{% endblock %}
+</div>
+{% endif %}
+
+{% block scripts %}{% endblock %}
 </body>
 </html>

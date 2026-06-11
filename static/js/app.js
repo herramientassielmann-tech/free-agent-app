@@ -1,4 +1,4 @@
-/* Free Agent Academy — Dashboard JS */
+/* Free Agent Academy — Dashboard JS v2 */
 
 const generateBtn   = document.getElementById('generate-btn');
 const errorBox      = document.getElementById('error-box');
@@ -7,10 +7,10 @@ const modal         = document.getElementById('processing-modal');
 const modalBar      = document.getElementById('modal-bar');
 
 const STEPS = [
-  { id: 'step-1', label: 'Analizando el vídeo',       pct: 15,  ms: 800  },
-  { id: 'step-2', label: 'Extrayendo transcripción',   pct: 45,  ms: 4000 },
-  { id: 'step-3', label: 'Adaptando a tu perfil',      pct: 75,  ms: 8000 },
-  { id: 'step-4', label: 'Generando guión',            pct: 92,  ms: 3000 },
+  { id: 'step-1', pct: 15,  ms: 800  },
+  { id: 'step-2', pct: 45,  ms: 4000 },
+  { id: 'step-3', pct: 75,  ms: 8000 },
+  { id: 'step-4', pct: 92,  ms: 3000 },
 ];
 
 let stepTimers = [];
@@ -37,7 +37,6 @@ async function handleGenerate() {
     });
 
     const data = await response.json();
-
     closeModal();
 
     if (!response.ok) {
@@ -45,18 +44,18 @@ async function handleGenerate() {
       return;
     }
 
-    fillResult(data);
+    fillResult(data, url);
     updateQuota(data);
     resultSection.classList.remove('hidden');
     resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  } catch (err) {
+  } catch {
     closeModal();
     showError('Error de conexión. Comprueba tu internet e inténtalo de nuevo.');
   }
 }
 
-/* ── Modal ──────────────────────────────── */
+/* ── Modal ──────────────────────────────────── */
 function openModal() {
   resetSteps();
   modal.classList.remove('hidden');
@@ -74,9 +73,10 @@ function closeModal() {
 }
 
 function resetSteps() {
-  modalBar.style.width = '0%';
+  if (modalBar) modalBar.style.width = '0%';
   STEPS.forEach(s => {
     const el  = document.getElementById(s.id);
+    if (!el) return;
     const dot = el.querySelector('.step-dot');
     el.classList.remove('live', 'done');
     dot.classList.remove('active', 'done');
@@ -87,33 +87,44 @@ function animateSteps() {
   let elapsed = 0;
   STEPS.forEach((step, i) => {
     const t = setTimeout(() => {
-      // Marca el anterior como hecho
       if (i > 0) {
-        const prev    = document.getElementById(STEPS[i - 1].id);
-        const prevDot = prev.querySelector('.step-dot');
-        prev.classList.remove('live');
-        prev.classList.add('done');
-        prevDot.classList.remove('active');
-        prevDot.classList.add('done');
+        const prev = document.getElementById(STEPS[i - 1].id);
+        if (prev) {
+          prev.querySelector('.step-dot').classList.replace('active', 'done');
+          prev.classList.replace('live', 'done');
+        }
       }
-      // Activa el actual
-      const el  = document.getElementById(step.id);
-      const dot = el.querySelector('.step-dot');
-      el.classList.add('live');
-      dot.classList.add('active');
-      modalBar.style.width = step.pct + '%';
+      const el = document.getElementById(step.id);
+      if (el) {
+        el.classList.add('live');
+        el.querySelector('.step-dot').classList.add('active');
+      }
+      if (modalBar) modalBar.style.width = step.pct + '%';
     }, elapsed);
     stepTimers.push(t);
     elapsed += step.ms;
   });
 }
 
-/* ── Fill result ────────────────────────── */
-function fillResult(data) {
+/* ── Fill result ────────────────────────────── */
+function fillResult(data, url) {
   setText('hook-text',    data.hook       || '');
   setText('dev-text',     data.desarrollo || '');
   setText('conc-text',    data.conclusion || '');
   setText('caption-text', data.caption    || '');
+
+  // Source URL
+  const urlEl = document.getElementById('result-url');
+  if (urlEl) urlEl.textContent = url.length > 55 ? url.slice(0, 55) + '…' : url;
+
+  // Thumbnail
+  const thumbImg  = document.getElementById('video-thumb-img');
+  const thumbPlch = document.getElementById('thumb-placeholder');
+  if (thumbImg && data.thumbnail_path) {
+    thumbImg.src = data.thumbnail_path;
+    thumbImg.classList.remove('hidden');
+    if (thumbPlch) thumbPlch.classList.add('hidden');
+  }
 }
 
 function setText(id, text) {
@@ -121,23 +132,33 @@ function setText(id, text) {
   if (el) el.textContent = text;
 }
 
+/* ── Quota ──────────────────────────────────── */
 function updateQuota(data) {
-  const badge = document.querySelector('.quota-badge');
-  if (!badge || data.limit === null || data.limit === undefined) return;
-  const numEl = badge.querySelector('.quota-number');
-  if (numEl && data.remaining !== null && data.remaining !== undefined) {
-    numEl.textContent = data.remaining;
-    badge.classList.remove('quota-low', 'quota-empty');
-    if (data.remaining === 0) {
-      badge.classList.add('quota-empty');
-      generateBtn.disabled = true;
-    } else if (data.remaining <= 5) {
-      badge.classList.add('quota-low');
-    }
+  if (data.limit === null || data.limit === undefined) return;
+
+  // Chip in header
+  const chip = document.querySelector('.quota-chip');
+  if (chip && data.remaining !== null && data.remaining !== undefined) {
+    const dot = chip.querySelector('.quota-dot');
+    chip.classList.remove('low', 'empty');
+    const r = data.remaining;
+    const s = r === 1 ? '' : 's';
+    chip.lastChild.textContent = ` ${r} guión${r !== 1 ? 'es' : ''} restante${s} este mes`;
+    if (r === 0) { chip.classList.add('empty'); generateBtn.disabled = true; }
+    else if (r <= 3) { chip.classList.add('low'); }
+  }
+
+  // Sidebar quota text
+  const sidebarQuota = document.querySelector('.user-quota');
+  if (sidebarQuota && data.remaining !== null) {
+    sidebarQuota.textContent = `${data.remaining} guiones restantes`;
+    sidebarQuota.className = 'user-quota';
+    if (data.remaining === 0) sidebarQuota.classList.add('empty');
+    else if (data.remaining <= 3) sidebarQuota.classList.add('low');
   }
 }
 
-/* ── Error ──────────────────────────────── */
+/* ── Error ──────────────────────────────────── */
 function showError(msg) {
   errorBox.textContent = msg;
   errorBox.classList.remove('hidden');
@@ -145,7 +166,7 @@ function showError(msg) {
 }
 function hideError() { errorBox.classList.add('hidden'); }
 
-/* ── Copy buttons ─────────────────────── */
+/* ── Copy buttons (result section) ─────────── */
 document.querySelectorAll('.copy-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const el = document.getElementById(btn.dataset.target);
@@ -163,6 +184,18 @@ if (copyAllBtn) {
     const all = `🎯 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CONCLUSIÓN\n${conc}\n\n📲 CAPTION\n${caption}`;
     copyText(all, copyAllBtn);
   });
+}
+
+/* ── Copy from recent list ──────────────────── */
+document.querySelectorAll('.recent-copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const text = buildScriptText(btn.dataset.hook, btn.dataset.dev, btn.dataset.conc, btn.dataset.caption);
+    copyText(text, btn);
+  });
+});
+
+function buildScriptText(hook, dev, conc, caption) {
+  return `🎯 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CONCLUSIÓN\n${conc}\n\n📲 CAPTION\n${caption}`;
 }
 
 function copyText(text, btn) {
