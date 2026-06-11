@@ -4,7 +4,7 @@ import os
 import uuid
 from pathlib import Path
 from openai import OpenAI
-from app.config import OPENAI_API_KEY
+from app.config import OPENAI_API_KEY, INSTAGRAM_COOKIES_FILE
 
 THUMBNAILS_DIR = Path("static/thumbnails")
 THUMB_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -44,6 +44,8 @@ def _yt_dlp_audio_then_whisper(url: str) -> dict:
             "quiet": True,
             "no_warnings": True,
         }
+        if INSTAGRAM_COOKIES_FILE and Path(INSTAGRAM_COOKIES_FILE).exists():
+            ydl_opts["cookiefile"] = INSTAGRAM_COOKIES_FILE
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
