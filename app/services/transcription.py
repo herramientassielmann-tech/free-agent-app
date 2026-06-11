@@ -37,12 +37,11 @@ def _youtube_transcript(video_id: str) -> str:
         try:
             transcript = transcript_list.find_transcript(["es", "es-419", "es-ES"])
         except Exception:
-            transcript = transcript_list.find_generated_transcript(
-                transcript_list._generated_transcripts.keys()
-                or transcript_list._manually_created_transcripts.keys()
-            )
+            transcript = next(iter(transcript_list))
         entries = transcript.fetch()
-        return " ".join(e["text"] for e in entries)
+        return " ".join(
+            e.text if hasattr(e, "text") else e["text"] for e in entries
+        )
     except (TranscriptsDisabled, NoTranscriptFound):
         raise ValueError("No hay transcripción disponible para este vídeo de YouTube.")
 
