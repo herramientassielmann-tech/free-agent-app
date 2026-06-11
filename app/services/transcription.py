@@ -1,47 +1,17 @@
-import re
 import tempfile
 import os
 from pathlib import Path
-from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
 from openai import OpenAI
 from app.config import OPENAI_API_KEY
 
 
 def _detect_platform(url: str) -> str:
     url_lower = url.lower()
-    if "youtube.com" in url_lower or "youtu.be" in url_lower:
-        return "youtube"
     if "tiktok.com" in url_lower:
         return "tiktok"
     if "instagram.com" in url_lower:
         return "instagram"
     return "unknown"
-
-
-def _extract_youtube_id(url: str):
-    patterns = [
-        r"(?:v=|youtu\.be/)([A-Za-z0-9_-]{11})",
-        r"(?:embed|shorts)/([A-Za-z0-9_-]{11})",
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, url)
-        if match:
-            return match.group(1)
-    return None
-
-
-def _youtube_transcript(video_id: str) -> str:
-    try:
-        api = YouTubeTranscriptApi()
-        try:
-            entries = api.fetch(video_id, languages=["es", "es-419", "es-ES"])
-        except Exception:
-            entries = api.fetch(video_id)
-        return " ".join(
-            e.text if hasattr(e, "text") else e["text"] for e in entries
-        )
-    except (TranscriptsDisabled, NoTranscriptFound):
-        raise ValueError("No hay transcripción disponible para este vídeo de YouTube.")
 
 
 def _whisper_transcribe(audio_path: str) -> str:
@@ -58,8 +28,6 @@ def _yt_dlp_audio_then_whisper(url: str) -> str:
     import yt_dlp
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Sin postprocesador FFmpeg: descargamos el audio nativo (m4a/webm/mp4)
-        # Whisper acepta todos esos formatos directamente.
         ydl_opts = {
             "format": "bestaudio/best",
             "outtmpl": os.path.join(tmpdir, "audio.%(ext)s"),
@@ -69,7 +37,6 @@ def _yt_dlp_audio_then_whisper(url: str) -> str:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
-        # Whisper acepta: mp3, mp4, mpeg, mpga, m4a, wav, webm, ogg
         WHISPER_EXTS = {".mp3", ".mp4", ".mpeg", ".mpga", ".m4a", ".wav", ".webm", ".ogg"}
         for f in Path(tmpdir).iterdir():
             if f.suffix.lower() in WHISPER_EXTS:
@@ -79,26 +46,12 @@ def _yt_dlp_audio_then_whisper(url: str) -> str:
 
 
 def get_transcript(url: str) -> str:
-    """
-    Extrae la transcripción de texto de un vídeo dado su URL.
-    Soporta YouTube, TikTok e Instagram.
-    """
+    """Extrae la transcripción de un vídeo de TikTok o Instagram."""
     platform = _detect_platform(url)
 
     if platform == "unknown":
         raise ValueError(
-            "URL no reconocida. Por favor usa una URL de YouTube, TikTok o Instagram."
+            "URL no reconocida. Por favor usa una URL de TikTok o Instagram."
         )
 
-    if platform == "youtube":
-        video_id = _extract_youtube_id(url)
-        if not video_id:
-            raise ValueError("No se pudo extraer el ID del vídeo de YouTube.")
-        try:
-            return _youtube_transcript(video_id)
-        except Exception:
-            # Fallback: IP bloqueada por YouTube o sin transcripción → Whisper
-            return _yt_dlp_audio_then_whisper(url)
-
-    # TikTok e Instagram: siempre via yt-dlp + Whisper
     return _yt_dlp_audio_then_whisper(url)
