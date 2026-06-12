@@ -90,7 +90,7 @@
       </div>
       <div class="video-source">
         <span style="font-size:1rem">🔗</span>
-        <span id="result-url" class="video-source-url"></span>
+        <a id="result-url" class="video-source-url" href="#" target="_blank" rel="noopener noreferrer"></a>
       </div>
     </div>
 
@@ -153,7 +153,14 @@
 <div class="recent-list">
   {% for s in recent_scripts %}
   {% set is_tiktok = 'tiktok.com' in s.source_url %}
-  <div class="recent-item">
+  <div class="recent-item recent-item--clickable"
+       data-hook="{{ s.hook or '' }}"
+       data-dev="{{ s.development or '' }}"
+       data-conc="{{ s.conclusion or '' }}"
+       data-caption="{{ s.caption or '' }}"
+       data-url="{{ s.source_url or '' }}"
+       data-thumb="{{ s.thumbnail_path or '' }}"
+       data-estructura="{{ s.estructura_detectada or '' }}">
     <div class="recent-thumb">
       {% if s.thumbnail_path %}
       <img src="{{ s.thumbnail_path }}" alt="thumb" />

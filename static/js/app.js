@@ -113,9 +113,12 @@ function fillResult(data, url) {
   setText('conc-text',    data.conclusion || '');
   setText('caption-text', data.caption    || '');
 
-  // Source URL
+  // Source URL (enlace clicable)
   const urlEl = document.getElementById('result-url');
-  if (urlEl) urlEl.textContent = url.length > 55 ? url.slice(0, 55) + '…' : url;
+  if (urlEl) {
+    urlEl.textContent = url.length > 55 ? url.slice(0, 55) + '…' : url;
+    urlEl.href = url;
+  }
 
   // Thumbnail
   const thumbImg  = document.getElementById('video-thumb-img');
@@ -197,6 +200,26 @@ if (copyAllBtn) {
     copyText(all, copyAllBtn);
   });
 }
+
+/* ── Click en guión reciente → abrir en sección de resultado ── */
+document.querySelectorAll('.recent-item--clickable').forEach(item => {
+  item.addEventListener('click', (e) => {
+    if (e.target.closest('.recent-copy-btn')) return;
+    const data = {
+      hook:                 item.dataset.hook       || '',
+      desarrollo:           item.dataset.dev        || '',
+      conclusion:           item.dataset.conc       || '',
+      caption:              item.dataset.caption    || '',
+      thumbnail_path:       item.dataset.thumb      || '',
+      estructura_detectada: item.dataset.estructura || '',
+    };
+    const url = item.dataset.url || '';
+    hideError();
+    fillResult(data, url);
+    resultSection.classList.remove('hidden');
+    resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
 
 /* ── Copy from recent list ──────────────────── */
 document.querySelectorAll('.recent-copy-btn').forEach(btn => {
