@@ -38,6 +38,7 @@ def _migrate_db(db: Session):
     from sqlalchemy import text, inspect as sa_inspect
     simple = [
         "ALTER TABLE scripts ADD COLUMN thumbnail_path VARCHAR(500)",
+        "ALTER TABLE scripts ADD COLUMN estructura_detectada TEXT",
         "ALTER TABLE users ADD COLUMN must_change_password BOOLEAN DEFAULT 0",
         "ALTER TABLE users ADD COLUMN temp_password VARCHAR(255)",
     ]

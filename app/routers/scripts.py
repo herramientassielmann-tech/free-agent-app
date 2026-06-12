@@ -97,6 +97,8 @@ async def generate(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al generar el guión: {str(e)}")
 
+    estructura = result.get("estructura_detectada") or None
+
     script = Script(
         user_id=current_user.id,
         source_url=payload.url.strip(),
@@ -107,6 +109,7 @@ async def generate(
         caption=result["caption"],
         custom_instructions=payload.custom_instructions.strip() or None,
         thumbnail_path=thumbnail_path,
+        estructura_detectada=estructura,
     )
     db.add(script)
     db.commit()
@@ -122,6 +125,7 @@ async def generate(
         "desarrollo": result["desarrollo"],
         "conclusion": result["conclusion"],
         "caption": result["caption"],
+        "estructura_detectada": estructura,
         "script_id": script.id,
         "thumbnail_path": thumbnail_path,
         "used": used_now,
