@@ -39,6 +39,12 @@ def _migrate_db(db: Session):
     simple = [
         "ALTER TABLE scripts ADD COLUMN thumbnail_path VARCHAR(500)",
         "ALTER TABLE scripts ADD COLUMN estructura_detectada TEXT",
+        "ALTER TABLE scripts ADD COLUMN promesa TEXT",
+        "ALTER TABLE realtor_profiles ADD COLUMN cliente_ideal TEXT",
+        "ALTER TABLE realtor_profiles ADD COLUMN objeciones TEXT",
+        "ALTER TABLE realtor_profiles ADD COLUMN casos_exito TEXT",
+        "ALTER TABLE realtor_profiles ADD COLUMN objetivo_cta TEXT",
+        "ALTER TABLE realtor_profiles ADD COLUMN temas_evitar TEXT",
         "ALTER TABLE users ADD COLUMN must_change_password BOOLEAN DEFAULT 0",
         "ALTER TABLE users ADD COLUMN temp_password VARCHAR(255)",
     ]

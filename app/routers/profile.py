@@ -85,24 +85,13 @@ async def delete_profile(
 @router.post("/profile/{pid}")
 async def save_profile(
     pid: int,
-    profile_name: str = Form("Mi Perfil"),
     display_name: str = Form(""),
-    market: str = Form(""),
-    tone: str = Form("cercano"),
-    speaking_notes: str = Form(""),
-    specialization: str = Form("todo_tipo"),
-    about_me: str = Form(""),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """El alumno solo puede editar su nombre en cámara. El resto lo configura el admin."""
     p = _own_profile(pid, current_user, db)
-    p.profile_name   = profile_name.strip() or "Mi Perfil"
-    p.display_name   = display_name.strip() or None
-    p.market         = market.strip() or None
-    p.tone           = tone
-    p.speaking_notes = speaking_notes.strip() or None
-    p.specialization = specialization
-    p.about_me       = about_me.strip() or None
+    p.display_name = display_name.strip() or None
     db.commit()
     return RedirectResponse(url=f"/profile?pid={pid}&saved=1", status_code=303)
 

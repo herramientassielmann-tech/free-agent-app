@@ -5,8 +5,8 @@
 
 <div class="page-header">
   <div>
-    <h1 class="page-title">Mis Perfiles</h1>
-    <p class="page-subtitle">Cada perfil personaliza el tono y estilo de tus guiones.</p>
+    <h1 class="page-title">Mi Perfil</h1>
+    <p class="page-subtitle">Así están configurados tus guiones. Lo gestiona tu coach.</p>
   </div>
 </div>
 
@@ -19,87 +19,65 @@
   </div>
 </div>
 
-{# ── Selector de perfiles ── #}
-<div class="profile-tabs-row">
-  {% for p in profiles %}
-  <a
-    href="/profile?pid={{ p.id }}"
-    class="profile-tab {% if p.id == selected.id %}profile-tab--selected{% endif %}"
-  >
-    <span class="profile-tab-name">{{ p.profile_name }}</span>
-    {% if p.is_active %}
-    <span class="profile-tab-badge">Activo</span>
-    {% endif %}
-  </a>
-  {% endfor %}
-
-  <form method="POST" action="/profile/new" style="display:inline">
-    <button type="submit" class="profile-tab profile-tab--new" title="Añadir perfil">
-      + Nuevo
-    </button>
-  </form>
+{# ── Aviso: perfil gestionado por el coach ── #}
+<div class="alert" style="margin-bottom:20px;background:rgba(10,132,255,0.10);border:1px solid rgba(10,132,255,0.25);color:var(--t2);">
+  🔒 Tu perfil lo configura tu coach de Free Agent Academy a partir de tu llamada de onboarding.
+  Aquí solo puedes cambiar <strong>tu nombre en cámara</strong>. Si quieres ajustar algo más, escríbele.
 </div>
 
 {# ── Alertas ── #}
 {% if saved %}
-<div class="alert alert-success" style="margin-bottom:20px;">Perfil guardado correctamente.</div>
+<div class="alert alert-success" style="margin-bottom:20px;">Guardado correctamente.</div>
 {% endif %}
 
-{# ── Formulario del perfil seleccionado ── #}
 <div class="card">
   <form method="POST" action="/profile/{{ selected.id }}">
 
+    {# Único campo editable por el alumno #}
     <div class="form-group">
-      <label class="form-label" for="profile_name">Nombre del perfil</label>
+      <label class="form-label" for="display_name">Nombre para los guiones <span class="form-hint">el nombre con el que apareces en cámara</span></label>
       <input
         class="form-input"
         type="text"
-        id="profile_name"
-        name="profile_name"
-        placeholder="Ej: Perfil Lujo, Perfil Inversores…"
-        value="{{ selected.profile_name }}"
-        required
+        id="display_name"
+        name="display_name"
+        placeholder="Ej: Carlos López"
+        value="{{ selected.display_name if selected.display_name else '' }}"
       />
     </div>
 
+    <div class="form-actions" style="margin:8px 0 4px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+      <button type="submit" class="btn btn-primary">Guardar</button>
+      <a href="/" class="btn btn-ghost" style="margin-left:auto;">Volver</a>
+    </div>
+  </form>
+
+  <div class="section-divider" style="margin:24px 0;"></div>
+
+  {# Resto del perfil: solo lectura (lo configura el coach) #}
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <h2 class="section-title" style="margin:0;">Configuración de tus guiones</h2>
+    <span class="status-badge" style="font-size:0.68rem;background:var(--s3);color:var(--t3);">Solo lo edita tu coach</span>
+  </div>
+
+  <fieldset disabled style="border:0;padding:0;margin:0;min-width:0;opacity:0.85;">
     <div class="form-grid">
       <div class="form-group">
-        <label class="form-label" for="display_name">Nombre para los guiones</label>
-        <input
-          class="form-input"
-          type="text"
-          id="display_name"
-          name="display_name"
-          placeholder="Ej: Carlos López"
-          value="{{ selected.display_name if selected.display_name else '' }}"
-        />
+        <label class="form-label">Tu mercado / zona</label>
+        <input class="form-input" type="text" value="{{ selected.market if selected.market else '—' }}" />
       </div>
-
       <div class="form-group">
-        <label class="form-label" for="market">Tu mercado / zona</label>
-        <input
-          class="form-input"
-          type="text"
-          id="market"
-          name="market"
-          placeholder="Ej: Madrid, Miami, Barcelona…"
-          value="{{ selected.market if selected.market else '' }}"
-        />
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="tone">Tono de comunicación</label>
-        <select class="form-input form-select" id="tone" name="tone">
+        <label class="form-label">Tono de comunicación</label>
+        <select class="form-input form-select">
           <option value="cercano"       {% if selected.tone == 'cercano' %}selected{% endif %}>Cercano y natural</option>
           <option value="formal"        {% if selected.tone == 'formal' %}selected{% endif %}>Profesional y formal</option>
           <option value="energetico"    {% if selected.tone == 'energetico' %}selected{% endif %}>Energético y dinámico</option>
           <option value="inspiracional" {% if selected.tone == 'inspiracional' %}selected{% endif %}>Inspiracional y motivador</option>
         </select>
       </div>
-
       <div class="form-group">
-        <label class="form-label" for="specialization">Especialización</label>
-        <select class="form-input form-select" id="specialization" name="specialization">
+        <label class="form-label">Especialización</label>
+        <select class="form-input form-select">
           <option value="todo_tipo"        {% if selected.specialization == 'todo_tipo' %}selected{% endif %}>Todo tipo de propiedades</option>
           <option value="primera_vivienda" {% if selected.specialization == 'primera_vivienda' %}selected{% endif %}>Primera vivienda</option>
           <option value="lujo"             {% if selected.specialization == 'lujo' %}selected{% endif %}>Propiedades de lujo</option>
@@ -110,62 +88,34 @@
     </div>
 
     <div class="form-group">
-      <label class="form-label" for="speaking_notes">
-        Notas sobre tu estilo
-        <span class="form-hint">cómo hablas, muletillas, cosas que usas mucho…</span>
-      </label>
-      <textarea
-        class="form-input form-textarea"
-        id="speaking_notes"
-        name="speaking_notes"
-        placeholder='Ej: "Soy muy directo, uso mucho el humor, no me gustan los tecnicismos"'
-        rows="3"
-      >{{ selected.speaking_notes if selected.speaking_notes else '' }}</textarea>
+      <label class="form-label">Estilo personal</label>
+      <textarea class="form-input form-textarea" rows="3">{{ selected.speaking_notes if selected.speaking_notes else '—' }}</textarea>
     </div>
-
+    <div class="form-group">
+      <label class="form-label">Contexto y autoridad</label>
+      <textarea class="form-input form-textarea" rows="3">{{ selected.about_me if selected.about_me else '—' }}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cliente ideal</label>
+      <textarea class="form-input form-textarea" rows="2">{{ selected.cliente_ideal if selected.cliente_ideal else '—' }}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Dolores y objeciones de tus clientes</label>
+      <textarea class="form-input form-textarea" rows="3">{{ selected.objeciones if selected.objeciones else '—' }}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Casos de éxito y cifras</label>
+      <textarea class="form-input form-textarea" rows="2">{{ selected.casos_exito if selected.casos_exito else '—' }}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Objetivo del contenido / CTA</label>
+      <textarea class="form-input form-textarea" rows="2">{{ selected.objetivo_cta if selected.objetivo_cta else '—' }}</textarea>
+    </div>
     <div class="form-group" style="margin-bottom:0">
-      <label class="form-label" for="about_me">
-        Sobre ti
-        <span class="form-hint">contexto adicional para personalizar mejor los guiones</span>
-      </label>
-      <textarea
-        class="form-input form-textarea"
-        id="about_me"
-        name="about_me"
-        placeholder='Ej: "Llevo 10 años en el sector, me centro en familias que buscan su primer piso"'
-        rows="4"
-      >{{ selected.about_me if selected.about_me else '' }}</textarea>
+      <label class="form-label">Temas a evitar</label>
+      <textarea class="form-input form-textarea" rows="2">{{ selected.temas_evitar if selected.temas_evitar else '—' }}</textarea>
     </div>
-
-    <div class="form-actions" style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-      <button type="submit" class="btn btn-primary">Guardar Perfil</button>
-
-      {% if not selected.is_active %}
-      <button
-        type="button"
-        onclick="document.getElementById('form-activate-{{ selected.id }}').submit()"
-        class="btn btn-secondary"
-      >Usar este perfil</button>
-      {% else %}
-      <span class="status-badge status-active" style="font-size:0.75rem;">Perfil activo</span>
-      {% endif %}
-
-      <a href="/" class="btn btn-ghost" style="margin-left:auto;">Cancelar</a>
-
-      {% if profiles|length > 1 %}
-      <button
-        type="button"
-        onclick="if(confirm('¿Eliminar el perfil «{{ selected.profile_name }}»? Esta acción no se puede deshacer.')) document.getElementById('form-delete-{{ selected.id }}').submit()"
-        class="btn"
-        style="background:rgba(255,69,58,0.12);color:#FF453A;border:1px solid rgba(255,69,58,0.25);"
-      >Eliminar perfil</button>
-      {% endif %}
-    </div>
-  </form>
+  </fieldset>
 </div>
-
-{# Formularios auxiliares ocultos para activate y delete #}
-<form id="form-activate-{{ selected.id }}" method="POST" action="/profile/{{ selected.id }}/activate" style="display:none"></form>
-<form id="form-delete-{{ selected.id }}"   method="POST" action="/profile/{{ selected.id }}/delete"   style="display:none"></form>
 
 {% endblock %}

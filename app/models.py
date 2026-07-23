@@ -69,6 +69,12 @@ class RealtorProfile(Base):
         SAEnum(SpecializationEnum), default=SpecializationEnum.todo_tipo, nullable=False
     )
     about_me: Mapped[Optional[str]] = mapped_column(Text)
+    # Campos ampliados (se rellenan desde la transcripción de la llamada de onboarding)
+    cliente_ideal: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    objeciones: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    casos_exito: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    objetivo_cta: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    temas_evitar: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="profiles")
 
@@ -81,6 +87,7 @@ class Script(Base):
     source_url: Mapped[str] = mapped_column(String(500), nullable=False)
     original_transcript: Mapped[Optional[str]] = mapped_column(Text)
     hook: Mapped[Optional[str]] = mapped_column(Text)
+    promesa: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     development: Mapped[Optional[str]] = mapped_column(Text)
     conclusion: Mapped[Optional[str]] = mapped_column(Text)
     caption: Mapped[Optional[str]] = mapped_column(Text)

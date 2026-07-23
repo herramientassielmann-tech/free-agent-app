@@ -85,6 +85,119 @@
   </div>
 </div>
 
+{# ── Perfil del realtor (configurado por el admin) ── #}
+<div class="card" style="margin-top:24px;">
+  <h2 class="section-title" style="margin-bottom:6px;">Perfil del realtor</h2>
+  <p class="page-subtitle" style="margin-bottom:20px;">Esto es lo que personaliza sus guiones. El alumno no puede editarlo — lo configuras tú aquí.</p>
+
+  {% if saved == 'profile' %}
+  <div class="alert alert-success" style="margin-bottom:20px;">Perfil guardado correctamente.</div>
+  {% endif %}
+
+  {# Autorrelleno desde la transcripción de la llamada #}
+  <div class="card" style="margin-bottom:24px;border:1px dashed var(--s3);background:var(--s1);">
+    <label class="form-label" for="onboarding-transcript">
+      ✨ Rellenar desde la llamada de onboarding
+      <span class="form-hint">pega la transcripción de la llamada con este alumno y la IA rellena el perfil de abajo</span>
+    </label>
+    <textarea
+      class="form-input form-textarea"
+      id="onboarding-transcript"
+      placeholder="Pega aquí la transcripción completa de la llamada de onboarding…"
+      rows="6"
+    ></textarea>
+    <div style="margin-top:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+      <button type="button" id="extract-btn" class="btn btn-primary">Rellenar perfil con la llamada</button>
+      <span id="extract-status" class="form-hint" style="margin:0;"></span>
+    </div>
+  </div>
+
+  <form method="POST" action="/admin/users/{{ realtor.id }}/profile">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label" for="display_name">Nombre para los guiones</label>
+        <input class="form-input" type="text" id="display_name" name="display_name"
+               placeholder="Ej: Laura Giménez"
+               value="{{ profile.display_name if profile.display_name else '' }}" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="market">Mercado / zona</label>
+        <input class="form-input" type="text" id="market" name="market"
+               placeholder="Ej: Valencia, sobre todo Ruzafa y el Ensanche"
+               value="{{ profile.market if profile.market else '' }}" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="tone">Tono de comunicación</label>
+        <select class="form-input form-select" id="tone" name="tone">
+          <option value="cercano"       {% if profile.tone == 'cercano' %}selected{% endif %}>Cercano y natural</option>
+          <option value="formal"        {% if profile.tone == 'formal' %}selected{% endif %}>Profesional y formal</option>
+          <option value="energetico"    {% if profile.tone == 'energetico' %}selected{% endif %}>Energético y dinámico</option>
+          <option value="inspiracional" {% if profile.tone == 'inspiracional' %}selected{% endif %}>Inspiracional y motivador</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="specialization">Especialización</label>
+        <select class="form-input form-select" id="specialization" name="specialization">
+          <option value="todo_tipo"        {% if profile.specialization == 'todo_tipo' %}selected{% endif %}>Todo tipo de propiedades</option>
+          <option value="primera_vivienda" {% if profile.specialization == 'primera_vivienda' %}selected{% endif %}>Primera vivienda</option>
+          <option value="lujo"             {% if profile.specialization == 'lujo' %}selected{% endif %}>Propiedades de lujo</option>
+          <option value="inversion"        {% if profile.specialization == 'inversion' %}selected{% endif %}>Inversión inmobiliaria</option>
+          <option value="comercial"        {% if profile.specialization == 'comercial' %}selected{% endif %}>Inmuebles comerciales</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="speaking_notes">Estilo personal <span class="form-hint">cómo habla, muletillas, cómo arranca sus vídeos</span></label>
+      <textarea class="form-input form-textarea" id="speaking_notes" name="speaking_notes" rows="3"
+                placeholder='Ej: "Muy cercana, tutea, mucho humor. Arranca con: a ver, que te lo explico fácil"'>{{ profile.speaking_notes if profile.speaking_notes else '' }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="about_me">Contexto y autoridad <span class="form-hint">su historia, años, qué le diferencia</span></label>
+      <textarea class="form-input form-textarea" id="about_me" name="about_me" rows="3"
+                placeholder='Ej: "8 años vendiendo en Valencia, empezó desde cero"'>{{ profile.about_me if profile.about_me else '' }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="cliente_ideal">Cliente ideal <span class="form-hint">a quién le habla</span></label>
+      <textarea class="form-input form-textarea" id="cliente_ideal" name="cliente_ideal" rows="2"
+                placeholder='Ej: "Compradores de primera vivienda, parejas jóvenes"'>{{ profile.cliente_ideal if profile.cliente_ideal else '' }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="objeciones">Dolores y objeciones <span class="form-hint">miedos que le repiten — munición para hooks</span></label>
+      <textarea class="form-input form-textarea" id="objeciones" name="objeciones" rows="3"
+                placeholder='Ej: "Miedo a que el banco no dé la hipoteca; a vicios ocultos"'>{{ profile.objeciones if profile.objeciones else '' }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="casos_exito">Casos de éxito y cifras <span class="form-hint">prueba social</span></label>
+      <textarea class="form-input form-textarea" id="casos_exito" name="casos_exito" rows="2"
+                placeholder='Ej: "32 operaciones el año pasado; compra sin entrada con hipoteca al 100%"'>{{ profile.casos_exito if profile.casos_exito else '' }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="objetivo_cta">Objetivo / CTA preferido <span class="form-hint">qué quiere que haga la gente</span></label>
+      <textarea class="form-input form-textarea" id="objetivo_cta" name="objetivo_cta" rows="2"
+                placeholder='Ej: "Que escriban PISO al DM para una valoración gratis"'>{{ profile.objetivo_cta if profile.objetivo_cta else '' }}</textarea>
+    </div>
+
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label" for="temas_evitar">Temas a evitar <span class="form-hint">qué NO debe decir (opcional)</span></label>
+      <textarea class="form-input form-textarea" id="temas_evitar" name="temas_evitar" rows="2"
+                placeholder='Ej: "No prometer rentabilidades ni dar consejos legales concretos"'>{{ profile.temas_evitar if profile.temas_evitar else '' }}</textarea>
+    </div>
+
+    <div class="form-actions" style="margin-top:24px;">
+      <button type="submit" class="btn btn-primary">Guardar perfil</button>
+    </div>
+  </form>
+</div>
+
 <div class="card" style="margin-top:24px;">
   <h2 class="section-title" style="margin-bottom:16px;">Últimos guiones generados</h2>
   {% if scripts %}
@@ -116,4 +229,69 @@
   <p class="empty-text">Este realtor aún no ha generado guiones.</p>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const extractBtn    = document.getElementById('extract-btn');
+  const transcriptEl  = document.getElementById('onboarding-transcript');
+  const extractStatus = document.getElementById('extract-status');
+
+  const TEXT_FIELDS = [
+    'display_name', 'market', 'speaking_notes', 'about_me',
+    'cliente_ideal', 'objeciones', 'casos_exito', 'objetivo_cta', 'temas_evitar',
+  ];
+  const SELECT_FIELDS = ['tone', 'specialization'];
+
+  function setStatus(msg, color) {
+    extractStatus.textContent = msg;
+    extractStatus.style.color = color || '';
+  }
+
+  if (extractBtn) {
+    extractBtn.addEventListener('click', async () => {
+      const transcript = (transcriptEl.value || '').trim();
+      if (!transcript) {
+        setStatus('Pega primero la transcripción de la llamada.', '#FF453A');
+        return;
+      }
+
+      extractBtn.disabled = true;
+      const originalLabel = extractBtn.textContent;
+      extractBtn.textContent = 'Analizando la llamada…';
+      setStatus('Esto puede tardar unos segundos…', '');
+
+      try {
+        const body = new FormData();
+        body.append('transcript', transcript);
+        const res = await fetch('/admin/extract-profile', { method: 'POST', body });
+
+        if (!res.ok) {
+          let detail = 'No se pudo analizar la transcripción.';
+          try { detail = (await res.json()).detail || detail; } catch (e) {}
+          throw new Error(detail);
+        }
+
+        const data = await res.json();
+        let filled = 0;
+
+        TEXT_FIELDS.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && data[id]) { el.value = data[id]; filled++; }
+        });
+        SELECT_FIELDS.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && data[id]) { el.value = data[id]; }
+        });
+
+        setStatus(`✅ Perfil rellenado (${filled} campos). Revisa y pulsa «Guardar perfil».`, '#30D158');
+      } catch (err) {
+        setStatus('⚠️ ' + err.message, '#FF453A');
+      } finally {
+        extractBtn.disabled = false;
+        extractBtn.textContent = originalLabel;
+      }
+    });
+  }
+</script>
 {% endblock %}

@@ -100,11 +100,22 @@
         <div class="script-card-header">
           <div class="script-meta">
             <span class="badge badge-blue">HOOK</span>
-            <span class="script-subtitle">Los primeros 3 segundos</span>
+            <span class="script-subtitle">Los primeros 1-3 segundos</span>
           </div>
           <button class="copy-btn" data-target="hook-text">Copiar</button>
         </div>
         <div id="hook-text" class="script-content"></div>
+      </div>
+
+      <div class="script-card promesa-card">
+        <div class="script-card-header">
+          <div class="script-meta">
+            <span class="badge badge-teal">PROMESA</span>
+            <span class="script-subtitle">La salsa secreta — qué verá el espectador</span>
+          </div>
+          <button class="copy-btn" data-target="promesa-text">Copiar</button>
+        </div>
+        <div id="promesa-text" class="script-content"></div>
       </div>
 
       <div class="script-card dev-card">
@@ -121,8 +132,8 @@
       <div class="script-card conc-card">
         <div class="script-card-header">
           <div class="script-meta">
-            <span class="badge badge-green">CONCLUSIÓN</span>
-            <span class="script-subtitle">Cierre y llamada a la acción</span>
+            <span class="badge badge-green">CTA</span>
+            <span class="script-subtitle">Un único llamamiento al final</span>
           </div>
           <button class="copy-btn" data-target="conc-text">Copiar</button>
         </div>
@@ -155,6 +166,7 @@
   {% set is_tiktok = 'tiktok.com' in s.source_url %}
   <div class="recent-item recent-item--clickable"
        data-hook="{{ s.hook or '' }}"
+       data-promesa="{{ s.promesa or '' }}"
        data-dev="{{ s.development or '' }}"
        data-conc="{{ s.conclusion or '' }}"
        data-caption="{{ s.caption or '' }}"
@@ -180,6 +192,7 @@
     <div class="recent-copy">
       <button class="btn btn-ghost btn-sm recent-copy-btn"
               data-hook="{{ s.hook or '' }}"
+              data-promesa="{{ s.promesa or '' }}"
               data-dev="{{ s.development or '' }}"
               data-conc="{{ s.conclusion or '' }}"
               data-caption="{{ s.caption or '' }}">

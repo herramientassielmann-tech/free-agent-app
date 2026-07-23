@@ -17,3 +17,14 @@ tmp/
 *.mp4
 *.webm
 *.m4a
+
+# Credenciales de Instagram (NUNCA versionar)
+insta_session
+instagram_cookies.txt
+
+# Thumbnails generados en runtime (se mantiene la carpeta con .gitkeep)
+static/thumbnails/*
+!static/thumbnails/.gitkeep
+
+# macOS
+.DS_Store

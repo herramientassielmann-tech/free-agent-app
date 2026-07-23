@@ -1,14 +1,29 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Script, RealtorProfile
 from app.auth import require_admin, hash_password
+from app.services.profile_extractor import extract_profile_from_transcript
 
 router = APIRouter(prefix="/admin")
 templates = Jinja2Templates(directory="app/templates")
+
+
+def _active_profile(user: User, db: Session) -> RealtorProfile:
+    """Devuelve el perfil activo del usuario (lo crea si no tiene ninguno)."""
+    prof = next((p for p in user.profiles if p.is_active), None)
+    if prof is None and user.profiles:
+        prof = user.profiles[0]
+    if prof is None:
+        prof = RealtorProfile(user_id=user.id, profile_name="Mi Perfil", is_active=True)
+        db.add(prof)
+        db.commit()
+        db.refresh(user)
+        prof = user.profiles[0]
+    return prof
 
 
 def _user_stats(user: User, db: Session) -> dict:
@@ -113,19 +128,23 @@ async def create_user(
     )
     db.add(new_user)
     db.commit()
-    return RedirectResponse(url="/admin/users", status_code=303)
+    db.refresh(new_user)
+    # Tras crear, vamos a su ficha para configurar el perfil (onboarding)
+    return RedirectResponse(url=f"/admin/users/{new_user.id}", status_code=303)
 
 
 @router.get("/users/{user_id}", response_class=HTMLResponse)
 async def user_detail(
     user_id: int,
     request: Request,
+    saved: str = "",
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     realtor = db.query(User).filter(User.id == user_id).first()
     if not realtor:
         raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+    profile = _active_profile(realtor, db)
     scripts = (
         db.query(Script)
         .filter(Script.user_id == user_id)
@@ -140,7 +159,9 @@ async def user_detail(
             "request": request,
             "user": current_user,
             "realtor": realtor,
+            "profile": profile,
             "scripts": scripts,
+            "saved": saved,
             **stats,
         },
     )
@@ -171,3 +192,58 @@ async def edit_user(
 
     db.commit()
     return RedirectResponse(url=f"/admin/users/{user_id}", status_code=303)
+
+
+# ── Guardar el perfil del realtor (solo admin) ────────────────────────────
+@router.post("/users/{user_id}/profile")
+async def save_user_profile(
+    user_id: int,
+    display_name: str = Form(""),
+    market: str = Form(""),
+    tone: str = Form("cercano"),
+    specialization: str = Form("todo_tipo"),
+    speaking_notes: str = Form(""),
+    about_me: str = Form(""),
+    cliente_ideal: str = Form(""),
+    objeciones: str = Form(""),
+    casos_exito: str = Form(""),
+    objetivo_cta: str = Form(""),
+    temas_evitar: str = Form(""),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    realtor = db.query(User).filter(User.id == user_id).first()
+    if not realtor:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+    p = _active_profile(realtor, db)
+    p.display_name   = display_name.strip() or None
+    p.market         = market.strip() or None
+    p.tone           = tone
+    p.specialization = specialization
+    p.speaking_notes = speaking_notes.strip() or None
+    p.about_me       = about_me.strip() or None
+    p.cliente_ideal  = cliente_ideal.strip() or None
+    p.objeciones     = objeciones.strip() or None
+    p.casos_exito    = casos_exito.strip() or None
+    p.objetivo_cta   = objetivo_cta.strip() or None
+    p.temas_evitar   = temas_evitar.strip() or None
+    db.commit()
+    return RedirectResponse(url=f"/admin/users/{user_id}?saved=profile", status_code=303)
+
+
+# ── Autorrellenar perfil desde la transcripción (solo admin) ──────────────
+@router.post("/extract-profile")
+async def admin_extract_profile(
+    transcript: str = Form(""),
+    current_user: User = Depends(require_admin),  # solo admin (la llamada consume API)
+):
+    """Analiza la transcripción de la llamada con IA y devuelve los campos del perfil (sin guardar)."""
+    if not transcript.strip():
+        raise HTTPException(status_code=422, detail="Pega la transcripción de la llamada primero.")
+    try:
+        fields = extract_profile_from_transcript(transcript)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al analizar la transcripción: {str(e)}")
+    return JSONResponse(fields)
