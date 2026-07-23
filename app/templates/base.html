@@ -59,6 +59,14 @@
   </aside>
 
   <div class="main-area">
+    {% if user.impersonated %}
+    <div class="impersonation-banner">
+      <span>👁️ Estás controlando el perfil de <strong>{{ user.name or user.email }}</strong> como admin. Todo lo que hagas (guiones, perfil) es como este realtor.</span>
+      <form method="POST" action="/admin/stop-impersonation" style="margin:0;">
+        <button type="submit" class="imp-back-btn">↩ Volver a mi cuenta de admin</button>
+      </form>
+    </div>
+    {% endif %}
     <div class="page-wrap">
       {% block content %}{% endblock %}
     </div>

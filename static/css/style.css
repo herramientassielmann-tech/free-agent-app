@@ -422,6 +422,35 @@ a:hover { color: #3d9eff; }
 .badge-green  { background: rgba(48,209,88,0.15);   color: #7de0a0; }
 .badge-purple { background: rgba(191,90,242,0.15);  color: #d49bfa; }
 .badge-teal   { background: rgba(45,212,191,0.15);   color: #5ee7d0; }
+
+/* ── Banner de impersonación (admin controlando a un realtor) ── */
+.impersonation-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: linear-gradient(90deg, #ff9f0a, #ff8a3d);
+  color: #201400;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 10px 20px;
+  border-radius: 0 0 12px 12px;
+  margin: 0 24px 16px;
+  box-shadow: 0 4px 14px rgba(255,159,10,0.25);
+}
+.imp-back-btn {
+  background: #201400;
+  color: #ffcf8a;
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 7px 16px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.imp-back-btn:hover { background: #000; }
 .badge-dark   { background: var(--s3); color: var(--t2); }
 
 /* ── Platform badges ─────────────────────────────── */

@@ -1,11 +1,12 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, Request, Form, HTTPException
+from typing import Optional
+from fastapi import APIRouter, Depends, Request, Form, HTTPException, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Script, RealtorProfile
-from app.auth import require_admin, hash_password
+from app.auth import require_admin, hash_password, create_access_token, get_real_user, decode_token
 from app.services.profile_extractor import extract_profile_from_transcript
 
 router = APIRouter(prefix="/admin")
@@ -247,3 +248,42 @@ async def admin_extract_profile(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al analizar la transcripción: {str(e)}")
     return JSONResponse(fields)
+
+
+# ── Impersonar: entrar como un realtor desde la cuenta de admin ───────────
+def _set_auth_cookie(resp: RedirectResponse, token: str):
+    resp.set_cookie(
+        key="access_token", value=token, httponly=True, max_age=60 * 60 * 8, samesite="lax"
+    )
+
+
+@router.post("/users/{user_id}/impersonate")
+async def impersonate_user(
+    user_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    target = db.query(User).filter(User.id == user_id, User.is_admin == False).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Realtor no encontrado.")
+    token = create_access_token(
+        {"sub": str(current_user.id), "is_admin": True, "imp": str(target.id)}
+    )
+    resp = RedirectResponse(url="/", status_code=303)
+    _set_auth_cookie(resp, token)
+    return resp
+
+
+@router.post("/stop-impersonation")
+async def stop_impersonation(
+    real_user: User = Depends(get_real_user),
+    access_token: Optional[str] = Cookie(default=None),
+):
+    payload = decode_token(access_token) if access_token else None
+    imp_id = payload.get("imp") if payload else None
+    if not real_user.is_admin or imp_id is None:
+        return RedirectResponse(url="/", status_code=303)
+    token = create_access_token({"sub": str(real_user.id), "is_admin": True})
+    resp = RedirectResponse(url=f"/admin/users/{imp_id}", status_code=303)
+    _set_auth_cookie(resp, token)
+    return resp

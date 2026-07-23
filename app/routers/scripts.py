@@ -70,7 +70,9 @@ async def generate(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if current_user.monthly_limit is not None:
+    # Al impersonar (admin probando el perfil del realtor) no aplicamos el límite mensual
+    impersonando = getattr(current_user, "impersonated", False)
+    if current_user.monthly_limit is not None and not impersonando:
         used = _scripts_this_month(current_user, db)
         if used >= current_user.monthly_limit:
             raise HTTPException(

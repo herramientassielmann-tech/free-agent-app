@@ -7,7 +7,12 @@
     <h1 class="page-title">{{ realtor.name }}</h1>
     <p class="page-subtitle">{{ realtor.email }}</p>
   </div>
-  <a href="/admin/users" class="btn btn-secondary">Volver</a>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <form method="POST" action="/admin/users/{{ realtor.id }}/impersonate" style="margin:0;">
+      <button type="submit" class="btn btn-primary">👁️ Entrar como este realtor</button>
+    </form>
+    <a href="/admin/users" class="btn btn-secondary">Volver</a>
+  </div>
 </div>
 
 <div class="two-col-grid">
