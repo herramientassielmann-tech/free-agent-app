@@ -54,7 +54,10 @@ async def dashboard(
             "remaining": remaining,
             "limit": current_user.monthly_limit,
             "recent_scripts": recent_scripts,
-            "must_change_password": current_user.must_change_password,
+            # El popup de cambiar contraseña NO debe salir si es el admin impersonando;
+            # solo cuando entra el realtor real. El flag en BD no se toca.
+            "must_change_password": current_user.must_change_password
+            and not getattr(current_user, "impersonated", False),
         },
     )
 
