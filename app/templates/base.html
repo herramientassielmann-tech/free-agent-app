@@ -43,13 +43,17 @@
       {% endif %}
       {% if user.is_admin %}
       <div class="nav-divider"></div>
-      <a href="/admin" class="nav-item {% if '/admin' in request.url.path and 'optimizar-ig' not in request.url.path %}active{% endif %}">
+      <a href="/admin" class="nav-item {% if '/admin' in request.url.path and 'optimizar-ig' not in request.url.path and 'cualificar-leads' not in request.url.path %}active{% endif %}">
         <span class="nav-icon">🛠</span>
         Admin
       </a>
       <a href="/admin/optimizar-ig" class="nav-item {% if 'optimizar-ig' in request.url.path %}active{% endif %}">
         <span class="nav-icon">🚀</span>
         Optimizar IG
+      </a>
+      <a href="/admin/cualificar-leads" class="nav-item {% if 'cualificar-leads' in request.url.path %}active{% endif %}">
+        <span class="nav-icon">🎯</span>
+        Cualificar Leads
       </a>
       {% endif %}
     </nav>

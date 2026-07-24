@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Cualificar Leads — Admin — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Cualificar Leads</h1>
+    <p class="page-subtitle">Preguntas sencillas, listas para copiar y mandar al cliente antes de enseñarle nada — así no se le manda todo de golpe y no se pierde el lead.</p>
+  </div>
+  <button type="button" id="copy-all-questions" class="btn btn-secondary">Copiar guion completo</button>
+</div>
+
+{% for cat in categorias %}
+<div class="card lead-q-card">
+  <div class="lead-q-cat-title">{{ cat.categoria }}</div>
+  {% for p in cat.preguntas %}
+  <div class="lead-q-row">
+    <span class="lead-q-text">{{ p }}</span>
+    <button type="button" class="copy-btn lead-q-copy" data-text="{{ p }}">Copiar</button>
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function copyPlain(text, btn, doneLabel) {
+    const original = btn.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = doneLabel || '¡Copiado!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1500);
+    });
+  }
+
+  document.querySelectorAll('.lead-q-copy').forEach(btn => {
+    btn.addEventListener('click', () => copyPlain(btn.dataset.text, btn));
+  });
+
+  const copyAllBtn = document.getElementById('copy-all-questions');
+  if (copyAllBtn) {
+    copyAllBtn.addEventListener('click', () => {
+      const lines = [];
+      document.querySelectorAll('.lead-q-card').forEach(card => {
+        const title = card.querySelector('.lead-q-cat-title').textContent;
+        lines.push('— ' + title + ' —');
+        card.querySelectorAll('.lead-q-text').forEach(q => lines.push(q.textContent));
+        lines.push('');
+      });
+      copyPlain(lines.join('\n').trim(), copyAllBtn, '¡Copiado!');
+    });
+  }
+</script>
+{% endblock %}

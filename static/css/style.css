@@ -509,6 +509,20 @@ a:hover { color: #3d9eff; }
 }
 .badge-dark   { background: var(--s3); color: var(--t2); }
 
+/* ── Cualificar Leads ── */
+.lead-q-card { margin-bottom: 18px; border-left: 3px solid var(--blue); }
+.lead-q-cat-title {
+  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.8rem;
+  color: var(--t2); margin-bottom: 6px;
+}
+.lead-q-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.lead-q-row:last-child { border-bottom: none; }
+.lead-q-text { color: var(--t1); font-size: 0.92rem; line-height: 1.45; }
+.lead-q-copy { flex: 0 0 auto; }
+
 /* ── Platform badges ─────────────────────────────── */
 .platform-badge {
   display: inline-flex;
