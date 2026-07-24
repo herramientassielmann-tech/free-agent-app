@@ -53,6 +53,17 @@ FORMATO DE RESPUESTA (JSON estricto, sin texto adicional):
 }"""
 
 
+def ig_handle_from_link(link: str) -> str:
+    """Extrae el @handle de un link de Instagram (o lo deja tal cual si ya es un handle)."""
+    link = (link or "").strip()
+    if not link:
+        return ""
+    m = re.search(r"instagram\.com/([A-Za-z0-9_.]+)", link)
+    if m:
+        return m.group(1)
+    return link.lstrip("@").strip("/")
+
+
 def _split_name_words(name: str) -> list:
     """'Ada Bonilla' -> ['ada', 'bonilla'] (sin acentos ni símbolos)."""
     name = unicodedata.normalize("NFKD", name or "")

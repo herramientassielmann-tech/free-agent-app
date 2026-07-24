@@ -1,11 +1,12 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, RealtorProfile
 from app.auth import get_current_user
+from app.services.ig_optimizer import optimize_ig_profile, ig_handle_from_link
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -124,3 +125,51 @@ async def profile_page(
             "saved": bool(saved),
         },
     )
+
+
+# ── Optimizar IG (self-service): siempre sobre el perfil propio ───────────
+@router.get("/optimizar-ig", response_class=HTMLResponse)
+async def optimizar_ig_self_page(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    db.refresh(current_user)
+    _ensure_profile_exists(current_user, db)
+    db.refresh(current_user)
+    return templates.TemplateResponse(
+        "optimizar_ig.html",
+        {"request": request, "user": current_user, "profile": current_user.profile},
+    )
+
+
+@router.post("/optimizar-ig/generate")
+async def optimizar_ig_self_generate(
+    ig_link: str = Form(""),
+    current_bio: str = Form(""),
+    screenshot_data: str = Form(""),
+    screenshot_media_type: str = Form(""),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    db.refresh(current_user)
+    profile = current_user.profile
+    nombre = (profile.display_name if profile and profile.display_name else current_user.name) or "Realtor"
+    handle = ig_handle_from_link(ig_link)
+    try:
+        opciones = optimize_ig_profile(
+            nombre=nombre,
+            profile=profile,
+            current_bio=current_bio,
+            current_handle=handle,
+            screenshot_base64=screenshot_data or None,
+            screenshot_media_type=screenshot_media_type or None,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al optimizar el perfil: {str(e)}")
+    return JSONResponse({
+        "opciones": opciones,
+        "telefono": (profile.telefono if profile else None) or "",
+    })

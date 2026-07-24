@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Optimizar IG — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Optimizar IG</h1>
+    <p class="page-subtitle">Genera 3 versiones optimizadas de tu perfil de Instagram, listas para convertir.</p>
+  </div>
+</div>
+
+{% if not profile.telefono %}
+<div class="alert" style="margin-bottom:20px;background:rgba(255,159,10,0.12);border:1px solid rgba(255,159,10,0.3);color:var(--t2);">
+  ⚠️ No tienes un <strong>teléfono</strong> configurado (es el enlace que aparece en tu perfil optimizado).
+  Pídele a tu coach que te lo añada para que salga en las 3 versiones.
+</div>
+{% endif %}
+
+{# ── Datos de entrada ── #}
+<div class="card" style="margin-bottom:20px;">
+  <div class="form-grid">
+    <div class="form-group">
+      <label class="form-label" for="ig-link">Link de tu perfil de Instagram <span class="form-hint">opcional</span></label>
+      <input class="form-input" type="text" id="ig-link" placeholder="https://instagram.com/tunombredeusuario" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="ig-screenshot">Captura de tu perfil actual <span class="form-hint">sube el pantallazo</span></label>
+      <input class="form-input" type="file" id="ig-screenshot" accept="image/*" />
+    </div>
+  </div>
+  <div class="form-group" style="margin-bottom:0;">
+    <label class="form-label" for="current-bio">Tu bio actual <span class="form-hint">opcional — pégala para que la IA la mejore mejor</span></label>
+    <textarea class="form-input form-textarea" id="current-bio" rows="3" placeholder="Pega aquí la bio que tienes ahora en Instagram…"></textarea>
+  </div>
+  <div style="margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+    <button type="button" id="ig-generate" class="btn btn-primary">Generar 3 versiones optimizadas</button>
+    <span id="ig-status" class="form-hint" style="margin:0;"></span>
+  </div>
+</div>
+
+{# ── Resultados (centrado) ── #}
+<div class="ig-results">
+  <div class="ig-current-wrap">
+    <div class="ig-col-title">Tu perfil actual</div>
+    <div id="current-preview" class="ig-current-frame">
+      <span class="ig-current-empty">Sube una captura para verla aquí</span>
+    </div>
+  </div>
+
+  <div class="ig-col-title" style="margin-top:8px;">3 versiones optimizadas</div>
+  <div id="ig-options" class="ig-options">
+    <div class="ig-options-empty">Pulsa «Generar 3 versiones optimizadas» para verlas aquí.</div>
+  </div>
+  <div id="ig-more-wrap" class="ig-more-wrap" style="display:none;">
+    <button type="button" id="ig-more" class="btn btn-secondary">🔄 Generar más</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const fileInput = document.getElementById('ig-screenshot');
+  const preview   = document.getElementById('current-preview');
+  const genBtn    = document.getElementById('ig-generate');
+  const statusEl  = document.getElementById('ig-status');
+
+  function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+  // La captura se redimensiona a JPEG y se guarda en base64 para mandarla a
+  // la IA (visión) — así puede leer el nombre/apellido reales del perfil.
+  let screenshotDataUrl = null;
+
+  function fileToResizedDataUrl(file, maxDim) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = e => {
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            const scale = maxDim / Math.max(width, height);
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener('change', async () => {
+      const f = fileInput.files[0];
+      if (!f) return;
+      try {
+        screenshotDataUrl = await fileToResizedDataUrl(f, 1000);
+        preview.innerHTML = '<img src="'+screenshotDataUrl+'" alt="perfil actual" />';
+      } catch (e) {
+        statusEl.textContent = '⚠️ No se pudo leer la imagen.';
+        statusEl.style.color = '#FF453A';
+      }
+    });
+  }
+
+  function initials(nombre, handle){
+    const base = (nombre || handle || '?').replace(/\|.*/, '').trim();
+    return base.split(/\s+/).slice(0,2).map(s => s[0] || '').join('').toUpperCase() || '?';
+  }
+
+  function renderOptions(ops){
+    const wrap = document.getElementById('ig-options');
+    wrap.innerHTML = '';
+    (ops || []).forEach((op, i) => {
+      const bioHtml = (op.bio || []).map(b => '<div class="ig-bio-line">'+escapeHtml(b)+'</div>').join('');
+      const card = document.createElement('div');
+      card.className = 'ig-card';
+      card.innerHTML =
+        '<div class="ig-opt-label">Opción '+(i+1)+'</div>'+
+        '<div class="ig-card-top">'+
+          '<div class="ig-avatar">'+escapeHtml(initials(op.nombre, op.handle))+'</div>'+
+          '<div class="ig-handle">'+escapeHtml(op.handle)+'</div>'+
+        '</div>'+
+        '<div class="ig-name">'+escapeHtml(op.nombre)+'</div>'+
+        '<div class="ig-bio">'+bioHtml+'</div>'+
+        (op.enlace ? '<div class="ig-link">🔗 '+escapeHtml(op.enlace)+'</div>' : '')+
+        '<button class="ig-copy" type="button">Copiar</button>';
+      card.querySelector('.ig-copy').addEventListener('click', (e) => {
+        const text = op.handle+'\n'+op.nombre+'\n'+(op.bio||[]).join('\n')+(op.enlace ? '\n'+op.enlace : '');
+        navigator.clipboard.writeText(text);
+        e.target.textContent = '¡Copiado!';
+        setTimeout(() => e.target.textContent = 'Copiar', 1500);
+      });
+      wrap.appendChild(card);
+    });
+  }
+
+  const moreBtn  = document.getElementById('ig-more');
+  const moreWrap = document.getElementById('ig-more-wrap');
+
+  async function doGenerate(btn) {
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Generando…';
+    statusEl.textContent = 'Esto puede tardar unos segundos…';
+    statusEl.style.color = '';
+    try {
+      const body = new FormData();
+      body.append('ig_link', (document.getElementById('ig-link').value) || '');
+      body.append('current_bio', (document.getElementById('current-bio').value) || '');
+      if (screenshotDataUrl) {
+        const m = screenshotDataUrl.match(/^data:([^;]+);base64,(.*)$/);
+        if (m) {
+          body.append('screenshot_media_type', m[1]);
+          body.append('screenshot_data', m[2]);
+        }
+      }
+      const res = await fetch('/optimizar-ig/generate', { method: 'POST', body });
+      if (!res.ok) {
+        let d = 'No se pudo generar.';
+        try { d = (await res.json()).detail || d; } catch (e) {}
+        throw new Error(d);
+      }
+      const data = await res.json();
+      renderOptions(data.opciones);
+      if (moreWrap) moreWrap.style.display = 'block';
+      statusEl.textContent = '✅ Listo. Elige la que más te guste.';
+      statusEl.style.color = '#30D158';
+    } catch (err) {
+      statusEl.textContent = '⚠️ ' + err.message;
+      statusEl.style.color = '#FF453A';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
+  }
+
+  if (genBtn)  genBtn.addEventListener('click', () => doGenerate(genBtn));
+  if (moreBtn) moreBtn.addEventListener('click', () => doGenerate(moreBtn));
+</script>
+{% endblock %}

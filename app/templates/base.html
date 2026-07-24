@@ -35,6 +35,12 @@
         <span class="nav-icon">👤</span>
         Mi Perfil
       </a>
+      {% if not user.is_admin %}
+      <a href="/optimizar-ig" class="nav-item {% if request.url.path == '/optimizar-ig' %}active{% endif %}">
+        <span class="nav-icon">🚀</span>
+        Optimizar IG
+      </a>
+      {% endif %}
       {% if user.is_admin %}
       <div class="nav-divider"></div>
       <a href="/admin" class="nav-item {% if '/admin' in request.url.path and 'optimizar-ig' not in request.url.path %}active{% endif %}">

@@ -6,20 +6,9 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Script, RealtorProfile
-import re
 from app.auth import require_admin, hash_password, create_access_token, get_real_user, decode_token
 from app.services.profile_extractor import extract_profile_from_transcript
-from app.services.ig_optimizer import optimize_ig_profile
-
-
-def _ig_handle_from_link(link: str) -> str:
-    link = (link or "").strip()
-    if not link:
-        return ""
-    m = re.search(r"instagram\.com/([A-Za-z0-9_.]+)", link)
-    if m:
-        return m.group(1)
-    return link.lstrip("@").strip("/")
+from app.services.ig_optimizer import optimize_ig_profile, ig_handle_from_link
 
 router = APIRouter(prefix="/admin")
 templates = Jinja2Templates(directory="app/templates")
@@ -345,7 +334,7 @@ async def optimizar_ig_generate(
         raise HTTPException(status_code=404, detail="Realtor no encontrado.")
     profile = _active_profile(realtor, db)
     nombre = (profile.display_name if profile and profile.display_name else realtor.name) or "Realtor"
-    handle = _ig_handle_from_link(ig_link)
+    handle = ig_handle_from_link(ig_link)
     try:
         opciones = optimize_ig_profile(
             nombre=nombre,
