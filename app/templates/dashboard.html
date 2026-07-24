@@ -107,17 +107,6 @@
         <div id="hook-text" class="script-content"></div>
       </div>
 
-      <div class="script-card promesa-card">
-        <div class="script-card-header">
-          <div class="script-meta">
-            <span class="badge badge-teal">PROMESA</span>
-            <span class="script-subtitle">La salsa secreta — qué verá el espectador</span>
-          </div>
-          <button class="copy-btn" data-target="promesa-text">Copiar</button>
-        </div>
-        <div id="promesa-text" class="script-content"></div>
-      </div>
-
       <div class="script-card dev-card">
         <div class="script-card-header">
           <div class="script-meta">
@@ -166,7 +155,6 @@
   {% set is_tiktok = 'tiktok.com' in s.source_url %}
   <div class="recent-item recent-item--clickable"
        data-hook="{{ s.hook or '' }}"
-       data-promesa="{{ s.promesa or '' }}"
        data-dev="{{ s.development or '' }}"
        data-conc="{{ s.conclusion or '' }}"
        data-caption="{{ s.caption or '' }}"
@@ -192,7 +180,6 @@
     <div class="recent-copy">
       <button class="btn btn-ghost btn-sm recent-copy-btn"
               data-hook="{{ s.hook or '' }}"
-              data-promesa="{{ s.promesa or '' }}"
               data-dev="{{ s.development or '' }}"
               data-conc="{{ s.conclusion or '' }}"
               data-caption="{{ s.caption or '' }}">

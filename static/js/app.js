@@ -109,7 +109,6 @@ function animateSteps() {
 /* ── Fill result ────────────────────────────── */
 function fillResult(data, url) {
   setText('hook-text',    data.hook       || '');
-  setText('promesa-text', data.promesa    || '');
   setText('dev-text',     data.desarrollo || '');
   setText('conc-text',    data.conclusion || '');
   setText('caption-text', data.caption    || '');
@@ -194,11 +193,10 @@ const copyAllBtn = document.getElementById('copy-all-btn');
 if (copyAllBtn) {
   copyAllBtn.addEventListener('click', () => {
     const hook    = document.getElementById('hook-text')?.textContent    || '';
-    const promesa = document.getElementById('promesa-text')?.textContent || '';
     const dev     = document.getElementById('dev-text')?.textContent     || '';
     const conc    = document.getElementById('conc-text')?.textContent    || '';
     const caption = document.getElementById('caption-text')?.textContent || '';
-    const all = buildScriptText(hook, promesa, dev, conc, caption);
+    const all = buildScriptText(hook, dev, conc, caption);
     copyText(all, copyAllBtn);
   });
 }
@@ -209,7 +207,6 @@ document.querySelectorAll('.recent-item--clickable').forEach(item => {
     if (e.target.closest('.recent-copy-btn')) return;
     const data = {
       hook:                 item.dataset.hook       || '',
-      promesa:              item.dataset.promesa    || '',
       desarrollo:           item.dataset.dev        || '',
       conclusion:           item.dataset.conc       || '',
       caption:              item.dataset.caption    || '',
@@ -227,13 +224,13 @@ document.querySelectorAll('.recent-item--clickable').forEach(item => {
 /* ── Copy from recent list ──────────────────── */
 document.querySelectorAll('.recent-copy-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    const text = buildScriptText(btn.dataset.hook, btn.dataset.promesa, btn.dataset.dev, btn.dataset.conc, btn.dataset.caption);
+    const text = buildScriptText(btn.dataset.hook, btn.dataset.dev, btn.dataset.conc, btn.dataset.caption);
     copyText(text, btn);
   });
 });
 
-function buildScriptText(hook, promesa, dev, conc, caption) {
-  return `🎣 HOOK\n${hook}\n\n🎯 PROMESA\n${promesa}\n\n📖 DESARROLLO\n${dev}\n\n✅ CTA\n${conc}\n\n📲 CAPTION\n${caption}`;
+function buildScriptText(hook, dev, conc, caption) {
+  return `🎣 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CTA\n${conc}\n\n📲 CAPTION\n${caption}`;
 }
 
 /* ── Password change modal ──────────────────── */

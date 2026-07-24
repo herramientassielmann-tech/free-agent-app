@@ -421,7 +421,6 @@ a:hover { color: #3d9eff; }
 .badge-orange { background: rgba(255,159,10,0.15);  color: #ffc56a; }
 .badge-green  { background: rgba(48,209,88,0.15);   color: #7de0a0; }
 .badge-purple { background: rgba(191,90,242,0.15);  color: #d49bfa; }
-.badge-teal   { background: rgba(45,212,191,0.15);   color: #5ee7d0; }
 
 /* ── Banner de impersonación (admin controlando a un realtor) ── */
 .impersonation-banner {
@@ -698,7 +697,6 @@ a:hover { color: #3d9eff; }
 
 /* Left accent bar variant */
 .script-card.hook-card    { border-left: 3px solid var(--blue); }
-.script-card.promesa-card { border-left: 3px solid #2dd4bf; }
 .script-card.dev-card     { border-left: 3px solid var(--orange); }
 .script-card.conc-card    { border-left: 3px solid var(--green); }
 .script-card.caption-card { border-left: 3px solid var(--purple); }

@@ -52,7 +52,6 @@
       <button class="btn btn-ghost history-toggle" data-id="{{ script.id }}">Ver guión</button>
       <button class="btn btn-primary history-copy-btn"
               data-hook="{{ script.hook or '' }}"
-              data-promesa="{{ script.promesa or '' }}"
               data-dev="{{ script.development or '' }}"
               data-conc="{{ script.conclusion or '' }}"
               data-caption="{{ script.caption or '' }}">
@@ -66,12 +65,6 @@
       <div class="history-section">
         <div class="history-section-label">🎣 Hook</div>
         <div class="history-section-text">{{ script.hook }}</div>
-      </div>
-      {% endif %}
-      {% if script.promesa %}
-      <div class="history-section">
-        <div class="history-section-label">🎯 Promesa</div>
-        <div class="history-section-text">{{ script.promesa }}</div>
       </div>
       {% endif %}
       {% if script.development %}
@@ -123,13 +116,13 @@
   // Copy full script
   document.querySelectorAll('.history-copy-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const text = buildScript(btn.dataset.hook, btn.dataset.promesa, btn.dataset.dev, btn.dataset.conc, btn.dataset.caption);
+      const text = buildScript(btn.dataset.hook, btn.dataset.dev, btn.dataset.conc, btn.dataset.caption);
       copyToClipboard(text, btn, 'Copiar', '¡Copiado!');
     });
   });
 
-  function buildScript(hook, promesa, dev, conc, caption) {
-    return `🎣 HOOK\n${hook}\n\n🎯 PROMESA\n${promesa}\n\n📖 DESARROLLO\n${dev}\n\n✅ CTA\n${conc}\n\n📲 CAPTION\n${caption}`;
+  function buildScript(hook, dev, conc, caption) {
+    return `🎣 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CTA\n${conc}\n\n📲 CAPTION\n${caption}`;
   }
 
   function copyToClipboard(text, btn, original, done) {

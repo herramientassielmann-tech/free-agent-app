@@ -109,7 +109,6 @@ async def generate(
         source_url=payload.url.strip(),
         original_transcript=transcript,
         hook=result["hook"],
-        promesa=result.get("promesa"),
         development=result["desarrollo"],
         conclusion=result["conclusion"],
         caption=result["caption"],
@@ -128,7 +127,6 @@ async def generate(
 
     return JSONResponse({
         "hook": result["hook"],
-        "promesa": result.get("promesa"),
         "desarrollo": result["desarrollo"],
         "conclusion": result["conclusion"],
         "caption": result["caption"],

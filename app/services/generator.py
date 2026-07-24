@@ -123,8 +123,7 @@ FORMATO DE RESPUESTA (JSON estricto, sin texto adicional)
 
 {{
   "estructura_detectada": "1-2 líneas: hook + promesa + desarrollo + CTA del vídeo original y por qué engancha",
-  "hook": "Hook adaptado (máx 3 frases cortas, pensadas para los primeros 1-3 segundos)",
-  "promesa": "La promesa: la frase que en el segundo 5-10 anticipa qué recompensa va a ver el espectador",
+  "hook": "El arranque del vídeo: el gancho (1-3s) y, justo después, la promesa que deja claro qué verá el espectador si se queda — todo junto, fluido y natural",
   "desarrollo": "El desarrollo que cumple la promesa, la parte más larga del vídeo",
   "conclusion": "El CTA: un único llamamiento claro y natural",
   "caption": "Caption con emojis relevantes, hashtags del sector inmobiliario en español y CTA"
@@ -172,7 +171,7 @@ Analiza la estructura y genera el guión adaptado en el formato JSON indicado.""
 
     parsed = json.loads(raw[json_start:json_end])
 
-    required_keys = {"hook", "promesa", "desarrollo", "conclusion", "caption"}
+    required_keys = {"hook", "desarrollo", "conclusion", "caption"}
     if not required_keys.issubset(parsed.keys()):
         raise ValueError(f"Faltan campos en la respuesta: {required_keys - parsed.keys()}")
 
