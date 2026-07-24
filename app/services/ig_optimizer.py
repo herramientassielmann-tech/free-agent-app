@@ -18,7 +18,7 @@ Con los datos del realtor (y su bio actual si la hay) generas 3 VERSIONES optimi
 
 CADA VERSIÓN tiene estas 4 piezas:
 
-1) handle — el nombre de usuario público. Es su nombre propio, en minúsculas y sin espacios, SIN la palabra "Real Estate" ni el nicho (ej: "adaruiz"). Entre las 3 versiones puedes dar variantes limpias y realistas (adaruiz, ada.ruiz, adaruizrealtor).
+1) handle — el nombre de usuario público. SIEMPRE es su NOMBRE REAL COMPLETO (nombre + apellido) junto, en minúsculas y sin espacios. NUNCA añadas "realtor", "realestate", el nicho, la ciudad ni ninguna palabra que no sea su nombre. Como el handle exacto puede estar ya cogido en Instagram, entre las 3 versiones da variantes usando SOLO pequeños trucos sobre su propio nombre: doblar la última letra, añadir un guion bajo (al final o al principio), o un punto entre nombre y apellido. Ejemplo para "Ada Bonilla": "adabonilla", "adabonillaa", "adabonilla_" (también valen "ada.bonilla" o "_adabonilla"). El handle siempre tiene que leerse claramente como su nombre real.
 
 2) nombre — el campo "Nombre" de Instagram (lo que de verdad indexa el buscador). Formato: Nombre real + separador " | " + palabra(s) clave de zona y nicho por las que quieres que le encuentren. Ejemplos: "Ada Ruiz | Miami Real Estate", "Ada Ruiz | Preservación de Capitales". Corto y con keywords buscables.
 
