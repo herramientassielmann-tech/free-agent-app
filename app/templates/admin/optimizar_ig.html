@@ -52,19 +52,21 @@
   </div>
 </div>
 
-{# ── Comparativa: actual vs optimizado ── #}
-<div class="ig-compare">
-  <div class="ig-current">
+{# ── Resultados (centrado) ── #}
+<div class="ig-results">
+  <div class="ig-current-wrap">
     <div class="ig-col-title">Perfil actual</div>
-    <div id="current-preview" class="ig-current-preview">
+    <div id="current-preview" class="ig-current-frame">
       <span class="ig-current-empty">Sube una captura para verla aquí</span>
     </div>
   </div>
-  <div class="ig-options-col">
-    <div class="ig-col-title">3 versiones optimizadas</div>
-    <div id="ig-options" class="ig-options">
-      <div class="ig-options-empty">Pulsa «Generar 3 versiones optimizadas» para verlas aquí.</div>
-    </div>
+
+  <div class="ig-col-title" style="margin-top:8px;">3 versiones optimizadas</div>
+  <div id="ig-options" class="ig-options">
+    <div class="ig-options-empty">Pulsa «Generar 3 versiones optimizadas» para verlas aquí.</div>
+  </div>
+  <div id="ig-more-wrap" class="ig-more-wrap" style="display:none;">
+    <button type="button" id="ig-more" class="btn btn-secondary" data-uid="{{ selected.id }}">🔄 Generar más</button>
   </div>
 </div>
 {% else %}
@@ -123,37 +125,42 @@
     });
   }
 
-  if (genBtn) {
-    genBtn.addEventListener('click', async () => {
-      const uid = genBtn.dataset.uid;
-      genBtn.disabled = true;
-      const orig = genBtn.textContent;
-      genBtn.textContent = 'Generando…';
-      statusEl.textContent = 'Esto puede tardar unos segundos…';
-      statusEl.style.color = '';
-      try {
-        const body = new FormData();
-        body.append('user_id', uid);
-        body.append('ig_link', document.getElementById('ig-link').value || '');
-        body.append('current_bio', document.getElementById('current-bio').value || '');
-        const res = await fetch('/admin/optimizar-ig/generate', { method: 'POST', body });
-        if (!res.ok) {
-          let d = 'No se pudo generar.';
-          try { d = (await res.json()).detail || d; } catch (e) {}
-          throw new Error(d);
-        }
-        const data = await res.json();
-        renderOptions(data.opciones);
-        statusEl.textContent = '✅ Listo. Elige la que más te guste.';
-        statusEl.style.color = '#30D158';
-      } catch (err) {
-        statusEl.textContent = '⚠️ ' + err.message;
-        statusEl.style.color = '#FF453A';
-      } finally {
-        genBtn.disabled = false;
-        genBtn.textContent = orig;
+  const moreBtn  = document.getElementById('ig-more');
+  const moreWrap = document.getElementById('ig-more-wrap');
+  const uidVal   = (genBtn && genBtn.dataset.uid) || (moreBtn && moreBtn.dataset.uid);
+
+  async function doGenerate(btn) {
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Generando…';
+    statusEl.textContent = 'Esto puede tardar unos segundos…';
+    statusEl.style.color = '';
+    try {
+      const body = new FormData();
+      body.append('user_id', uidVal);
+      body.append('ig_link', (document.getElementById('ig-link').value) || '');
+      body.append('current_bio', (document.getElementById('current-bio').value) || '');
+      const res = await fetch('/admin/optimizar-ig/generate', { method: 'POST', body });
+      if (!res.ok) {
+        let d = 'No se pudo generar.';
+        try { d = (await res.json()).detail || d; } catch (e) {}
+        throw new Error(d);
       }
-    });
+      const data = await res.json();
+      renderOptions(data.opciones);
+      if (moreWrap) moreWrap.style.display = 'block';
+      statusEl.textContent = '✅ Listo. Elige la que más te guste.';
+      statusEl.style.color = '#30D158';
+    } catch (err) {
+      statusEl.textContent = '⚠️ ' + err.message;
+      statusEl.style.color = '#FF453A';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
   }
+
+  if (genBtn)  genBtn.addEventListener('click', () => doGenerate(genBtn));
+  if (moreBtn) moreBtn.addEventListener('click', () => doGenerate(moreBtn));
 </script>
 {% endblock %}

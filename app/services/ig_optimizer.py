@@ -20,13 +20,13 @@ CADA VERSIÓN tiene estas 4 piezas:
 
 1) handle — el nombre de usuario público. SIEMPRE es su NOMBRE REAL COMPLETO (nombre + apellido) junto, en minúsculas y sin espacios. NUNCA añadas "realtor", "realestate", el nicho, la ciudad ni ninguna palabra que no sea su nombre. Como el handle exacto puede estar ya cogido en Instagram, entre las 3 versiones da variantes usando SOLO pequeños trucos sobre su propio nombre: doblar la última letra, añadir un guion bajo (al final o al principio), o un punto entre nombre y apellido. Ejemplo para "Ada Bonilla": "adabonilla", "adabonillaa", "adabonilla_" (también valen "ada.bonilla" o "_adabonilla"). El handle siempre tiene que leerse claramente como su nombre real.
 
-2) nombre — el campo "Nombre" de Instagram (lo que de verdad indexa el buscador). Formato: Nombre real + separador " | " + palabra(s) clave de zona y nicho por las que quieres que le encuentren. Ejemplos: "Ada Ruiz | Miami Real Estate", "Ada Ruiz | Preservación de Capitales". Corto y con keywords buscables.
+2) nombre — el campo "Nombre" de Instagram (lo que de verdad indexa el buscador). Formato: NOMBRE REAL COMPLETO (nombre + apellido, SIEMPRE que tengas el apellido) + separador " | " + palabra(s) clave de zona y nicho por las que quieres que le encuentren. Ejemplos: "Ada Bonilla | Miami Real Estate", "Ada Bonilla | Preservación de Capitales". Nunca uses solo el nombre de pila si conoces el apellido. Corto y con keywords buscables.
 
 3) bio — EXACTAMENTE 3 frases, en este orden:
    - Frase 1: en qué es experto/a.
    - Frase 2: a quién ayuda y con qué beneficio.
    - Frase 3: un CTA hacia el enlace de abajo (que es su teléfono). Ej: "Habla conmigo", "Contáctame".
-   Cada frase EMPIEZA con UN solo emoji (nunca más de uno, y solo al principio de la frase). Frases cortas, claras y orientadas a conversión. Sin relleno ni frases genéricas.
+   Cada frase EMPIEZA con UN solo emoji (nunca más de uno, y solo al principio de la frase). MUY IMPORTANTE: cada frase tiene un MÁXIMO de 45 caracteres en total, contando el emoji y los espacios. Cuenta los caracteres de cada frase y recórtala si se pasa. Frases telegráficas, claras y orientadas a conversión. Sin relleno.
 
 4) enlace — SIEMPRE el teléfono del realtor (te lo doy). No lo cambies.
 

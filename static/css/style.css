@@ -452,46 +452,60 @@ a:hover { color: #3d9eff; }
 .imp-back-btn:hover { background: #000; }
 
 /* ── Optimizar IG ── */
-.ig-compare { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
-.ig-current { flex: 0 0 300px; }
-.ig-options-col { flex: 1; min-width: 300px; }
+.ig-results { max-width: 1040px; margin: 0 auto; }
 .ig-col-title {
   font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.72rem;
-  letter-spacing: 0.5px; text-transform: uppercase; color: var(--t3); margin-bottom: 12px;
+  letter-spacing: 0.5px; text-transform: uppercase; color: var(--t3);
+  margin-bottom: 12px; text-align: center;
 }
-.ig-current-preview {
-  border: 1px dashed var(--s3); border-radius: 14px; min-height: 220px;
-  display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--s1);
+.ig-current-wrap { margin-bottom: 28px; }
+.ig-current-frame {
+  width: 300px; margin: 0 auto; background: #000; border-radius: 26px;
+  padding: 12px; border: 6px solid #1c1c1e; box-shadow: 0 16px 44px rgba(0,0,0,0.5);
+  min-height: 180px; display: flex; align-items: center; justify-content: center; overflow: hidden;
 }
-.ig-current-preview img { width: 100%; height: auto; display: block; border-radius: 14px; }
-.ig-current-empty, .ig-options-empty { color: var(--t3); font-size: 0.85rem; padding: 20px; text-align: center; }
-.ig-options { display: flex; flex-direction: column; gap: 16px; }
+.ig-current-frame img { width: 100%; border-radius: 14px; display: block; }
+.ig-current-empty { color: var(--t3); font-size: 0.82rem; text-align: center; padding: 30px 10px; }
+
+.ig-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; }
+.ig-options-empty {
+  grid-column: 1 / -1; color: var(--t3); font-size: 0.85rem; padding: 30px; text-align: center;
+}
 
 .ig-card {
   position: relative; background: #fff; color: #262626;
-  border-radius: 16px; padding: 20px; box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  border-radius: 18px; padding: 22px 20px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 10px 30px rgba(0,0,0,0.45), 0 0 34px rgba(120,150,255,0.22);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.ig-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 16px 40px rgba(0,0,0,0.5), 0 0 44px rgba(120,150,255,0.4);
 }
 .ig-opt-label {
-  position: absolute; top: 12px; right: 14px; font-size: 0.65rem; font-weight: 700;
-  letter-spacing: 0.5px; color: #8e8e8e; text-transform: uppercase;
+  position: absolute; top: 12px; right: 14px; font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.5px; color: #b0b0b0; text-transform: uppercase;
 }
-.ig-card-top { display: flex; align-items: center; gap: 14px; }
+.ig-card-top { display: flex; align-items: center; gap: 12px; }
 .ig-avatar {
-  width: 58px; height: 58px; border-radius: 50%; flex: 0 0 58px;
-  display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 1.1rem;
+  width: 52px; height: 52px; border-radius: 50%; flex: 0 0 52px;
+  display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 1rem;
   background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
 }
-.ig-handle { font-weight: 700; font-size: 1rem; color: #262626; }
-.ig-name { font-weight: 700; font-size: 0.95rem; color: #262626; margin-top: 12px; }
-.ig-bio { margin-top: 4px; font-size: 0.9rem; line-height: 1.55; color: #262626; }
-.ig-bio-line { margin: 2px 0; }
-.ig-link { margin-top: 8px; color: #00376b; font-weight: 600; font-size: 0.9rem; word-break: break-word; }
+.ig-handle { font-weight: 700; font-size: 0.95rem; color: #262626; word-break: break-word; }
+.ig-name { font-weight: 700; font-size: 0.9rem; color: #262626; margin-top: 12px; }
+.ig-bio { margin-top: 4px; font-size: 0.86rem; line-height: 1.5; color: #262626; }
+.ig-bio-line { margin: 3px 0; }
+.ig-link { margin-top: 8px; color: #00376b; font-weight: 600; font-size: 0.86rem; word-break: break-word; }
 .ig-copy {
-  margin-top: 14px; background: #efefef; color: #262626; border: none;
-  border-radius: 8px; padding: 6px 16px; font-weight: 600; font-size: 0.8rem; cursor: pointer;
+  margin-top: 14px; width: 100%; background: #efefef; color: #262626; border: none;
+  border-radius: 8px; padding: 8px 16px; font-weight: 600; font-size: 0.8rem; cursor: pointer;
 }
 .ig-copy:hover { background: #dbdbdb; }
-@media (max-width: 720px) { .ig-current { flex: 1 1 100%; } }
+.ig-more-wrap { text-align: center; margin-top: 26px; }
+@media (max-width: 860px) {
+  .ig-options { grid-template-columns: 1fr; max-width: 340px; margin: 0 auto; }
+}
 .badge-dark   { background: var(--s3); color: var(--t2); }
 
 /* ── Platform badges ─────────────────────────────── */
