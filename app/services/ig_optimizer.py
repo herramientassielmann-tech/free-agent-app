@@ -182,7 +182,8 @@ Genera las 3 versiones optimizadas en el formato JSON indicado. El enlace de cad
             "handle": str(op.get("handle", "")).strip().lstrip("@"),
             "nombre": str(op.get("nombre", "")).strip(),
             "bio": bio,
-            "enlace": telefono or str(op.get("enlace", "")).strip(),
+            # El enlace SIEMPRE es el teléfono real (o vacío) — nunca algo inventado por el modelo.
+            "enlace": telefono.strip() if telefono else "",
         })
 
     # Blindaje: el handle SIEMPRE se deriva del nombre real y nunca lleva

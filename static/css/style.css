@@ -497,6 +497,7 @@ a:hover { color: #3d9eff; }
 .ig-bio { margin-top: 4px; font-size: 0.86rem; line-height: 1.5; color: #262626; }
 .ig-bio-line { margin: 3px 0; }
 .ig-link { margin-top: 8px; color: #00376b; font-weight: 600; font-size: 0.86rem; word-break: break-word; }
+.ig-link-placeholder { color: #8e8e8e; font-weight: 500; font-style: italic; }
 .ig-copy {
   margin-top: 14px; width: 100%; background: #efefef; color: #262626; border: none;
   border-radius: 8px; padding: 8px 16px; font-weight: 600; font-size: 0.8rem; cursor: pointer;

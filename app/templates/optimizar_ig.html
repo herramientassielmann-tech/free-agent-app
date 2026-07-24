@@ -9,13 +9,6 @@
   </div>
 </div>
 
-{% if not profile.telefono %}
-<div class="alert" style="margin-bottom:20px;background:rgba(255,159,10,0.12);border:1px solid rgba(255,159,10,0.3);color:var(--t2);">
-  ⚠️ No tienes un <strong>teléfono</strong> configurado (es el enlace que aparece en tu perfil optimizado).
-  Pídele a tu coach que te lo añada para que salga en las 3 versiones.
-</div>
-{% endif %}
-
 {# ── Datos de entrada ── #}
 <div class="card" style="margin-bottom:20px;">
   <div class="form-grid">
@@ -129,7 +122,7 @@
         '</div>'+
         '<div class="ig-name">'+escapeHtml(op.nombre)+'</div>'+
         '<div class="ig-bio">'+bioHtml+'</div>'+
-        (op.enlace ? '<div class="ig-link">🔗 '+escapeHtml(op.enlace)+'</div>' : '')+
+        '<div class="ig-link'+(op.enlace ? '' : ' ig-link-placeholder')+'">🔗 '+(op.enlace ? escapeHtml(op.enlace) : '(teléfono)')+'</div>'+
         '<button class="ig-copy" type="button">Copiar</button>';
       card.querySelector('.ig-copy').addEventListener('click', (e) => {
         const text = op.handle+'\n'+op.nombre+'\n'+(op.bio||[]).join('\n')+(op.enlace ? '\n'+op.enlace : '');
