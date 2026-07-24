@@ -6,8 +6,20 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Script, RealtorProfile
+import re
 from app.auth import require_admin, hash_password, create_access_token, get_real_user, decode_token
 from app.services.profile_extractor import extract_profile_from_transcript
+from app.services.ig_optimizer import optimize_ig_profile
+
+
+def _ig_handle_from_link(link: str) -> str:
+    link = (link or "").strip()
+    if not link:
+        return ""
+    m = re.search(r"instagram\.com/([A-Za-z0-9_.]+)", link)
+    if m:
+        return m.group(1)
+    return link.lstrip("@").strip("/")
 
 router = APIRouter(prefix="/admin")
 templates = Jinja2Templates(directory="app/templates")
@@ -210,6 +222,7 @@ async def save_user_profile(
     casos_exito: str = Form(""),
     objetivo_cta: str = Form(""),
     temas_evitar: str = Form(""),
+    telefono: str = Form(""),
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
@@ -228,6 +241,7 @@ async def save_user_profile(
     p.casos_exito    = casos_exito.strip() or None
     p.objetivo_cta   = objetivo_cta.strip() or None
     p.temas_evitar   = temas_evitar.strip() or None
+    p.telefono       = telefono.strip() or None
     db.commit()
     return RedirectResponse(url=f"/admin/users/{user_id}?saved=profile", status_code=303)
 
@@ -287,3 +301,58 @@ async def stop_impersonation(
     resp = RedirectResponse(url=f"/admin/users/{imp_id}", status_code=303)
     _set_auth_cookie(resp, token)
     return resp
+
+
+# ── Optimizar IG: 3 versiones optimizadas del perfil de Instagram ─────────
+@router.get("/optimizar-ig", response_class=HTMLResponse)
+async def optimizar_ig_page(
+    request: Request,
+    uid: Optional[int] = None,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    realtors = db.query(User).filter(User.is_admin == False).order_by(User.name).all()
+    selected = None
+    profile = None
+    if uid:
+        selected = db.query(User).filter(User.id == uid, User.is_admin == False).first()
+        if selected:
+            profile = _active_profile(selected, db)
+    return templates.TemplateResponse(
+        "admin/optimizar_ig.html",
+        {
+            "request": request,
+            "user": current_user,
+            "realtors": realtors,
+            "selected": selected,
+            "profile": profile,
+        },
+    )
+
+
+@router.post("/optimizar-ig/generate")
+async def optimizar_ig_generate(
+    user_id: int = Form(...),
+    ig_link: str = Form(""),
+    current_bio: str = Form(""),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    realtor = db.query(User).filter(User.id == user_id, User.is_admin == False).first()
+    if not realtor:
+        raise HTTPException(status_code=404, detail="Realtor no encontrado.")
+    profile = _active_profile(realtor, db)
+    nombre = (profile.display_name if profile and profile.display_name else realtor.name) or "Realtor"
+    handle = _ig_handle_from_link(ig_link)
+    try:
+        opciones = optimize_ig_profile(
+            nombre=nombre, profile=profile, current_bio=current_bio, current_handle=handle
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al optimizar el perfil: {str(e)}")
+    return JSONResponse({
+        "opciones": opciones,
+        "telefono": (profile.telefono if profile else None) or "",
+    })

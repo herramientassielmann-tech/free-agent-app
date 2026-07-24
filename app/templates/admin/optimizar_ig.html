@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Optimizar IG — Admin — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Optimizar IG</h1>
+    <p class="page-subtitle">Genera 3 versiones optimizadas del perfil de Instagram del realtor, listas para convertir.</p>
+  </div>
+  <a href="/admin/users" class="btn btn-secondary">Volver</a>
+</div>
+
+{# ── Selector de realtor ── #}
+<div class="card" style="margin-bottom:20px;">
+  <label class="form-label" for="realtor-select">Realtor</label>
+  <select class="form-input form-select" id="realtor-select"
+          onchange="if(this.value) window.location.href='/admin/optimizar-ig?uid='+this.value;">
+    <option value="">— Elige un realtor —</option>
+    {% for r in realtors %}
+    <option value="{{ r.id }}" {% if selected and r.id == selected.id %}selected{% endif %}>{{ r.name }} ({{ r.email }})</option>
+    {% endfor %}
+  </select>
+</div>
+
+{% if selected %}
+{% if not profile.telefono %}
+<div class="alert" style="margin-bottom:20px;background:rgba(255,159,10,0.12);border:1px solid rgba(255,159,10,0.3);color:var(--t2);">
+  ⚠️ Este realtor no tiene <strong>teléfono</strong> configurado (es el enlace del perfil optimizado).
+  <a href="/admin/users/{{ selected.id }}" style="color:var(--orange);">Añádelo en su ficha</a> para que salga en las 3 versiones.
+</div>
+{% endif %}
+
+{# ── Datos de entrada ── #}
+<div class="card" style="margin-bottom:20px;">
+  <div class="form-grid">
+    <div class="form-group">
+      <label class="form-label" for="ig-link">Link del perfil de Instagram <span class="form-hint">opcional</span></label>
+      <input class="form-input" type="text" id="ig-link" placeholder="https://instagram.com/nombreusuario" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="ig-screenshot">Captura del perfil actual <span class="form-hint">sube el pantallazo</span></label>
+      <input class="form-input" type="file" id="ig-screenshot" accept="image/*" />
+    </div>
+  </div>
+  <div class="form-group" style="margin-bottom:0;">
+    <label class="form-label" for="current-bio">Bio actual <span class="form-hint">opcional — pégala para que la IA la mejore mejor</span></label>
+    <textarea class="form-input form-textarea" id="current-bio" rows="3" placeholder="Pega aquí la bio que tiene ahora en Instagram…"></textarea>
+  </div>
+  <div style="margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+    <button type="button" id="ig-generate" class="btn btn-primary" data-uid="{{ selected.id }}">Generar 3 versiones optimizadas</button>
+    <span id="ig-status" class="form-hint" style="margin:0;"></span>
+  </div>
+</div>
+
+{# ── Comparativa: actual vs optimizado ── #}
+<div class="ig-compare">
+  <div class="ig-current">
+    <div class="ig-col-title">Perfil actual</div>
+    <div id="current-preview" class="ig-current-preview">
+      <span class="ig-current-empty">Sube una captura para verla aquí</span>
+    </div>
+  </div>
+  <div class="ig-options-col">
+    <div class="ig-col-title">3 versiones optimizadas</div>
+    <div id="ig-options" class="ig-options">
+      <div class="ig-options-empty">Pulsa «Generar 3 versiones optimizadas» para verlas aquí.</div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card"><p class="empty-text">Elige un realtor arriba para empezar.</p></div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const fileInput = document.getElementById('ig-screenshot');
+  const preview   = document.getElementById('current-preview');
+  const genBtn    = document.getElementById('ig-generate');
+  const statusEl  = document.getElementById('ig-status');
+
+  function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+  if (fileInput) {
+    fileInput.addEventListener('change', () => {
+      const f = fileInput.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = e => { preview.innerHTML = '<img src="'+e.target.result+'" alt="perfil actual" />'; };
+      reader.readAsDataURL(f);
+    });
+  }
+
+  function initials(nombre, handle){
+    const base = (nombre || handle || '?').replace(/\|.*/, '').trim();
+    return base.split(/\s+/).slice(0,2).map(s => s[0] || '').join('').toUpperCase() || '?';
+  }
+
+  function renderOptions(ops){
+    const wrap = document.getElementById('ig-options');
+    wrap.innerHTML = '';
+    (ops || []).forEach((op, i) => {
+      const bioHtml = (op.bio || []).map(b => '<div class="ig-bio-line">'+escapeHtml(b)+'</div>').join('');
+      const card = document.createElement('div');
+      card.className = 'ig-card';
+      card.innerHTML =
+        '<div class="ig-opt-label">Opción '+(i+1)+'</div>'+
+        '<div class="ig-card-top">'+
+          '<div class="ig-avatar">'+escapeHtml(initials(op.nombre, op.handle))+'</div>'+
+          '<div class="ig-handle">'+escapeHtml(op.handle)+'</div>'+
+        '</div>'+
+        '<div class="ig-name">'+escapeHtml(op.nombre)+'</div>'+
+        '<div class="ig-bio">'+bioHtml+'</div>'+
+        (op.enlace ? '<div class="ig-link">🔗 '+escapeHtml(op.enlace)+'</div>' : '')+
+        '<button class="ig-copy" type="button">Copiar</button>';
+      card.querySelector('.ig-copy').addEventListener('click', (e) => {
+        const text = op.handle+'\n'+op.nombre+'\n'+(op.bio||[]).join('\n')+(op.enlace ? '\n'+op.enlace : '');
+        navigator.clipboard.writeText(text);
+        e.target.textContent = '¡Copiado!';
+        setTimeout(() => e.target.textContent = 'Copiar', 1500);
+      });
+      wrap.appendChild(card);
+    });
+  }
+
+  if (genBtn) {
+    genBtn.addEventListener('click', async () => {
+      const uid = genBtn.dataset.uid;
+      genBtn.disabled = true;
+      const orig = genBtn.textContent;
+      genBtn.textContent = 'Generando…';
+      statusEl.textContent = 'Esto puede tardar unos segundos…';
+      statusEl.style.color = '';
+      try {
+        const body = new FormData();
+        body.append('user_id', uid);
+        body.append('ig_link', document.getElementById('ig-link').value || '');
+        body.append('current_bio', document.getElementById('current-bio').value || '');
+        const res = await fetch('/admin/optimizar-ig/generate', { method: 'POST', body });
+        if (!res.ok) {
+          let d = 'No se pudo generar.';
+          try { d = (await res.json()).detail || d; } catch (e) {}
+          throw new Error(d);
+        }
+        const data = await res.json();
+        renderOptions(data.opciones);
+        statusEl.textContent = '✅ Listo. Elige la que más te guste.';
+        statusEl.style.color = '#30D158';
+      } catch (err) {
+        statusEl.textContent = '⚠️ ' + err.message;
+        statusEl.style.color = '#FF453A';
+      } finally {
+        genBtn.disabled = false;
+        genBtn.textContent = orig;
+      }
+    });
+  }
+</script>
+{% endblock %}

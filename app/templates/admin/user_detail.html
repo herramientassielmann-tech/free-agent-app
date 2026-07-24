@@ -8,10 +8,11 @@
     <p class="page-subtitle">{{ realtor.email }}</p>
   </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <a href="/admin/optimizar-ig?uid={{ realtor.id }}" class="btn btn-primary">🚀 Optimizar IG</a>
     <form method="POST" action="/admin/users/{{ realtor.id }}/impersonate" style="margin:0;">
-      <button type="submit" class="btn btn-primary">👁️ Entrar como este realtor</button>
+      <button type="submit" class="btn btn-secondary">👁️ Entrar como este realtor</button>
     </form>
-    <a href="/admin/users" class="btn btn-secondary">Volver</a>
+    <a href="/admin/users" class="btn btn-ghost">Volver</a>
   </div>
 </div>
 
@@ -153,6 +154,13 @@
           <option value="comercial"        {% if profile.specialization == 'comercial' %}selected{% endif %}>Inmuebles comerciales</option>
         </select>
       </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="telefono">Teléfono <span class="form-hint">se usa como enlace en el perfil de Instagram optimizado</span></label>
+      <input class="form-input" type="text" id="telefono" name="telefono"
+             placeholder="Ej: +1 305 555 1234"
+             value="{{ profile.telefono if profile.telefono else '' }}" />
     </div>
 
     <div class="form-group">

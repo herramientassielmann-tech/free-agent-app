@@ -450,6 +450,48 @@ a:hover { color: #3d9eff; }
   white-space: nowrap;
 }
 .imp-back-btn:hover { background: #000; }
+
+/* ── Optimizar IG ── */
+.ig-compare { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.ig-current { flex: 0 0 300px; }
+.ig-options-col { flex: 1; min-width: 300px; }
+.ig-col-title {
+  font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.72rem;
+  letter-spacing: 0.5px; text-transform: uppercase; color: var(--t3); margin-bottom: 12px;
+}
+.ig-current-preview {
+  border: 1px dashed var(--s3); border-radius: 14px; min-height: 220px;
+  display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--s1);
+}
+.ig-current-preview img { width: 100%; height: auto; display: block; border-radius: 14px; }
+.ig-current-empty, .ig-options-empty { color: var(--t3); font-size: 0.85rem; padding: 20px; text-align: center; }
+.ig-options { display: flex; flex-direction: column; gap: 16px; }
+
+.ig-card {
+  position: relative; background: #fff; color: #262626;
+  border-radius: 16px; padding: 20px; box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+}
+.ig-opt-label {
+  position: absolute; top: 12px; right: 14px; font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.5px; color: #8e8e8e; text-transform: uppercase;
+}
+.ig-card-top { display: flex; align-items: center; gap: 14px; }
+.ig-avatar {
+  width: 58px; height: 58px; border-radius: 50%; flex: 0 0 58px;
+  display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 1.1rem;
+  background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
+}
+.ig-handle { font-weight: 700; font-size: 1rem; color: #262626; }
+.ig-name { font-weight: 700; font-size: 0.95rem; color: #262626; margin-top: 12px; }
+.ig-bio { margin-top: 4px; font-size: 0.9rem; line-height: 1.55; color: #262626; }
+.ig-bio-line { margin: 2px 0; }
+.ig-link { margin-top: 8px; color: #00376b; font-weight: 600; font-size: 0.9rem; word-break: break-word; }
+.ig-copy {
+  margin-top: 14px; background: #efefef; color: #262626; border: none;
+  border-radius: 8px; padding: 6px 16px; font-weight: 600; font-size: 0.8rem; cursor: pointer;
+}
+.ig-copy:hover { background: #dbdbdb; }
+@media (max-width: 720px) { .ig-current { flex: 1 1 100%; } }
 .badge-dark   { background: var(--s3); color: var(--t2); }
 
 /* ── Platform badges ─────────────────────────────── */

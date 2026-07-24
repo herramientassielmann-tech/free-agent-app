@@ -45,6 +45,7 @@ def _migrate_db(db: Session):
         "ALTER TABLE realtor_profiles ADD COLUMN casos_exito TEXT",
         "ALTER TABLE realtor_profiles ADD COLUMN objetivo_cta TEXT",
         "ALTER TABLE realtor_profiles ADD COLUMN temas_evitar TEXT",
+        "ALTER TABLE realtor_profiles ADD COLUMN telefono VARCHAR(50)",
         "ALTER TABLE users ADD COLUMN must_change_password BOOLEAN DEFAULT 0",
         "ALTER TABLE users ADD COLUMN temp_password VARCHAR(255)",
     ]

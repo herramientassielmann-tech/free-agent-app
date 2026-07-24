@@ -75,6 +75,7 @@ class RealtorProfile(Base):
     casos_exito: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     objetivo_cta: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     temas_evitar: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    telefono: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="profiles")
 
