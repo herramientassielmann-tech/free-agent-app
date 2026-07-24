@@ -83,13 +83,46 @@
 
   function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
+  // La captura se redimensiona a JPEG y se guarda en base64 para mandarla a
+  // la IA (visión) — así puede leer el nombre/apellido reales del perfil.
+  let screenshotDataUrl = null;
+
+  function fileToResizedDataUrl(file, maxDim) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = e => {
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            const scale = maxDim / Math.max(width, height);
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   if (fileInput) {
-    fileInput.addEventListener('change', () => {
+    fileInput.addEventListener('change', async () => {
       const f = fileInput.files[0];
       if (!f) return;
-      const reader = new FileReader();
-      reader.onload = e => { preview.innerHTML = '<img src="'+e.target.result+'" alt="perfil actual" />'; };
-      reader.readAsDataURL(f);
+      try {
+        screenshotDataUrl = await fileToResizedDataUrl(f, 1000);
+        preview.innerHTML = '<img src="'+screenshotDataUrl+'" alt="perfil actual" />';
+      } catch (e) {
+        statusEl.textContent = '⚠️ No se pudo leer la imagen.';
+        statusEl.style.color = '#FF453A';
+      }
     });
   }
 
@@ -140,6 +173,13 @@
       body.append('user_id', uidVal);
       body.append('ig_link', (document.getElementById('ig-link').value) || '');
       body.append('current_bio', (document.getElementById('current-bio').value) || '');
+      if (screenshotDataUrl) {
+        const m = screenshotDataUrl.match(/^data:([^;]+);base64,(.*)$/);
+        if (m) {
+          body.append('screenshot_media_type', m[1]);
+          body.append('screenshot_data', m[2]);
+        }
+      }
       const res = await fetch('/admin/optimizar-ig/generate', { method: 'POST', body });
       if (!res.ok) {
         let d = 'No se pudo generar.';

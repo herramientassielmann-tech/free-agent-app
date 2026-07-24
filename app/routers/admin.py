@@ -335,6 +335,8 @@ async def optimizar_ig_generate(
     user_id: int = Form(...),
     ig_link: str = Form(""),
     current_bio: str = Form(""),
+    screenshot_data: str = Form(""),
+    screenshot_media_type: str = Form(""),
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
@@ -346,7 +348,12 @@ async def optimizar_ig_generate(
     handle = _ig_handle_from_link(ig_link)
     try:
         opciones = optimize_ig_profile(
-            nombre=nombre, profile=profile, current_bio=current_bio, current_handle=handle
+            nombre=nombre,
+            profile=profile,
+            current_bio=current_bio,
+            current_handle=handle,
+            screenshot_base64=screenshot_data or None,
+            screenshot_media_type=screenshot_media_type or None,
         )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
