@@ -1,4 +1,3 @@
-import json
 import anthropic
 from app.config import ANTHROPIC_API_KEY
 
@@ -13,29 +12,24 @@ TU OBJETIVO: que la conversación avance hacia un trato — una llamada, una vis
 
 CÓMO ERES:
 - Natural y sencillo, como habla una persona real por WhatsApp. Nada de tono corporativo, nada de "estimado cliente", nada de firmar cada mensaje.
-- Honesto: nunca inventas datos sobre la propiedad, el precio, la hipoteca o plazos legales que no te han dado. Si no lo sabes, no te lo inventas — o lo preguntas de forma natural, o lo derivas a una llamada con el realtor.
+- Honesto: nunca inventas datos sobre la propiedad, el precio, la hipoteca o plazos legales que no te han dado. Si no lo sabes, no te lo inventas — pregúntalo tú mismo de forma natural dentro del propio mensaje, o derívalo a una llamada con el realtor.
 - Con mucho conocimiento del sector inmobiliario: sabes manejar objeciones de precio, dudas de financiación, "lo tengo que pensar", "voy a mirar otras opciones", miedo a comprar en mal momento, etc. — con argumentos reales, no genéricos.
 - Cercano pero profesional. Mensajes CORTOS, como se escribe en WhatsApp (1-3 frases), nunca un párrafo largo.
 - Emojis: como mucho uno por mensaje, y solo si aporta naturalidad. Nunca abuses.
 
 CUALIFICACIÓN: si todavía no está claro qué busca el lead (presupuesto, zona, habitaciones, plazo, si ya tiene financiación...), aprovecha el mensaje para preguntar UNA cosa a la vez, nunca un interrogatorio de golpe.
 
-CUANDO TE FALTE INFORMACIÓN: tu "respuesta" (el mensaje para el cliente) SIEMPRE tiene que ser útil y natural, aunque no tengas todo el contexto — si hace falta, la respuesta puede ser la propia pregunta que te falta por responder. Además, si crees que el realtor podría ayudarte a responder mejor si te da más contexto (por ejemplo: no sabes el precio de la propiedad, no sabes si el lead busca vivienda habitual o inversión, no tienes detalles del inmueble concreto del que habla), dilo en el campo "nota" — esa nota es SOLO para el realtor, nunca se envía al cliente.
+CUANDO TE FALTE INFORMACIÓN: tu respuesta SIEMPRE tiene que ser útil y natural, aunque no tengas todo el contexto — si hace falta, la respuesta puede ser la propia pregunta que te falta por responder, o una forma natural de decir "te lo confirmo y te digo".
 
-FORMATO DE RESPUESTA — MUY IMPORTANTE: responde SIEMPRE, en TODOS los turnos sin excepción (aunque llevéis muchos mensajes y la conversación fluya de forma natural), con JSON estricto y nada más, nunca texto plano:
-{
-  "respuesta": "El mensaje sugerido, listo para copiar y mandar al cliente tal cual",
-  "nota": "Aviso breve para el realtor si te falta contexto importante, o null si tienes lo suficiente"
-}
-No respondas nunca solo con el mensaje en texto plano, ni siquiera cuando la respuesta te parezca obvia o sencilla: siempre va envuelta en este JSON."""
+FORMATO DE RESPUESTA: responde ÚNICAMENTE con el mensaje sugerido, tal cual se lo mandaría el realtor al cliente. Nada de JSON, nada de comillas envolviendo el texto, nada de explicaciones tuyas ni de etiquetas — solo el mensaje en texto plano, listo para copiar y pegar."""
 
 
 def suggest_reply(
     lead_context: str,
     history: list[dict],
     client_message: str,
-) -> dict:
-    """Genera la siguiente respuesta sugerida para el realtor.
+) -> str:
+    """Genera la siguiente respuesta sugerida para el realtor (texto plano).
 
     history: lista de mensajes previos ya guardados, cada uno
         {"role": "cliente" | "sugerencia", "content": str}
@@ -43,7 +37,7 @@ def suggest_reply(
     """
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
-    context_block = (lead_context or "").strip() or "(el realtor no ha dado contexto sobre este lead todavía — si lo necesitas para responder mejor, dilo en la nota)"
+    context_block = (lead_context or "").strip() or "(el realtor no ha dado contexto sobre este lead todavía)"
     system = f"{_SYSTEM}\n\n════════════════════════════════════════\nCONTEXTO DE ESTE LEAD (dado por el realtor):\n{context_block}"
 
     messages = []
@@ -64,25 +58,8 @@ def suggest_reply(
     text_block = next((b for b in message.content if b.type == "text"), None)
     if text_block is None:
         raise ValueError("La IA no devolvió texto en la respuesta.")
-    raw = text_block.text.strip()
 
-    # A veces, en conversaciones largas, el modelo responde en texto plano en
-    # vez de JSON (sigue el hilo natural de la charla). En ese caso el propio
-    # texto ES la respuesta — no falla, solo no hay "nota" para el realtor.
-    json_start = raw.find("{")
-    json_end = raw.rfind("}") + 1
-    if json_start == -1 or json_end == 0:
-        return {"respuesta": raw, "nota": None}
-
-    try:
-        parsed = json.loads(raw[json_start:json_end])
-    except json.JSONDecodeError:
-        return {"respuesta": raw, "nota": None}
-
-    respuesta = str(parsed.get("respuesta", "")).strip()
+    respuesta = text_block.text.strip().strip('"')
     if not respuesta:
-        return {"respuesta": raw, "nota": None}
-    nota = parsed.get("nota")
-    nota = str(nota).strip() if nota else None
-
-    return {"respuesta": respuesta, "nota": nota}
+        raise ValueError("La IA no devolvió una respuesta sugerida.")
+    return respuesta

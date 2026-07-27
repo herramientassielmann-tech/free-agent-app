@@ -1289,11 +1289,6 @@ a:hover { color: #3d9eff; }
 .chat-bubble-actions { display: flex; align-items: center; gap: 8px; margin-top: 3px; padding: 0 4px; }
 .chat-bubble-actions .chat-bubble-time { margin-top: 0; padding: 0; }
 .chat-bubble-actions .copy-btn { font-size: 0.65rem; padding: 2px 8px; }
-.chat-nota {
-  align-self: flex-end; max-width: 100%; font-size: 0.74rem; color: var(--orange);
-  background: rgba(255,159,10,0.10); border: 1px dashed rgba(255,159,10,0.35);
-  border-radius: 10px; padding: 6px 10px; margin-bottom: 5px; line-height: 1.4;
-}
 
 .chat-compose {
   flex: 0 0 auto; display: flex; align-items: flex-end; gap: 8px;

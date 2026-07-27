@@ -86,7 +86,7 @@ async def chatbot_send(
     history = [{"role": m.role, "content": m.content} for m in conv.messages]
 
     try:
-        result = suggest_reply(
+        respuesta = suggest_reply(
             lead_context=conv.lead_context or "",
             history=history,
             client_message=client_message,
@@ -97,18 +97,14 @@ async def chatbot_send(
         raise HTTPException(status_code=500, detail=f"Error al generar la sugerencia: {str(e)}")
 
     db.add(LeadMessage(conversation_id=conv.id, role="cliente", content=client_message))
-    sugerencia = LeadMessage(
-        conversation_id=conv.id, role="sugerencia",
-        content=result["respuesta"], nota=result["nota"],
-    )
+    sugerencia = LeadMessage(conversation_id=conv.id, role="sugerencia", content=respuesta)
     db.add(sugerencia)
     conv.updated_at = datetime.utcnow()  # onupdate no dispara solo por añadir mensajes hijos
     db.commit()
     db.refresh(sugerencia)
 
     return JSONResponse({
-        "respuesta": result["respuesta"],
-        "nota": result["nota"],
+        "respuesta": respuesta,
         "created_at": sugerencia.created_at.strftime("%H:%M"),
     })
 

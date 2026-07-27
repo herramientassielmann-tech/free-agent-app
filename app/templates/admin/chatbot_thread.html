@@ -51,9 +51,6 @@
         </div>
         {% else %}
         <div class="chat-bubble-row chat-bubble-row--out">
-          {% if m.nota %}
-          <div class="chat-nota">💡 {{ m.nota }}</div>
-          {% endif %}
           <div class="chat-bubble chat-bubble--out">{{ m.content }}</div>
           <div class="chat-bubble-actions">
             <span class="chat-bubble-time">{{ m.created_at.strftime('%H:%M') }}</span>
@@ -107,12 +104,10 @@
     thread.appendChild(row);
   }
 
-  function appendSugerenciaBubble(text, nota, time) {
+  function appendSugerenciaBubble(text, time) {
     const row = document.createElement('div');
     row.className = 'chat-bubble-row chat-bubble-row--out';
-    let html = '';
-    if (nota) html += '<div class="chat-nota">💡 '+escapeHtml(nota)+'</div>';
-    html += '<div class="chat-bubble chat-bubble--out">'+escapeHtml(text)+'</div>';
+    let html = '<div class="chat-bubble chat-bubble--out">'+escapeHtml(text)+'</div>';
     html += '<div class="chat-bubble-actions"><span class="chat-bubble-time">'+(time||nowHHMM())+'</span>'+
             '<button type="button" class="copy-btn chat-copy" data-text="'+escapeHtml(text)+'">Copiar</button></div>';
     row.innerHTML = html;
@@ -146,7 +141,7 @@
         throw new Error(d);
       }
       const data = await res.json();
-      appendSugerenciaBubble(data.respuesta, data.nota, data.created_at);
+      appendSugerenciaBubble(data.respuesta, data.created_at);
       statusEl.textContent = '';
       scrollToBottom();
     } catch (err) {
