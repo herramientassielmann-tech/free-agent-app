@@ -358,3 +358,14 @@ async def optimizar_ig_generate(
 @router.get("/cualificar-leads")
 async def cualificar_leads_redirect():
     return RedirectResponse(url="/cualificar-leads", status_code=301)
+
+
+# ── Asesor (antes "Chatbot"): ahora es una sección general, ver /chatbot ──
+@router.get("/chatbot")
+async def asesor_list_redirect():
+    return RedirectResponse(url="/chatbot", status_code=301)
+
+
+@router.get("/chatbot/{cid}")
+async def asesor_thread_redirect(cid: int):
+    return RedirectResponse(url=f"/chatbot/{cid}", status_code=301)

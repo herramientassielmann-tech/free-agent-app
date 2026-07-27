@@ -8,7 +8,7 @@
     <p class="page-subtitle">Pega lo que dice el cliente y copia la sugerencia. Tú decides si la mandas tal cual.</p>
   </div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;">
-    <a href="/admin/chatbot" class="btn btn-secondary">Volver</a>
+    <a href="/chatbot" class="btn btn-secondary">Volver</a>
     <button type="button"
             onclick="if(confirm('¿Eliminar esta conversación? No se puede deshacer.')) document.getElementById('form-delete').submit()"
             class="btn"
@@ -16,11 +16,11 @@
     >Eliminar</button>
   </div>
 </div>
-<form id="form-delete" method="POST" action="/admin/chatbot/{{ conv.id }}/delete" style="display:none"></form>
+<form id="form-delete" method="POST" action="/chatbot/{{ conv.id }}/delete" style="display:none"></form>
 
 {# ── Contexto del lead (editable) ── #}
 <div class="card" style="margin-bottom:24px;max-width:640px;margin-left:auto;margin-right:auto;">
-  <form method="POST" action="/admin/chatbot/{{ conv.id }}/context">
+  <form method="POST" action="/chatbot/{{ conv.id }}/context">
     <label class="form-label" for="lead_context">
       Contexto del lead
       <span class="form-hint">qué busca, presupuesto, zona… cuanto más sepa el chatbot, mejor responde</span>
@@ -134,7 +134,7 @@
     try {
       const body = new FormData();
       body.append('client_message', text);
-      const res = await fetch(`/admin/chatbot/${convId}/send`, { method: 'POST', body });
+      const res = await fetch(`/chatbot/${convId}/send`, { method: 'POST', body });
       if (!res.ok) {
         let d = 'No se pudo generar la sugerencia.';
         try { d = (await res.json()).detail || d; } catch (e) {}

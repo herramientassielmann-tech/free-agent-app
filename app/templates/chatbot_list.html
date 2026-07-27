@@ -12,7 +12,7 @@
 {# ── Nueva conversación ── #}
 <div class="card" style="margin-bottom:24px;">
   <h2 class="section-title" style="margin-bottom:16px;">Nueva conversación</h2>
-  <form method="POST" action="/admin/chatbot/new">
+  <form method="POST" action="/chatbot/new">
     <div class="form-group">
       <label class="form-label" for="lead_name">Nombre del lead</label>
       <input class="form-input" type="text" id="lead_name" name="lead_name" placeholder="Ej: Marta Reyes" required />
@@ -38,7 +38,7 @@
 </div>
 <div class="chat-conv-list">
   {% for c in conversations %}
-  <a href="/admin/chatbot/{{ c.id }}" class="card chat-conv-card">
+  <a href="/chatbot/{{ c.id }}" class="card chat-conv-card">
     <div class="chat-conv-avatar">{{ c.lead_name[:2].upper() }}</div>
     <div class="chat-conv-info">
       <div class="chat-conv-name">{{ c.lead_name }}</div>

@@ -45,19 +45,19 @@
         <span class="nav-icon">🎯</span>
         Cualificar Leads
       </a>
+      <a href="/chatbot" class="nav-item {% if '/chatbot' in request.url.path %}active{% endif %}">
+        <span class="nav-icon">💬</span>
+        Asesor
+      </a>
       {% if user.is_admin %}
       <div class="nav-divider"></div>
-      <a href="/admin" class="nav-item {% if '/admin' in request.url.path and 'optimizar-ig' not in request.url.path and 'chatbot' not in request.url.path %}active{% endif %}">
+      <a href="/admin" class="nav-item {% if '/admin' in request.url.path and 'optimizar-ig' not in request.url.path %}active{% endif %}">
         <span class="nav-icon">🛠</span>
         Admin
       </a>
       <a href="/admin/optimizar-ig" class="nav-item {% if 'optimizar-ig' in request.url.path %}active{% endif %}">
         <span class="nav-icon">🚀</span>
         Optimizar IG
-      </a>
-      <a href="/admin/chatbot" class="nav-item {% if 'chatbot' in request.url.path %}active{% endif %}">
-        <span class="nav-icon">💬</span>
-        Asesor
       </a>
       {% endif %}
     </nav>
