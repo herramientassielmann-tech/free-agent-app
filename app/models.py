@@ -42,6 +42,9 @@ class User(Base):
         "RealtorProfile", back_populates="user", order_by="RealtorProfile.id"
     )
     scripts: Mapped[List["Script"]] = relationship("Script", back_populates="user")
+    lead_conversations: Mapped[List["LeadConversation"]] = relationship(
+        "LeadConversation", back_populates="user"
+    )
 
     @property
     def profile(self) -> Optional["RealtorProfile"]:
@@ -98,3 +101,43 @@ class Script(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     user: Mapped["User"] = relationship("User", back_populates="scripts")
+
+
+class LeadConversation(Base):
+    """Un hilo de chat con un lead concreto: el realtor pega lo que dice el
+    cliente y recibe una sugerencia de respuesta. Nunca se envía nada solo."""
+    __tablename__ = "lead_conversations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    lead_name: Mapped[str] = mapped_column(String(150), nullable=False)
+    lead_context: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    user: Mapped["User"] = relationship("User", back_populates="lead_conversations")
+    messages: Mapped[List["LeadMessage"]] = relationship(
+        "LeadMessage", back_populates="conversation",
+        order_by="LeadMessage.id", cascade="all, delete-orphan",
+    )
+
+
+class LeadMessage(Base):
+    __tablename__ = "lead_messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    conversation_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("lead_conversations.id"), nullable=False
+    )
+    role: Mapped[str] = mapped_column(String(20), nullable=False)  # 'cliente' | 'sugerencia'
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    # Solo en 'sugerencia': aviso para el realtor cuando falta contexto para
+    # responder mejor. Nunca se manda al cliente, no forma parte del mensaje.
+    nota: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    conversation: Mapped["LeadConversation"] = relationship(
+        "LeadConversation", back_populates="messages"
+    )

@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}{{ conv.lead_name }} — Chatbot — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ conv.lead_name }}</h1>
+    <p class="page-subtitle">Pega lo que dice el cliente y copia la sugerencia. Tú decides si la mandas tal cual.</p>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <a href="/admin/chatbot" class="btn btn-secondary">Volver</a>
+    <button type="button"
+            onclick="if(confirm('¿Eliminar esta conversación? No se puede deshacer.')) document.getElementById('form-delete').submit()"
+            class="btn"
+            style="background:rgba(255,69,58,0.12);color:#FF453A;border:1px solid rgba(255,69,58,0.25);"
+    >Eliminar</button>
+  </div>
+</div>
+<form id="form-delete" method="POST" action="/admin/chatbot/{{ conv.id }}/delete" style="display:none"></form>
+
+{# ── Contexto del lead (editable) ── #}
+<div class="card" style="margin-bottom:24px;max-width:640px;margin-left:auto;margin-right:auto;">
+  <form method="POST" action="/admin/chatbot/{{ conv.id }}/context">
+    <label class="form-label" for="lead_context">
+      Contexto del lead
+      <span class="form-hint">qué busca, presupuesto, zona… cuanto más sepa el chatbot, mejor responde</span>
+    </label>
+    <textarea class="form-input form-textarea" id="lead_context" name="lead_context" rows="2"
+              placeholder="Ej: Vio el piso de Ruzafa en Instagram, busca para vivir con su pareja, presupuesto 220-230k">{{ conv.lead_context or '' }}</textarea>
+    <div style="margin-top:10px;">
+      <button type="submit" class="btn btn-secondary" style="font-size:0.8rem;">Guardar contexto</button>
+    </div>
+  </form>
+</div>
+
+{# ── Marco de iPhone con el chat ── #}
+<div class="phone-frame">
+  <div class="phone-notch"></div>
+  <div class="phone-screen">
+    <div class="phone-header">
+      <div class="phone-header-avatar">{{ conv.lead_name[:2].upper() }}</div>
+      <div class="phone-header-name">{{ conv.lead_name }}</div>
+    </div>
+
+    <div class="chat-thread" id="chat-thread">
+      {% for m in conv.messages %}
+        {% if m.role == 'cliente' %}
+        <div class="chat-bubble-row chat-bubble-row--in">
+          <div class="chat-bubble chat-bubble--in">{{ m.content }}</div>
+          <div class="chat-bubble-time">{{ m.created_at.strftime('%H:%M') }}</div>
+        </div>
+        {% else %}
+        <div class="chat-bubble-row chat-bubble-row--out">
+          {% if m.nota %}
+          <div class="chat-nota">💡 {{ m.nota }}</div>
+          {% endif %}
+          <div class="chat-bubble chat-bubble--out">{{ m.content }}</div>
+          <div class="chat-bubble-actions">
+            <span class="chat-bubble-time">{{ m.created_at.strftime('%H:%M') }}</span>
+            <button type="button" class="copy-btn chat-copy" data-text="{{ m.content }}">Copiar</button>
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="chat-compose">
+      <textarea id="client-input" class="chat-compose-input" rows="1" placeholder="Pega aquí lo que ha dicho el cliente…"></textarea>
+      <button type="button" id="chat-send-btn" class="chat-send-btn" title="Sugerir respuesta">➤</button>
+    </div>
+  </div>
+</div>
+<p id="chat-status" class="form-hint" style="text-align:center;margin-top:10px;"></p>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const thread   = document.getElementById('chat-thread');
+  const input    = document.getElementById('client-input');
+  const sendBtn  = document.getElementById('chat-send-btn');
+  const statusEl = document.getElementById('chat-status');
+  const convId   = {{ conv.id }};
+
+  function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+  function nowHHMM(){
+    const d = new Date();
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function attachCopyHandler(btn) {
+    btn.addEventListener('click', () => {
+      navigator.clipboard.writeText(btn.dataset.text);
+      const orig = btn.textContent;
+      btn.textContent = '¡Copiado!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+    });
+  }
+  document.querySelectorAll('.chat-copy').forEach(attachCopyHandler);
+
+  function appendClienteBubble(text) {
+    const row = document.createElement('div');
+    row.className = 'chat-bubble-row chat-bubble-row--in';
+    row.innerHTML = '<div class="chat-bubble chat-bubble--in">'+escapeHtml(text)+'</div>'+
+                     '<div class="chat-bubble-time">'+nowHHMM()+'</div>';
+    thread.appendChild(row);
+  }
+
+  function appendSugerenciaBubble(text, nota, time) {
+    const row = document.createElement('div');
+    row.className = 'chat-bubble-row chat-bubble-row--out';
+    let html = '';
+    if (nota) html += '<div class="chat-nota">💡 '+escapeHtml(nota)+'</div>';
+    html += '<div class="chat-bubble chat-bubble--out">'+escapeHtml(text)+'</div>';
+    html += '<div class="chat-bubble-actions"><span class="chat-bubble-time">'+(time||nowHHMM())+'</span>'+
+            '<button type="button" class="copy-btn chat-copy" data-text="'+escapeHtml(text)+'">Copiar</button></div>';
+    row.innerHTML = html;
+    thread.appendChild(row);
+    attachCopyHandler(row.querySelector('.chat-copy'));
+  }
+
+  function scrollToBottom() { thread.scrollTop = thread.scrollHeight; }
+  scrollToBottom();
+
+  async function sendClientMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    appendClienteBubble(text);
+    input.value = '';
+    input.style.height = 'auto';
+    scrollToBottom();
+
+    sendBtn.disabled = true;
+    statusEl.textContent = 'Pensando la respuesta…';
+    statusEl.style.color = '';
+
+    try {
+      const body = new FormData();
+      body.append('client_message', text);
+      const res = await fetch(`/admin/chatbot/${convId}/send`, { method: 'POST', body });
+      if (!res.ok) {
+        let d = 'No se pudo generar la sugerencia.';
+        try { d = (await res.json()).detail || d; } catch (e) {}
+        throw new Error(d);
+      }
+      const data = await res.json();
+      appendSugerenciaBubble(data.respuesta, data.nota, data.created_at);
+      statusEl.textContent = '';
+      scrollToBottom();
+    } catch (err) {
+      statusEl.textContent = '⚠️ ' + err.message;
+      statusEl.style.color = '#FF453A';
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  sendBtn.addEventListener('click', sendClientMessage);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendClientMessage();
+    }
+  });
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 90) + 'px';
+  });
+</script>
+{% endblock %}

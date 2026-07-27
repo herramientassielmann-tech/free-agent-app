@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Chatbot — Admin — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Chatbot</h1>
+    <p class="page-subtitle">Pega lo que te dice un lead y recibe la siguiente respuesta sugerida. Nunca se manda nada solo — tú revisas y copias.</p>
+  </div>
+</div>
+
+{# ── Nueva conversación ── #}
+<div class="card" style="margin-bottom:24px;">
+  <h2 class="section-title" style="margin-bottom:16px;">Nueva conversación</h2>
+  <form method="POST" action="/admin/chatbot/new">
+    <div class="form-group">
+      <label class="form-label" for="lead_name">Nombre del lead</label>
+      <input class="form-input" type="text" id="lead_name" name="lead_name" placeholder="Ej: Marta Reyes" required />
+    </div>
+    <div class="form-group" style="margin-bottom:0;">
+      <label class="form-label" for="lead_context">
+        Contexto del lead
+        <span class="form-hint">opcional — qué busca, presupuesto, zona… todo lo que sepas ya</span>
+      </label>
+      <textarea class="form-input form-textarea" id="lead_context" name="lead_context" rows="3"
+                placeholder="Ej: Vio el piso de Ruzafa en Instagram, busca para vivir con su pareja, presupuesto 220-230k"></textarea>
+    </div>
+    <div class="form-actions" style="margin-top:16px;">
+      <button type="submit" class="btn btn-primary">Empezar conversación</button>
+    </div>
+  </form>
+</div>
+
+{# ── Conversaciones existentes ── #}
+{% if conversations %}
+<div class="section-label">
+  <h2 class="section-title">Tus conversaciones</h2>
+</div>
+<div class="chat-conv-list">
+  {% for c in conversations %}
+  <a href="/admin/chatbot/{{ c.id }}" class="card chat-conv-card">
+    <div class="chat-conv-avatar">{{ c.lead_name[:2].upper() }}</div>
+    <div class="chat-conv-info">
+      <div class="chat-conv-name">{{ c.lead_name }}</div>
+      <div class="chat-conv-preview">
+        {% if c.messages %}
+          {{ c.messages[-1].content[:70] }}{% if c.messages[-1].content|length > 70 %}…{% endif %}
+        {% else %}
+          <span class="td-muted">Sin mensajes todavía</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="chat-conv-date">{{ c.updated_at.strftime('%d/%m %H:%M') }}</div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty-text">Todavía no has iniciado ninguna conversación.</p>
+{% endif %}
+{% endblock %}
