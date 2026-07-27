@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models import User, RealtorProfile
 from app.auth import get_current_user
 from app.services.ig_optimizer import optimize_ig_profile, ig_handle_from_link
+from app.services.lead_questions import LEAD_QUESTIONS
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -173,3 +174,15 @@ async def optimizar_ig_self_generate(
         "opciones": opciones,
         "telefono": (profile.telefono if profile else None) or "",
     })
+
+
+# ── Cualificar Leads: preguntas listas para copiar y enviar al cliente ────
+@router.get("/cualificar-leads", response_class=HTMLResponse)
+async def cualificar_leads_page(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    return templates.TemplateResponse(
+        "cualificar_leads.html",
+        {"request": request, "user": current_user, "categorias": LEAD_QUESTIONS},
+    )
