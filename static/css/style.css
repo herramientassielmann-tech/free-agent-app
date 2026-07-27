@@ -1224,7 +1224,7 @@ a:hover { color: #3d9eff; }
   .video-thumb-wrap { aspect-ratio: 16/9; }
 }
 
-/* ── Chatbot: lista de conversaciones ── */
+/* ── Asesor: lista de conversaciones ── */
 .chat-conv-list { display: flex; flex-direction: column; gap: 10px; }
 .chat-conv-card {
   display: flex; align-items: center; gap: 14px; padding: 16px 20px;
@@ -1241,7 +1241,7 @@ a:hover { color: #3d9eff; }
 .chat-conv-preview { color: var(--t2); font-size: 0.82rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chat-conv-date { color: var(--t3); font-size: 0.75rem; flex: 0 0 auto; white-space: nowrap; }
 
-/* ── Chatbot: marco de iPhone ── */
+/* ── Asesor: marco de iPhone ── */
 .phone-frame {
   width: 100%; max-width: 380px; margin: 0 auto;
   background: #000; border-radius: 46px; padding: 14px;
