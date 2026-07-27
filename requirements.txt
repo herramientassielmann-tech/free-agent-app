@@ -7,7 +7,7 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
 python-dotenv==1.0.1
-anthropic==0.40.0
+anthropic==0.120.0
 openai==1.54.0
 youtube-transcript-api==0.6.3
 yt-dlp==2024.10.22
