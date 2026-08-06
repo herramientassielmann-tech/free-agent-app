@@ -2,7 +2,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import (
-    Integer, String, Boolean, Text, DateTime, ForeignKey, Enum as SAEnum
+    Integer, String, Boolean, Text, DateTime, ForeignKey, Enum as SAEnum,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
@@ -101,6 +102,47 @@ class Script(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     user: Mapped["User"] = relationship("User", back_populates="scripts")
+
+
+class StarterScript(Base):
+    """Guión de las "ideas iniciales": contenido común de la academia, igual
+    para todos los realtors. Se genera una sola vez a partir de un vídeo de
+    referencia y queda fijo; los realtors solo lo consultan y lo marcan."""
+    __tablename__ = "starter_scripts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)  # orden 1..N
+    source_url: Mapped[str] = mapped_column(String(500), nullable=False)
+    titulo: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    hook: Mapped[Optional[str]] = mapped_column(Text)
+    development: Mapped[Optional[str]] = mapped_column(Text)
+    conclusion: Mapped[Optional[str]] = mapped_column(Text)
+    caption: Mapped[Optional[str]] = mapped_column(Text)
+    estructura_detectada: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    thumbnail_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    checks: Mapped[List["StarterScriptCheck"]] = relationship(
+        "StarterScriptCheck", back_populates="script", cascade="all, delete-orphan"
+    )
+
+
+class StarterScriptCheck(Base):
+    """Marca de "ya lo he hecho" de UN realtor sobre UN guión inicial.
+    Cada realtor lleva su propio progreso sobre los mismos guiones."""
+    __tablename__ = "starter_script_checks"
+    __table_args__ = (
+        UniqueConstraint("user_id", "starter_script_id", name="uq_starter_check_user_script"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    starter_script_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("starter_scripts.id"), nullable=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    script: Mapped["StarterScript"] = relationship("StarterScript", back_populates="checks")
 
 
 class LeadConversation(Base):
