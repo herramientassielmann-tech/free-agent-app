@@ -81,6 +81,8 @@ LEGIBILIDAD (formato, no contenido)
 ════════════════════════════════════════
 Las transcripciones automáticas llegan a menudo sin puntuación y todo seguido. Tu guión SÍ tiene que estar bien escrito y ser fácil de leer a cámara: puntúa las frases con normalidad (mayúsculas, comas, puntos, interrogaciones).
 
+Esto NO es opcional y NO depende del original: aunque la transcripción venga entera en minúsculas y sin un solo signo de puntuación, tu guión SÍ va puntuado, con su mayúscula inicial en cada frase y su punto final. La regla de "copiar la estructura" se refiere al contenido y al orden, nunca a copiar la falta de puntuación.
+
 Si el vídeo original es una ENUMERACIÓN o una lista de pares (por ejemplo "hábito → clase media / hábito → millonario", "error 1, error 2, error 3", "esto sí / esto no"), respeta ese formato de lista y escribe CADA elemento en su propia línea, separados por saltos de línea, conservando el mismo número de elementos y su orden.
 
 Ojo: esto es solo FORMATO. No añade ni quita contenido, no alarga nada. Sigue aplicándose todo lo de arriba.
