@@ -54,11 +54,12 @@ VIDEO_URLS = [
 ]
 
 # Perfil neutro: estos guiones son comunes a TODOS los realtors, así que no
-# se personalizan a la zona ni al estilo de ninguno en concreto.
-GENERIC_USER = SimpleNamespace(name="el realtor")
+# se personalizan a nadie. Donde el guión necesite el nombre o la zona, deja
+# un marcador entre corchetes para que cada realtor lo sustituya por el suyo.
+GENERIC_USER = SimpleNamespace(name="[TU NOMBRE]")
 GENERIC_PROFILE = SimpleNamespace(
     display_name=None,
-    market="tu zona",
+    market="[TU ZONA]",
     tone="cercano",
     specialization="todo_tipo",
     speaking_notes=None,
