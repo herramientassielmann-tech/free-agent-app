@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/css/style.css?v=5" />
+  <link rel="stylesheet" href="/static/css/style.css?v=6" />
 </head>
 <body>
 
@@ -95,6 +95,146 @@
   </div>
 
 </div>
+
+{# ══ Robert: chat flotante con el creador de la academia ══ #}
+<button type="button" class="rb-fab" id="rb-fab" title="Pregúntale a Robert" aria-label="Abrir chat con Robert">
+  <span class="rb-fab-initials">RS</span>
+  <span class="rb-fab-dot"></span>
+</button>
+
+<div class="rb-panel" id="rb-panel" hidden>
+  <div class="rb-head">
+    <div class="rb-head-avatar">RS</div>
+    <div>
+      <div class="rb-head-name">Robert Sielmann</div>
+      <div class="rb-head-sub">● Pregúntame lo que quieras</div>
+    </div>
+    <button type="button" class="rb-close" id="rb-close" aria-label="Cerrar">×</button>
+  </div>
+
+  <div class="rb-body" id="rb-body"></div>
+
+  <div class="rb-compose">
+    <textarea id="rb-input" class="rb-input" rows="1" placeholder="Escríbeme tu duda…"></textarea>
+    <button type="button" id="rb-send" class="rb-send" aria-label="Enviar">➤</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  const fab   = document.getElementById('rb-fab');
+  const panel = document.getElementById('rb-panel');
+  const body  = document.getElementById('rb-body');
+  const input = document.getElementById('rb-input');
+  const send  = document.getElementById('rb-send');
+  const KEY   = 'robert_chat_v1';
+
+  const SALUDO = '¡Hey! Soy Robert 👋 Pregúntame lo que quieras sobre contenido, marca personal o cómo vender más como realtor.';
+  const SUGERENCIAS = [
+    '¿Cómo hago un buen hook?',
+    'Me da vergüenza grabarme',
+    '¿Qué métricas debo mirar?',
+    '¿Qué equipo necesito?',
+  ];
+
+  // El historial vive en el navegador: se mantiene al navegar entre páginas
+  let historial = [];
+  try { historial = JSON.parse(sessionStorage.getItem(KEY) || '[]'); } catch (e) { historial = []; }
+  const guardar = () => { try { sessionStorage.setItem(KEY, JSON.stringify(historial)); } catch (e) {} };
+
+  function burbuja(texto, quien) {
+    const d = document.createElement('div');
+    d.className = 'rb-msg rb-msg--' + quien;
+    d.textContent = texto;
+    body.appendChild(d);
+    return d;
+  }
+
+  function abajo() { body.scrollTop = body.scrollHeight; }
+
+  function pintarSugerencias() {
+    const cont = document.createElement('div');
+    cont.className = 'rb-suggestions';
+    SUGERENCIAS.forEach(s => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'rb-chip'; b.textContent = s;
+      b.addEventListener('click', () => { input.value = s; enviar(); });
+      cont.appendChild(b);
+    });
+    body.appendChild(cont);
+  }
+
+  function pintarTodo() {
+    body.innerHTML = '';
+    burbuja(SALUDO, 'robert');
+    if (!historial.length) pintarSugerencias();
+    historial.forEach(m => burbuja(m.content, m.role === 'alumno' ? 'alumno' : 'robert'));
+    abajo();
+  }
+
+  async function enviar() {
+    const texto = input.value.trim();
+    if (!texto) return;
+    document.querySelectorAll('.rb-suggestions').forEach(e => e.remove());
+
+    burbuja(texto, 'alumno');
+    input.value = ''; input.style.height = 'auto';
+    send.disabled = true;
+    abajo();
+
+    const typing = document.createElement('div');
+    typing.className = 'rb-typing';
+    typing.innerHTML = '<span></span><span></span><span></span>';
+    body.appendChild(typing); abajo();
+
+    try {
+      const res = await fetch('/robert/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pregunta: texto, historial: historial }),
+      });
+      typing.remove();
+      if (!res.ok) {
+        let d = 'Ahora mismo no puedo contestarte. Prueba en un momento.';
+        try { d = (await res.json()).detail || d; } catch (e) {}
+        throw new Error(d);
+      }
+      const data = await res.json();
+      burbuja(data.respuesta, 'robert');
+      historial.push({ role: 'alumno', content: texto });
+      historial.push({ role: 'robert', content: data.respuesta });
+      if (historial.length > 24) historial = historial.slice(-24);
+      guardar();
+    } catch (err) {
+      typing.remove();
+      const d = document.createElement('div');
+      d.className = 'rb-msg rb-msg--error';
+      d.textContent = '⚠️ ' + err.message;
+      body.appendChild(d);
+    } finally {
+      send.disabled = false;
+      abajo();
+      input.focus();
+    }
+  }
+
+  fab.addEventListener('click', () => {
+    const abierto = !panel.hidden;
+    panel.hidden = abierto;
+    if (!abierto) { pintarTodo(); input.focus(); }
+  });
+  document.getElementById('rb-close').addEventListener('click', () => { panel.hidden = true; });
+
+  send.addEventListener('click', enviar);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
+  });
+  input.addEventListener('input', () => {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 88) + 'px';
+  });
+})();
+</script>
 
 {% endif %}
 

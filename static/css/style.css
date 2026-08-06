@@ -1395,3 +1395,103 @@ a:hover { color: #3d9eff; }
   display: flex; justify-content: space-between; align-items: center;
   gap: 12px; margin-top: 28px; flex-wrap: wrap;
 }
+
+/* ════════════════════════════════════════════════
+   ROBERT — chat flotante del creador de la academia
+   ════════════════════════════════════════════════ */
+
+.rb-fab {
+  position: fixed; right: 24px; bottom: 24px; z-index: 900;
+  width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  box-shadow: 0 8px 26px rgba(10,132,255,0.45), 0 0 0 1px rgba(255,255,255,0.08);
+  display: grid; place-items: center; padding: 0;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.rb-fab:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 12px 34px rgba(10,132,255,0.6); }
+.rb-fab-avatar {
+  width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;
+}
+.rb-fab-initials {
+  font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.05rem; color: #fff;
+}
+.rb-fab-dot {
+  position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--green); border: 2.5px solid #000;
+}
+
+.rb-panel {
+  position: fixed; right: 24px; bottom: 96px; z-index: 901;
+  width: 372px; max-width: calc(100vw - 32px);
+  height: 540px; max-height: calc(100vh - 140px);
+  background: var(--s1); border: 1px solid var(--border); border-radius: var(--r-xl);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 40px rgba(10,132,255,0.18);
+  display: flex; flex-direction: column; overflow: hidden;
+  transform-origin: bottom right;
+  animation: rb-in .18s ease-out;
+}
+@keyframes rb-in { from { opacity: 0; transform: translateY(10px) scale(.97); } }
+.rb-panel[hidden] { display: none; }
+
+.rb-head {
+  display: flex; align-items: center; gap: 11px; padding: 14px 16px;
+  background: var(--s2); border-bottom: 1px solid var(--border); flex: 0 0 auto;
+}
+.rb-head-avatar {
+  width: 38px; height: 38px; border-radius: 50%; flex: 0 0 38px; object-fit: cover;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  display: grid; place-items: center; color: #fff; font-weight: 800; font-size: .8rem;
+  font-family: 'Montserrat', sans-serif;
+}
+.rb-head-name { font-weight: 700; color: var(--t1); font-size: .92rem; line-height: 1.2; }
+.rb-head-sub  { font-size: .72rem; color: var(--green); }
+.rb-close {
+  margin-left: auto; background: none; border: none; color: var(--t3); cursor: pointer;
+  font-size: 1.35rem; line-height: 1; padding: 4px 6px; border-radius: 8px;
+}
+.rb-close:hover { color: var(--t1); background: var(--s3); }
+
+.rb-body {
+  flex: 1; overflow-y: auto; padding: 16px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.rb-msg { max-width: 86%; padding: 9px 13px; border-radius: 15px; font-size: .87rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.rb-msg--robert { align-self: flex-start; background: var(--s3); color: var(--t1); border-bottom-left-radius: 4px; }
+.rb-msg--alumno { align-self: flex-end; background: linear-gradient(135deg, var(--blue), var(--purple)); color: #fff; border-bottom-right-radius: 4px; }
+.rb-msg--error  { align-self: flex-start; background: rgba(255,69,58,.12); color: #ff8b83; border: 1px solid rgba(255,69,58,.25); }
+
+.rb-typing { align-self: flex-start; display: flex; gap: 4px; padding: 11px 14px; background: var(--s3); border-radius: 15px; border-bottom-left-radius: 4px; }
+.rb-typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--t3); animation: rb-blink 1.3s infinite; }
+.rb-typing span:nth-child(2) { animation-delay: .18s; }
+.rb-typing span:nth-child(3) { animation-delay: .36s; }
+@keyframes rb-blink { 0%,60%,100% { opacity:.3 } 30% { opacity:1 } }
+
+.rb-suggestions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 2px; }
+.rb-chip {
+  background: var(--s2); border: 1px solid var(--border); color: var(--t2);
+  border-radius: var(--r-pill); padding: 6px 12px; font-size: .76rem; cursor: pointer;
+  font-family: 'Inter', sans-serif; text-align: left;
+}
+.rb-chip:hover { border-color: var(--blue); color: var(--t1); }
+
+.rb-compose {
+  flex: 0 0 auto; display: flex; align-items: flex-end; gap: 8px;
+  padding: 11px 12px; background: var(--s2); border-top: 1px solid var(--border);
+}
+.rb-input {
+  flex: 1; resize: none; background: var(--s1); color: var(--t1);
+  border: 1px solid var(--border); border-radius: 17px; padding: 9px 14px;
+  font-size: .86rem; font-family: 'Inter', sans-serif; max-height: 88px; line-height: 1.4;
+}
+.rb-input:focus { outline: none; border-color: var(--blue); }
+.rb-send {
+  flex: 0 0 auto; width: 35px; height: 35px; border-radius: 50%; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--blue), var(--purple)); color: #fff;
+  display: grid; place-items: center; font-size: .95rem;
+}
+.rb-send:disabled { opacity: .45; cursor: default; }
+
+@media (max-width: 560px) {
+  .rb-panel { right: 12px; left: 12px; width: auto; bottom: 88px; height: calc(100vh - 160px); }
+  .rb-fab { right: 16px; bottom: 16px; }
+}

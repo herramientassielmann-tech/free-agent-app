@@ -1,0 +1,389 @@
+{
+  "lecciones": [
+    {
+      "fichero": "semana-1_01",
+      "titulo": "Cómo hablarle a la cámara: trucos para perder el miedo",
+      "temas": [
+        "hablar a cámara",
+        "práctica constante",
+        "técnicas para grabar vídeos",
+        "gestión de nervios"
+      ]
+    },
+    {
+      "fichero": "semana-1_02",
+      "titulo": "Superar la creencia de que hacer contenido 'no es para ti'",
+      "temas": [
+        "creencias limitantes",
+        "marca personal",
+        "exposición como estrategia de negocio",
+        "diferencia con métodos tradicionales"
+      ]
+    },
+    {
+      "fichero": "semana-1_03",
+      "titulo": "Introducción al módulo de herramientas y producción",
+      "temas": [
+        "calidad de vídeo",
+        "excusas para no empezar",
+        "presentación del módulo técnico"
+      ]
+    },
+    {
+      "fichero": "semana-1_04",
+      "titulo": "Influencer vs. marca personal: entendiendo tu propósito",
+      "temas": [
+        "diferencia influencer/marca personal",
+        "redes sociales como escaparate",
+        "gestión emocional",
+        "opinión de terceros"
+      ]
+    },
+    {
+      "fichero": "semana-1_05",
+      "titulo": "Gestión de expectativas: constancia frente a resultados inmediatos",
+      "temas": [
+        "expectativas realistas",
+        "pequeñas victorias",
+        "viralidad vs conversión",
+        "comparación con otros"
+      ]
+    },
+    {
+      "fichero": "semana-1_06",
+      "titulo": "Optimización del perfil en redes sociales",
+      "temas": [
+        "bio de Instagram",
+        "nombre y foto de perfil",
+        "call to action",
+        "SEO en redes sociales",
+        "perfil de TikTok"
+      ]
+    },
+    {
+      "fichero": "semana-1_07",
+      "titulo": "Mentalidad: la base para crear contenido con éxito",
+      "temas": [
+        "pensamientos y hábitos",
+        "salir de la zona de confort",
+        "mindset",
+        "bloqueos mentales"
+      ]
+    },
+    {
+      "fichero": "semana-1_08",
+      "titulo": "Cómo gestionar los comentarios negativos",
+      "temas": [
+        "comentarios negativos",
+        "gestión emocional",
+        "crecimiento en redes"
+      ]
+    },
+    {
+      "fichero": "semana-1_09",
+      "titulo": "Bienvenida a la academia: la marca personal como diferenciador",
+      "temas": [
+        "introducción a la academia",
+        "marca personal",
+        "diferenciación entre realtors",
+        "onboarding"
+      ]
+    },
+    {
+      "fichero": "semana-2_01",
+      "titulo": "Introducción al módulo de herramientas y producción (repaso)",
+      "temas": [
+        "calidad de vídeo",
+        "excusas para no empezar",
+        "presentación del módulo técnico"
+      ]
+    },
+    {
+      "fichero": "semana-2_02",
+      "titulo": "Equipo básico para grabar: iPhone, estabilizador y micrófonos",
+      "temas": [
+        "iPhone para grabar",
+        "estabilizador/gimbal",
+        "micrófonos",
+        "trípode",
+        "presupuesto de equipo"
+      ]
+    },
+    {
+      "fichero": "semana-2_03",
+      "titulo": "Ejercicio semanal: grabar tu primer vídeo con estructura",
+      "temas": [
+        "ejercicio práctico",
+        "aplicación de estructura de vídeo"
+      ]
+    },
+    {
+      "fichero": "semana-2_04",
+      "titulo": "Plataformas de redes sociales: Instagram, TikTok y YouTube",
+      "temas": [
+        "Instagram como escaparate",
+        "TikTok como exposición",
+        "YouTube como plataforma de fidelización",
+        "estrategia multiplataforma"
+      ]
+    },
+    {
+      "fichero": "semana-2_05",
+      "titulo": "Cantidad vs. calidad: las tres fases del contenido",
+      "temas": [
+        "fase sprint",
+        "fase de adaptación",
+        "formato ganador",
+        "frecuencia de publicación"
+      ]
+    },
+    {
+      "fichero": "semana-2_06",
+      "titulo": "Cómo edito mis vídeos: proceso paso a paso",
+      "temas": [
+        "edición de vídeo",
+        "organización de clips",
+        "cortes de silencios",
+        "subtítulos/captions",
+        "b-roll y sonidos"
+      ]
+    },
+    {
+      "fichero": "semana-2_07",
+      "titulo": "La estructura perfecta de vídeo: hook, promesa, desarrollo y CTA",
+      "temas": [
+        "hook",
+        "promesa",
+        "desarrollo del vídeo",
+        "call to action",
+        "ejemplo práctico de house tour"
+      ]
+    },
+    {
+      "fichero": "semana-3_01",
+      "titulo": "Ejercicio semanal: celebrar el watch time superior a 22 segundos",
+      "temas": [
+        "ejercicio práctico",
+        "watch time",
+        "motivación grupal"
+      ]
+    },
+    {
+      "fichero": "semana-3_02",
+      "titulo": "La regla del 1%: mejora constante sobre las métricas",
+      "temas": [
+        "mejora continua",
+        "efecto compuesto",
+        "constancia",
+        "gestión de expectativas con métricas"
+      ]
+    },
+    {
+      "fichero": "semana-3_03",
+      "titulo": "La comparación como enemigo del creador de contenido",
+      "temas": [
+        "comparación con otros",
+        "seguidores falsos",
+        "proceso individual",
+        "salud mental en redes"
+      ]
+    },
+    {
+      "fichero": "semana-3_04",
+      "titulo": "Las métricas más importantes: watch time y retención",
+      "temas": [
+        "watch time",
+        "retención",
+        "análisis de insights de Instagram",
+        "identificación del formato ganador"
+      ]
+    },
+    {
+      "fichero": "semana-3_05",
+      "titulo": "Trampas a evitar: seguidores falsos, boost y agencias fraudulentas",
+      "temas": [
+        "seguidores falsos",
+        "engagement comprado",
+        "botón boost",
+        "agencias de contenido",
+        "crecimiento orgánico"
+      ]
+    },
+    {
+      "fichero": "semana-4_01",
+      "titulo": "Por qué no debes seguir modas y tendencias virales",
+      "temas": [
+        "modas y tendencias",
+        "contenido sostenible",
+        "construcción de marca a largo plazo"
+      ]
+    },
+    {
+      "fichero": "semana-4_02",
+      "titulo": "Cómo encontrar tu formato único como realtor",
+      "temas": [
+        "diferenciación",
+        "formato ganador personal",
+        "prueba de formatos",
+        "ejemplo del proceso de Robert"
+      ]
+    },
+    {
+      "fichero": "semana-4_03",
+      "titulo": "Cómo funciona el algoritmo de Instagram y la simplicidad del contenido",
+      "temas": [
+        "algoritmo de Instagram",
+        "testeo de contenido por audiencia",
+        "simplicidad para maximizar alcance"
+      ]
+    },
+    {
+      "fichero": "semana-4_04",
+      "titulo": "La viralidad no lo es todo: nutrir tu cuenta con vídeos virales",
+      "temas": [
+        "viralidad vs conversión",
+        "vídeos pineados",
+        "micro-influencer nicho",
+        "estrategia de contenido combinado"
+      ]
+    },
+    {
+      "fichero": "semana-4_05",
+      "titulo": "A-roll y B-roll: tipos de tomas para vídeos inmobiliarios",
+      "temas": [
+        "A-roll",
+        "B-roll",
+        "movimientos de cámara",
+        "técnica de grabación con gimbal"
+      ]
+    },
+    {
+      "fichero": "semana-4_06",
+      "titulo": "Cómo encontrar ideas de vídeos virales mediante research en TikTok",
+      "temas": [
+        "research de contenido",
+        "outliers",
+        "análisis de likes y views",
+        "adaptación de ideas a tu marca"
+      ]
+    },
+    {
+      "fichero": "semana-4_07",
+      "titulo": "Vídeos profesionales vs. vídeos simples: qué convierte realmente",
+      "temas": [
+        "falsa percepción de calidad",
+        "vídeos low-cost efectivos",
+        "autenticidad y vulnerabilidad",
+        "ejemplos comparativos"
+      ]
+    },
+    {
+      "fichero": "semana-5_01",
+      "titulo": "Fireflies: IA para transcribir y resumir reuniones con clientes",
+      "temas": [
+        "inteligencia artificial",
+        "Fireflies",
+        "resumen de reuniones",
+        "seguimiento de clientes"
+      ]
+    },
+    {
+      "fichero": "semana-5_02",
+      "titulo": "ChatGPT a fondo: funciones avanzadas para realtors",
+      "temas": [
+        "ChatGPT",
+        "investigación en profundidad",
+        "modo agente",
+        "modelos de IA",
+        "carpetas y proyectos",
+        "GPTs personalizados"
+      ]
+    },
+    {
+      "fichero": "semana-5_03",
+      "titulo": "ManyChat: automatización de mensajes y captación de leads",
+      "temas": [
+        "ManyChat",
+        "automatización de comentarios",
+        "captación de leads",
+        "integración con WhatsApp",
+        "filtrado de clientes"
+      ]
+    }
+  ],
+  "areas_tematicas": [
+    {
+      "slug": "mentalidad-y-desarrollo-personal",
+      "nombre": "Mentalidad y desarrollo personal",
+      "descripcion": "Trabajo de creencias limitantes, gestión emocional, manejo de comentarios negativos, comparación con otros y expectativas realistas necesarias para sostener el proceso de creación de contenido a largo plazo.",
+      "lecciones": [
+        "semana-1_01",
+        "semana-1_02",
+        "semana-1_04",
+        "semana-1_05",
+        "semana-1_07",
+        "semana-1_08",
+        "semana-1_09",
+        "semana-3_02",
+        "semana-3_03"
+      ]
+    },
+    {
+      "slug": "produccion-y-herramientas-tecnicas",
+      "nombre": "Producción y herramientas técnicas",
+      "descripcion": "Equipo necesario para grabar (iPhone, micrófonos, estabilizadores), técnicas de grabación de A-roll y B-roll, y proceso de edición de vídeo paso a paso.",
+      "lecciones": [
+        "semana-1_03",
+        "semana-2_01",
+        "semana-2_02",
+        "semana-2_06",
+        "semana-4_05"
+      ]
+    },
+    {
+      "slug": "estrategia-y-estructura-de-contenido",
+      "nombre": "Estrategia y estructura de contenido",
+      "descripcion": "Metodología para crear vídeos ganadores: estructura hook-promesa-desarrollo-CTA, búsqueda de ideas virales, encontrar el formato propio y evitar modas o contenido sobreproducido que no convierte.",
+      "lecciones": [
+        "semana-2_03",
+        "semana-2_07",
+        "semana-4_01",
+        "semana-4_02",
+        "semana-4_06",
+        "semana-4_07"
+      ]
+    },
+    {
+      "slug": "plataformas-y-optimizacion-de-perfil",
+      "nombre": "Plataformas y optimización de perfil",
+      "descripcion": "Cómo configurar y optimizar perfiles en Instagram, TikTok y YouTube para convertir el perfil en un escaparate profesional que genere confianza y contactos.",
+      "lecciones": [
+        "semana-1_06",
+        "semana-2_04"
+      ]
+    },
+    {
+      "slug": "metricas-algoritmo-y-crecimiento",
+      "nombre": "Métricas, algoritmo y crecimiento orgánico",
+      "descripcion": "Interpretación de métricas clave (watch time, retención), funcionamiento del algoritmo, fases de cantidad vs calidad, y advertencias sobre trampas como seguidores falsos, boost y agencias fraudulentas.",
+      "lecciones": [
+        "semana-2_05",
+        "semana-3_01",
+        "semana-3_04",
+        "semana-3_05",
+        "semana-4_03",
+        "semana-4_04"
+      ]
+    },
+    {
+      "slug": "inteligencia-artificial-y-automatizacion",
+      "nombre": "Inteligencia artificial y automatización",
+      "descripcion": "Uso de herramientas de IA (Fireflies, ChatGPT) y automatización de mensajes (ManyChat) para optimizar la gestión de clientes, reuniones y captación de leads.",
+      "lecciones": [
+        "semana-5_01",
+        "semana-5_02",
+        "semana-5_03"
+      ]
+    }
+  ]
+}
