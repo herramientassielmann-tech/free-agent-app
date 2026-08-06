@@ -1408,13 +1408,34 @@ a:hover { color: #3d9eff; }
   display: grid; place-items: center; padding: 0;
   transition: transform .18s ease, box-shadow .18s ease;
 }
-.rb-fab:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 12px 34px rgba(10,132,255,0.6); }
+.rb-fab:hover { transform: translateY(-3px) scale(1.06); box-shadow: 0 12px 34px rgba(10,132,255,0.6); }
+.rb-fab { overflow: hidden; animation: rb-pulse 3.6s ease-in-out infinite; }
+/* El botón no se mueve (molesta y dificulta el clic): late el aura, no el botón */
+@keyframes rb-pulse {
+  0%,100% { box-shadow: 0 8px 26px rgba(10,132,255,.45), 0 0 0 0 rgba(10,132,255,.35); }
+  50%     { box-shadow: 0 8px 26px rgba(10,132,255,.45), 0 0 0 10px rgba(10,132,255,0); }
+}
 .rb-fab-avatar {
   width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;
 }
-.rb-fab-initials {
-  font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.05rem; color: #fff;
+/* ── El muñeco ── */
+.rb-doll { width: 100%; height: 100%; display: block; }
+.rb-doll-eyes {
+  transform-origin: 50px 47px;
+  animation: rb-blink-eyes 5.2s infinite;
 }
+@keyframes rb-blink-eyes {
+  0%, 93%, 100% { transform: scaleY(1); }
+  96%           { transform: scaleY(.08); }
+}
+.rb-doll-head { transform-origin: 50px 60px; }
+.rb-fab:hover .rb-doll-head { animation: rb-tilt .6s ease-in-out; }
+@keyframes rb-tilt {
+  0%,100% { transform: rotate(0deg); }
+  30%     { transform: rotate(-7deg); }
+  65%     { transform: rotate(5deg); }
+}
+.rb-fab.rb-saluda .rb-doll-head { animation: rb-tilt .6s ease-in-out; }
 .rb-fab-dot {
   position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%;
   background: var(--green); border: 2.5px solid #000;
@@ -1438,10 +1459,9 @@ a:hover { color: #3d9eff; }
   background: var(--s2); border-bottom: 1px solid var(--border); flex: 0 0 auto;
 }
 .rb-head-avatar {
-  width: 38px; height: 38px; border-radius: 50%; flex: 0 0 38px; object-fit: cover;
+  width: 38px; height: 38px; border-radius: 50%; flex: 0 0 38px; overflow: hidden;
   background: linear-gradient(135deg, var(--blue), var(--purple));
-  display: grid; place-items: center; color: #fff; font-weight: 800; font-size: .8rem;
-  font-family: 'Montserrat', sans-serif;
+  display: grid; place-items: center;
 }
 .rb-head-name { font-weight: 700; color: var(--t1); font-size: .92rem; line-height: 1.2; }
 .rb-head-sub  { font-size: .72rem; color: var(--green); }
@@ -1494,4 +1514,29 @@ a:hover { color: #3d9eff; }
 @media (max-width: 560px) {
   .rb-panel { right: 12px; left: 12px; width: auto; bottom: 88px; height: calc(100vh - 160px); }
   .rb-fab { right: 16px; bottom: 16px; }
+}
+
+/* ── Burbuja de saludo del muñeco ── */
+.rb-hello {
+  position: fixed; right: 96px; bottom: 34px; z-index: 899;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--s1); color: var(--t1); border: 1px solid var(--border);
+  border-radius: 16px; border-bottom-right-radius: 5px;
+  padding: 10px 12px 10px 14px; font-size: .82rem; max-width: 240px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.55), 0 0 24px rgba(10,132,255,.18);
+  animation: rb-hello-in .35s ease-out;
+}
+.rb-hello[hidden] { display: none; }
+@keyframes rb-hello-in { from { opacity: 0; transform: translateX(12px) scale(.94); } }
+.rb-hello-x {
+  background: none; border: none; color: var(--t3); cursor: pointer;
+  font-size: 1.1rem; line-height: 1; padding: 0 2px;
+}
+.rb-hello-x:hover { color: var(--t1); }
+@media (max-width: 560px) { .rb-hello { display: none; } }
+
+/* Respeta a quien prefiere menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .rb-fab, .rb-doll-eyes, .rb-fab:hover .rb-doll-head, .rb-fab.rb-saluda .rb-doll-head { animation: none; }
+  .rb-panel, .rb-hello { animation: none; }
 }

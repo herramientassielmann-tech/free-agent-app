@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/css/style.css?v=6" />
+  <link rel="stylesheet" href="/static/css/style.css?v=7" />
 </head>
 <body>
 
@@ -97,14 +97,19 @@
 </div>
 
 {# ══ Robert: chat flotante con el creador de la academia ══ #}
+<div class="rb-hello" id="rb-hello" hidden>
+  <span>¡Ey! ¿Te echo una mano con algo? 👋</span>
+  <button type="button" class="rb-hello-x" id="rb-hello-x" aria-label="Cerrar aviso">×</button>
+</div>
+
 <button type="button" class="rb-fab" id="rb-fab" title="Pregúntale a Robert" aria-label="Abrir chat con Robert">
-  <span class="rb-fab-initials">RS</span>
+  {% include "_robert_avatar.html" %}
   <span class="rb-fab-dot"></span>
 </button>
 
 <div class="rb-panel" id="rb-panel" hidden>
   <div class="rb-head">
-    <div class="rb-head-avatar">RS</div>
+    <div class="rb-head-avatar">{% include "_robert_avatar.html" %}</div>
     <div>
       <div class="rb-head-name">Robert Sielmann</div>
       <div class="rb-head-sub">● Pregúntame lo que quieras</div>
@@ -218,10 +223,29 @@
     }
   }
 
+  // Burbujita de saludo: sale una vez por sesión si aún no ha abierto el chat
+  const hello   = document.getElementById('rb-hello');
+  const helloX  = document.getElementById('rb-hello-x');
+  const HELLO_K = 'robert_hello_visto';
+  function ocultarSaludo() {
+    if (hello) hello.hidden = true;
+    try { sessionStorage.setItem(HELLO_K, '1'); } catch (e) {}
+  }
+  if (hello && !sessionStorage.getItem(HELLO_K) && !historial.length) {
+    setTimeout(() => { if (panel.hidden) hello.hidden = false; }, 5000);
+    setTimeout(ocultarSaludo, 20000);
+  }
+  if (helloX) helloX.addEventListener('click', e => { e.stopPropagation(); ocultarSaludo(); });
+
   fab.addEventListener('click', () => {
+    ocultarSaludo();
     const abierto = !panel.hidden;
     panel.hidden = abierto;
-    if (!abierto) { pintarTodo(); input.focus(); }
+    if (!abierto) {
+      fab.classList.add('rb-saluda');
+      setTimeout(() => fab.classList.remove('rb-saluda'), 700);
+      pintarTodo(); input.focus();
+    }
   });
   document.getElementById('rb-close').addEventListener('click', () => { panel.hidden = true; });
 
