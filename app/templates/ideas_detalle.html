@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Idea {{ numero }} — {{ s.titulo or 'Guión' }} — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="idea-num">Idea {{ numero }} de {{ total }}</div>
+    <h1 class="page-title">{{ s.titulo or 'Guión' }}</h1>
+  </div>
+  <a href="/ideas-iniciales" class="btn btn-secondary">← Volver a las ideas</a>
+</div>
+
+{# ── Marcar como hecho ── #}
+<div class="card idea-detalle-check-bar">
+  <button type="button" id="detalle-check"
+          class="idea-check {% if hecho %}idea-check--on{% endif %}" data-id="{{ s.id }}">✓</button>
+  <span id="detalle-check-label" class="idea-detalle-check-label">
+    {% if hecho %}Ya has hecho este vídeo{% else %}Marca cuando lo hayas grabado{% endif %}
+  </span>
+  <button class="btn btn-ghost btn-sm" id="copy-all-btn" style="margin-left:auto;">📋 Copiar todo</button>
+</div>
+
+{% if s.estructura_detectada %}
+<div class="estructura-badge">
+  <span class="estructura-label">Estructura detectada</span>
+  <span>{{ s.estructura_detectada }}</span>
+</div>
+{% endif %}
+
+<div class="result-layout">
+  {# Izquierda: vídeo de referencia #}
+  <div class="video-thumb-card">
+    <div class="video-thumb-wrap">
+      {% if s.thumbnail_path %}
+      <img src="{{ s.thumbnail_path }}" alt="Frame del vídeo de referencia" />
+      {% else %}
+      <div class="thumb-placeholder">
+        <span class="thumb-placeholder-icon">🎬</span>
+        <span>Frame del vídeo</span>
+      </div>
+      {% endif %}
+    </div>
+    <div class="video-source">
+      <span style="font-size:1rem">🔗</span>
+      <a class="video-source-url" href="{{ s.source_url }}" target="_blank" rel="noopener noreferrer">
+        {{ s.source_url[:48] }}{% if s.source_url|length > 48 %}…{% endif %}
+      </a>
+    </div>
+  </div>
+
+  {# Derecha: el guión #}
+  <div class="script-sections">
+    <div class="script-card hook-card">
+      <div class="script-card-header">
+        <div class="script-meta">
+          <span class="badge badge-blue">HOOK</span>
+          <span class="script-subtitle">Los primeros 1-3 segundos</span>
+        </div>
+        <button class="copy-btn" data-target="hook-text">Copiar</button>
+      </div>
+      <div id="hook-text" class="script-content">{{ s.hook or '' }}</div>
+    </div>
+
+    <div class="script-card dev-card">
+      <div class="script-card-header">
+        <div class="script-meta">
+          <span class="badge badge-orange">DESARROLLO</span>
+          <span class="script-subtitle">El cuerpo del vídeo</span>
+        </div>
+        <button class="copy-btn" data-target="dev-text">Copiar</button>
+      </div>
+      <div id="dev-text" class="script-content">{{ s.development or '' }}</div>
+    </div>
+
+    <div class="script-card conc-card">
+      <div class="script-card-header">
+        <div class="script-meta">
+          <span class="badge badge-green">CTA</span>
+          <span class="script-subtitle">Un único llamamiento al final</span>
+        </div>
+        <button class="copy-btn" data-target="conc-text">Copiar</button>
+      </div>
+      <div id="conc-text" class="script-content">{{ s.conclusion or '' }}</div>
+    </div>
+
+    <div class="script-card caption-card">
+      <div class="script-card-header">
+        <div class="script-meta">
+          <span class="badge badge-purple">CAPTION</span>
+          <span class="script-subtitle">Listo para copiar y pegar</span>
+        </div>
+        <button class="copy-btn" data-target="caption-text">Copiar</button>
+      </div>
+      <div id="caption-text" class="script-content caption-content">{{ s.caption or '' }}</div>
+    </div>
+  </div>
+</div>
+
+{# ── Ir a la idea anterior / siguiente ── #}
+<div class="idea-nav">
+  {% if anterior %}
+  <a href="/ideas-iniciales/{{ anterior.id }}" class="btn btn-secondary">← Idea {{ numero - 1 }}</a>
+  {% else %}<span></span>{% endif %}
+  {% if siguiente %}
+  <a href="/ideas-iniciales/{{ siguiente.id }}" class="btn btn-secondary">Idea {{ numero + 1 }} →</a>
+  {% else %}<span></span>{% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function flash(btn, label) {
+    const orig = btn.textContent;
+    btn.textContent = label;
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+  }
+
+  // Copiar cada sección
+  document.querySelectorAll('.copy-btn[data-target]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const el = document.getElementById(btn.dataset.target);
+      if (el) { navigator.clipboard.writeText(el.textContent.trim()); flash(btn, '¡Copiado!'); }
+    });
+  });
+
+  // Copiar el guión entero
+  const copyAll = document.getElementById('copy-all-btn');
+  if (copyAll) {
+    copyAll.addEventListener('click', () => {
+      const g = id => (document.getElementById(id)?.textContent || '').trim();
+      const text = `🎣 HOOK\n${g('hook-text')}\n\n📖 DESARROLLO\n${g('dev-text')}\n\n✅ CTA\n${g('conc-text')}\n\n📲 CAPTION\n${g('caption-text')}`;
+      navigator.clipboard.writeText(text);
+      flash(copyAll, '¡Copiado!');
+    });
+  }
+
+  // Marcar / desmarcar como hecho
+  const check = document.getElementById('detalle-check');
+  const label = document.getElementById('detalle-check-label');
+  if (check) {
+    check.addEventListener('click', async () => {
+      check.disabled = true;
+      try {
+        const res = await fetch(`/ideas-iniciales/${check.dataset.id}/toggle`, { method: 'POST' });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        check.classList.toggle('idea-check--on', data.checked);
+        label.textContent = data.checked ? 'Ya has hecho este vídeo' : 'Marca cuando lo hayas grabado';
+      } catch (e) {
+        alert('No se pudo guardar el cambio. Inténtalo de nuevo.');
+      } finally {
+        check.disabled = false;
+      }
+    });
+  }
+</script>
+{% endblock %}

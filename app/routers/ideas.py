@@ -39,6 +39,42 @@ async def ideas_page(
     )
 
 
+@router.get("/ideas-iniciales/{sid}", response_class=HTMLResponse)
+async def idea_detalle(
+    sid: int,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Vista grande de un guión, igual que la del generador."""
+    script = db.query(StarterScript).filter(StarterScript.id == sid).first()
+    if not script:
+        raise HTTPException(status_code=404, detail="Guión no encontrado.")
+
+    hecho = db.query(StarterScriptCheck).filter(
+        StarterScriptCheck.user_id == current_user.id,
+        StarterScriptCheck.starter_script_id == sid,
+    ).first() is not None
+
+    # Para poder pasar de una idea a la siguiente sin volver a la lista
+    todos = db.query(StarterScript).order_by(StarterScript.position).all()
+    idx = next((i for i, s in enumerate(todos) if s.id == sid), 0)
+
+    return templates.TemplateResponse(
+        "ideas_detalle.html",
+        {
+            "request": request,
+            "user": current_user,
+            "s": script,
+            "hecho": hecho,
+            "numero": idx + 1,
+            "total": len(todos),
+            "anterior": todos[idx - 1] if idx > 0 else None,
+            "siguiente": todos[idx + 1] if idx < len(todos) - 1 else None,
+        },
+    )
+
+
 @router.post("/ideas-iniciales/{sid}/toggle")
 async def toggle_check(
     sid: int,

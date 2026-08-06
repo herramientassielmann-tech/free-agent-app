@@ -5,7 +5,7 @@
 <div class="page-header">
   <div>
     <h1 class="page-title">Ideas Iniciales</h1>
-    <p class="page-subtitle">{{ total }} guiones listos para grabar. Ve marcando los que ya hayas hecho — tu progreso es solo tuyo.</p>
+    <p class="page-subtitle">{{ total }} guiones listos para grabar. Toca cualquiera para ver el guión completo y marca los que ya hayas hecho — tu progreso es solo tuyo.</p>
   </div>
 </div>
 
@@ -22,12 +22,12 @@
   </div>
 </div>
 
-{# ── Lista de ideas ── #}
+{# ── Lista de ideas (tarjeta entera clicable) ── #}
 <div class="idea-list">
   {% for s in scripts %}
   {% set done = s.id in checked_ids %}
-  <div class="card idea-card {% if done %}idea-card--done{% endif %}" id="idea-{{ s.id }}">
-
+  <div class="card idea-card idea-card--clickable {% if done %}idea-card--done{% endif %}"
+       id="idea-{{ s.id }}" data-href="/ideas-iniciales/{{ s.id }}">
     <div class="idea-head">
       <button type="button" class="idea-check {% if done %}idea-check--on{% endif %}"
               data-id="{{ s.id }}" title="Marcar como hecho">✓</button>
@@ -46,63 +46,7 @@
         <div class="idea-preview">{{ (s.hook or '')|replace('\n', ' ') }}</div>
       </div>
 
-      <div class="idea-actions">
-        <button type="button" class="btn btn-ghost btn-sm idea-toggle" data-id="{{ s.id }}">Ver guión</button>
-      </div>
-    </div>
-
-    {# ── Guión completo ── #}
-    <div class="idea-body hidden" id="body-{{ s.id }}">
-      {% if s.estructura_detectada %}
-      <div class="idea-estructura">📐 {{ s.estructura_detectada }}</div>
-      {% endif %}
-
-      {% if s.hook %}
-      <div class="idea-section">
-        <div class="idea-section-head">
-          <span class="badge badge-blue">HOOK</span>
-          <button type="button" class="copy-btn idea-copy" data-text="{{ s.hook }}">Copiar</button>
-        </div>
-        <div class="idea-section-text">{{ s.hook }}</div>
-      </div>
-      {% endif %}
-
-      {% if s.development %}
-      <div class="idea-section">
-        <div class="idea-section-head">
-          <span class="badge badge-orange">DESARROLLO</span>
-          <button type="button" class="copy-btn idea-copy" data-text="{{ s.development }}">Copiar</button>
-        </div>
-        <div class="idea-section-text">{{ s.development }}</div>
-      </div>
-      {% endif %}
-
-      {% if s.conclusion %}
-      <div class="idea-section">
-        <div class="idea-section-head">
-          <span class="badge badge-green">CTA</span>
-          <button type="button" class="copy-btn idea-copy" data-text="{{ s.conclusion }}">Copiar</button>
-        </div>
-        <div class="idea-section-text">{{ s.conclusion }}</div>
-      </div>
-      {% endif %}
-
-      {% if s.caption %}
-      <div class="idea-section">
-        <div class="idea-section-head">
-          <span class="badge badge-purple">CAPTION</span>
-          <button type="button" class="copy-btn idea-copy" data-text="{{ s.caption }}">Copiar</button>
-        </div>
-        <div class="idea-section-text caption-content">{{ s.caption }}</div>
-      </div>
-      {% endif %}
-
-      <div class="idea-foot">
-        <a href="{{ s.source_url }}" target="_blank" rel="noopener" class="idea-source">🔗 Ver el vídeo de referencia</a>
-        <button type="button" class="btn btn-secondary btn-sm idea-copy-all"
-                data-hook="{{ s.hook or '' }}" data-dev="{{ s.development or '' }}"
-                data-conc="{{ s.conclusion or '' }}" data-caption="{{ s.caption or '' }}">Copiar guión completo</button>
-      </div>
+      <span class="idea-arrow">→</span>
     </div>
   </div>
   {% endfor %}
@@ -116,61 +60,34 @@
 <script>
   const TOTAL = {{ total }};
 
-  function flash(btn, label) {
-    const orig = btn.textContent;
-    btn.textContent = label;
-    btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
-  }
+  // Toda la tarjeta abre el guión, salvo el botón de marcar
+  document.querySelectorAll('.idea-card--clickable').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.idea-check')) return;
+      window.location.href = card.dataset.href;
+    });
+  });
 
-  // Marcar / desmarcar como hecho
+  // Marcar / desmarcar sin salir de la lista
   document.querySelectorAll('.idea-check').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = btn.dataset.id;
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
       btn.disabled = true;
       try {
-        const res = await fetch(`/ideas-iniciales/${id}/toggle`, { method: 'POST' });
-        if (!res.ok) throw new Error('No se pudo guardar');
+        const res = await fetch(`/ideas-iniciales/${btn.dataset.id}/toggle`, { method: 'POST' });
+        if (!res.ok) throw new Error();
         const data = await res.json();
-
         btn.classList.toggle('idea-check--on', data.checked);
-        document.getElementById('idea-' + id).classList.toggle('idea-card--done', data.checked);
+        document.getElementById('idea-' + btn.dataset.id)
+                .classList.toggle('idea-card--done', data.checked);
         document.getElementById('progress-done').textContent = data.hechos;
         document.getElementById('progress-fill').style.width =
           (TOTAL ? (data.hechos / TOTAL * 100) : 0) + '%';
-      } catch (e) {
+      } catch (err) {
         alert('No se pudo guardar el cambio. Inténtalo de nuevo.');
       } finally {
         btn.disabled = false;
       }
-    });
-  });
-
-  // Desplegar / plegar el guión
-  document.querySelectorAll('.idea-toggle').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const body = document.getElementById('body-' + btn.dataset.id);
-      const open = !body.classList.contains('hidden');
-      body.classList.toggle('hidden', open);
-      btn.textContent = open ? 'Ver guión' : 'Ocultar';
-    });
-  });
-
-  // Copiar una sección
-  document.querySelectorAll('.idea-copy').forEach(btn => {
-    btn.addEventListener('click', () => {
-      navigator.clipboard.writeText(btn.dataset.text);
-      flash(btn, '¡Copiado!');
-    });
-  });
-
-  // Copiar el guión entero
-  document.querySelectorAll('.idea-copy-all').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const d = btn.dataset;
-      const text = `🎣 HOOK\n${d.hook}\n\n📖 DESARROLLO\n${d.dev}\n\n✅ CTA\n${d.conc}\n\n📲 CAPTION\n${d.caption}`;
-      navigator.clipboard.writeText(text);
-      flash(btn, '¡Copiado!');
     });
   });
 </script>

@@ -1366,31 +1366,32 @@ a:hover { color: #3d9eff; }
   color: var(--t3); font-size: 0.8rem; margin-top: 2px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.idea-actions { flex: 0 0 auto; }
 
-.idea-body { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
-.idea-estructura {
-  font-size: 0.8rem; color: var(--t2); background: var(--s2);
-  border-radius: var(--r-sm); padding: 10px 12px; margin-bottom: 16px; line-height: 1.5;
-}
-.idea-section { margin-bottom: 16px; }
-.idea-section-head {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 10px; margin-bottom: 6px;
-}
-.idea-section-text {
-  color: var(--t1); font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap;
-}
-.idea-foot {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 12px; flex-wrap: wrap; margin-top: 18px; padding-top: 14px;
-  border-top: 1px solid var(--border);
-}
-.idea-source { font-size: 0.78rem; color: var(--t3); }
-.idea-source:hover { color: var(--blue); }
 
 @media (max-width: 640px) {
   .idea-head { flex-wrap: wrap; }
   .idea-info { flex: 1 1 100%; order: 3; }
   .idea-actions { margin-left: auto; }
+}
+
+/* ── Ideas Iniciales: tarjeta clicable y vista de detalle ── */
+.idea-card--clickable { cursor: pointer; }
+.idea-card--clickable:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+}
+.idea-card--clickable:hover .idea-arrow { color: var(--blue); transform: translateX(3px); }
+.idea-arrow {
+  flex: 0 0 auto; color: var(--t3); font-size: 1.1rem;
+  transition: color 0.15s, transform 0.15s;
+}
+.idea-detalle-check-bar {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 20px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.idea-detalle-check-label { color: var(--t2); font-size: 0.88rem; }
+.idea-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; margin-top: 28px; flex-wrap: wrap;
 }
