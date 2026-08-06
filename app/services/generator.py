@@ -77,6 +77,15 @@ LA REGLA DE ORO: ADAPTACIÓN 1:1, NO REESCRITURA
 - NO cambies el número de frases ni el orden de las ideas.
 
 ════════════════════════════════════════
+LEGIBILIDAD (formato, no contenido)
+════════════════════════════════════════
+Las transcripciones automáticas llegan a menudo sin puntuación y todo seguido. Tu guión SÍ tiene que estar bien escrito y ser fácil de leer a cámara: puntúa las frases con normalidad (mayúsculas, comas, puntos, interrogaciones).
+
+Si el vídeo original es una ENUMERACIÓN o una lista de pares (por ejemplo "hábito → clase media / hábito → millonario", "error 1, error 2, error 3", "esto sí / esto no"), respeta ese formato de lista y escribe CADA elemento en su propia línea, separados por saltos de línea, conservando el mismo número de elementos y su orden.
+
+Ojo: esto es solo FORMATO. No añade ni quita contenido, no alarga nada. Sigue aplicándose todo lo de arriba.
+
+════════════════════════════════════════
 CÓMO REPARTIR EN SECCIONES
 ════════════════════════════════════════
 Divide tu adaptación (que ya tiene la misma longitud que el original) en las tres partes habladas, respetando dónde el original cambia de fase:
