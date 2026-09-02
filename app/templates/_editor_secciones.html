@@ -1,0 +1,46 @@
+{# Las tres secciones habladas del guión, editables.
+   `secciones` puede no venir (el generador las rellena por JS tras generar). #}
+{% set s = secciones if secciones is defined else {} %}
+
+<div class="ed-marca">
+  <span class="logo-free">Free</span><span class="logo-agent">Agent</span><span class="logo-academy"> Academy</span>
+</div>
+<h2 class="ed-marca-titulo">{{ titulo if titulo is defined else 'Guión' }}</h2>
+
+<div class="script-card hook-card ed-card">
+  <div class="script-card-header">
+    <div class="script-meta">
+      <span class="badge badge-blue">HOOK</span>
+      <span class="script-subtitle">Los primeros 1-3 segundos</span>
+    </div>
+    <span class="ed-dur" data-for="hook"></span>
+  </div>
+  <div class="script-content" data-seccion="hook"
+       aria-label="Hook">{{ s.get('hook', '') | safe }}</div>
+</div>
+
+<div class="script-card dev-card ed-card">
+  <div class="script-card-header">
+    <div class="script-meta">
+      <span class="badge badge-orange">DESARROLLO</span>
+      <span class="script-subtitle">El cuerpo del vídeo</span>
+    </div>
+    <span class="ed-dur" data-for="development"></span>
+  </div>
+  <div class="script-content" data-seccion="development"
+       aria-label="Desarrollo">{{ s.get('development', '') | safe }}</div>
+</div>
+
+<div class="script-card conc-card ed-card">
+  <div class="script-card-header">
+    <div class="script-meta">
+      <span class="badge badge-green">CTA</span>
+      <span class="script-subtitle">Un único llamamiento al final</span>
+    </div>
+    <span class="ed-dur" data-for="conclusion"></span>
+  </div>
+  <div class="script-content" data-seccion="conclusion"
+       aria-label="CTA">{{ s.get('conclusion', '') | safe }}</div>
+</div>
+
+<div class="ed-total" data-ed-total></div>

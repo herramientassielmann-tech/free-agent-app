@@ -11,98 +11,58 @@
 </div>
 
 {# ── Marcar como hecho ── #}
-<div class="card idea-detalle-check-bar">
+<div class="card idea-detalle-check-bar ed-no-print">
   <button type="button" id="detalle-check"
           class="idea-check {% if hecho %}idea-check--on{% endif %}" data-id="{{ s.id }}">✓</button>
   <span id="detalle-check-label" class="idea-detalle-check-label">
     {% if hecho %}Ya has hecho este vídeo{% else %}Marca cuando lo hayas grabado{% endif %}
   </span>
-  {% if user.is_admin %}
-  <a class="btn btn-ghost btn-sm" href="/editor/idea/{{ s.id }}" style="margin-left:auto;">✏️ Editar guión</a>
-  <button class="btn btn-ghost btn-sm" id="copy-all-btn">📋 Copiar todo</button>
-  {% else %}
-  <button class="btn btn-ghost btn-sm" id="copy-all-btn" style="margin-left:auto;">📋 Copiar todo</button>
-  {% endif %}
 </div>
 
-{% if s.estructura_detectada %}
-<div class="estructura-badge">
-  <span class="estructura-label">Estructura detectada</span>
-  <span>{{ s.estructura_detectada }}</span>
-</div>
-{% endif %}
+<div id="ed-raiz">
+  {% include "_editor_barra.html" %}
 
-<div class="result-layout">
-  {# Izquierda: vídeo de referencia #}
-  <div class="video-thumb-card">
-    <div class="video-thumb-wrap">
-      {% if s.thumbnail_path %}
-      <img src="{{ s.thumbnail_path }}" alt="Frame del vídeo de referencia" />
-      {% else %}
-      <div class="thumb-placeholder">
-        <span class="thumb-placeholder-icon">🎬</span>
-        <span>Frame del vídeo</span>
-      </div>
-      {% endif %}
-    </div>
-    <div class="video-source">
-      <span style="font-size:1rem">🔗</span>
-      <a class="video-source-url" href="{{ s.source_url }}" target="_blank" rel="noopener noreferrer">
-        {{ s.source_url[:48] }}{% if s.source_url|length > 48 %}…{% endif %}
-      </a>
-    </div>
+  {% if s.estructura_detectada %}
+  <div class="estructura-badge ed-no-print">
+    <span class="estructura-label">Estructura detectada</span>
+    <span>{{ s.estructura_detectada }}</span>
   </div>
+  {% endif %}
 
-  {# Derecha: el guión #}
-  <div class="script-sections">
-    <div class="script-card hook-card">
-      <div class="script-card-header">
-        <div class="script-meta">
-          <span class="badge badge-blue">HOOK</span>
-          <span class="script-subtitle">Los primeros 1-3 segundos</span>
+  <div class="result-layout">
+    <div class="video-thumb-card ed-no-print">
+      <div class="video-thumb-wrap">
+        {% if s.thumbnail_path %}
+        <img src="{{ s.thumbnail_path }}" alt="Frame del vídeo de referencia" />
+        {% else %}
+        <div class="thumb-placeholder">
+          <span class="thumb-placeholder-icon">🎬</span>
+          <span>Frame del vídeo</span>
         </div>
-        <button class="copy-btn" data-target="hook-text">Copiar</button>
+        {% endif %}
       </div>
-      <div id="hook-text" class="script-content">{{ s.hook or '' }}</div>
+      <div class="video-source">
+        <span style="font-size:1rem">🔗</span>
+        <a class="video-source-url" href="{{ s.source_url }}" target="_blank" rel="noopener noreferrer">
+          {{ s.source_url[:48] }}{% if s.source_url|length > 48 %}…{% endif %}
+        </a>
+      </div>
+      <div class="ed-ayuda">
+        <p><b>Este guión es tuyo: escríbelo encima.</b> Cámbialo hasta que suene a ti —
+        tus palabras, tu zona, tus datos. La estructura es lo único que no conviene tocar.</p>
+        <p>Se guarda solo mientras escribes, y solo lo ves tú. El guión original de la
+        academia no se toca, y siempre puedes volver a él.</p>
+      </div>
     </div>
 
-    <div class="script-card dev-card">
-      <div class="script-card-header">
-        <div class="script-meta">
-          <span class="badge badge-orange">DESARROLLO</span>
-          <span class="script-subtitle">El cuerpo del vídeo</span>
-        </div>
-        <button class="copy-btn" data-target="dev-text">Copiar</button>
-      </div>
-      <div id="dev-text" class="script-content">{{ s.development or '' }}</div>
-    </div>
-
-    <div class="script-card conc-card">
-      <div class="script-card-header">
-        <div class="script-meta">
-          <span class="badge badge-green">CTA</span>
-          <span class="script-subtitle">Un único llamamiento al final</span>
-        </div>
-        <button class="copy-btn" data-target="conc-text">Copiar</button>
-      </div>
-      <div id="conc-text" class="script-content">{{ s.conclusion or '' }}</div>
-    </div>
-
-    <div class="script-card caption-card">
-      <div class="script-card-header">
-        <div class="script-meta">
-          <span class="badge badge-purple">CAPTION</span>
-          <span class="script-subtitle">Listo para copiar y pegar</span>
-        </div>
-        <button class="copy-btn" data-target="caption-text">Copiar</button>
-      </div>
-      <div id="caption-text" class="script-content caption-content">{{ s.caption or '' }}</div>
+    <div class="script-sections">
+      {% include "_editor_secciones.html" %}
     </div>
   </div>
 </div>
 
 {# ── Ir a la idea anterior / siguiente ── #}
-<div class="idea-nav">
+<div class="idea-nav ed-no-print">
   {% if anterior %}
   <a href="/ideas-iniciales/{{ anterior.id }}" class="btn btn-secondary">← Idea {{ numero - 1 }}</a>
   {% else %}<span></span>{% endif %}
@@ -113,32 +73,13 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/js/editor.js?v=1"></script>
 <script>
-  function flash(btn, label) {
-    const orig = btn.textContent;
-    btn.textContent = label;
-    btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
-  }
-
-  // Copiar cada sección
-  document.querySelectorAll('.copy-btn[data-target]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const el = document.getElementById(btn.dataset.target);
-      if (el) { navigator.clipboard.writeText(el.textContent.trim()); flash(btn, '¡Copiado!'); }
-    });
+  EditorGuiones.init({
+    raiz:         document.getElementById("ed-raiz"),
+    urlGuardar:   {{ url_guardar | tojson }},
+    urlRestaurar: {{ url_restaurar | tojson }},
   });
-
-  // Copiar el guión entero
-  const copyAll = document.getElementById('copy-all-btn');
-  if (copyAll) {
-    copyAll.addEventListener('click', () => {
-      const g = id => (document.getElementById(id)?.textContent || '').trim();
-      const text = `🎣 HOOK\n${g('hook-text')}\n\n📖 DESARROLLO\n${g('dev-text')}\n\n✅ CTA\n${g('conc-text')}\n\n📲 CAPTION\n${g('caption-text')}`;
-      navigator.clipboard.writeText(text);
-      flash(copyAll, '¡Copiado!');
-    });
-  }
 
   // Marcar / desmarcar como hecho
   const check = document.getElementById('detalle-check');

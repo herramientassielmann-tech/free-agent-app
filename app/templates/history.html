@@ -49,15 +49,11 @@
 
     {# Actions #}
     <div class="history-actions">
-      <button class="btn btn-ghost history-toggle" data-id="{{ script.id }}">Ver guión</button>
-      {% if user.is_admin %}
-      <a class="btn btn-ghost" href="/editor/guion/{{ script.id }}">✏️ Editar</a>
-      {% endif %}
+      <a class="btn btn-ghost" href="/editor/guion/{{ script.id }}">Abrir guión</a>
       <button class="btn btn-primary history-copy-btn"
               data-hook="{{ script.hook or '' }}"
               data-dev="{{ script.development or '' }}"
-              data-conc="{{ script.conclusion or '' }}"
-              data-caption="{{ script.caption or '' }}">
+              data-conc="{{ script.conclusion or '' }}">
         Copiar
       </button>
     </div>
@@ -82,12 +78,6 @@
         <div class="history-section-text">{{ script.conclusion }}</div>
       </div>
       {% endif %}
-      {% if script.caption %}
-      <div class="history-section">
-        <div class="history-section-label">📲 Caption</div>
-        <div class="history-section-text caption-content">{{ script.caption }}</div>
-      </div>
-      {% endif %}
       {% if script.source_url %}
       <div class="history-section" style="margin-top:8px">
         <a href="{{ script.source_url }}" target="_blank" rel="noopener" style="font-size:0.75rem;color:var(--t3)">
@@ -105,27 +95,16 @@
 
 {% block scripts %}
 <script>
-  // Toggle expand
-  document.querySelectorAll('.history-toggle').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      const panel = document.getElementById('script-' + id);
-      const open = !panel.classList.contains('hidden');
-      panel.classList.toggle('hidden', open);
-      btn.textContent = open ? 'Ver guión' : 'Ocultar';
-    });
-  });
-
   // Copy full script
   document.querySelectorAll('.history-copy-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const text = buildScript(btn.dataset.hook, btn.dataset.dev, btn.dataset.conc, btn.dataset.caption);
+      const text = buildScript(btn.dataset.hook, btn.dataset.dev, btn.dataset.conc);
       copyToClipboard(text, btn, 'Copiar', '¡Copiado!');
     });
   });
 
-  function buildScript(hook, dev, conc, caption) {
-    return `🎣 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CTA\n${conc}\n\n📲 CAPTION\n${caption}`;
+  function buildScript(hook, dev, conc) {
+    return `🎣 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CTA\n${conc}`;
   }
 
   function copyToClipboard(text, btn, original, done) {

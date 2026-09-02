@@ -66,81 +66,45 @@
 {# Error box #}
 <div id="error-box" class="alert alert-error hidden"></div>
 
-{# Result section #}
+{# Result section — el guión nace ya editable #}
 <div id="result-section" class="hidden">
   <div class="result-header">
-    <h2 class="result-title">Guión generado</h2>
-    {% if user.is_admin %}
-    <a class="btn btn-ghost btn-sm hidden" id="edit-script-link" href="#">✏️ Editar guión</a>
-    {% endif %}
-    <button class="btn btn-ghost btn-sm" id="copy-all-btn">📋 Copiar todo</button>
+    <h2 class="result-title">Tu guión</h2>
   </div>
 
-  <div id="estructura-badge" class="estructura-badge hidden">
-    <span class="estructura-label">Estructura detectada</span>
-    <span id="estructura-text"></span>
-  </div>
+  <div id="ed-raiz">
+    {% include "_editor_barra.html" %}
 
-  <div class="result-layout">
-    {# Left: Video thumbnail #}
-    <div class="video-thumb-card">
-      <div class="video-thumb-wrap">
-        <img id="video-thumb-img" src="" alt="Primer frame del vídeo" class="hidden" />
-        <div id="thumb-placeholder" class="thumb-placeholder">
-          <span class="thumb-placeholder-icon">🎬</span>
-          <span>Frame del vídeo</span>
-        </div>
-      </div>
-      <div class="video-source">
-        <span style="font-size:1rem">🔗</span>
-        <a id="result-url" class="video-source-url" href="#" target="_blank" rel="noopener noreferrer"></a>
-      </div>
+    <div id="estructura-badge" class="estructura-badge hidden ed-no-print">
+      <span class="estructura-label">Estructura detectada</span>
+      <span id="estructura-text"></span>
     </div>
 
-    {# Right: Script sections #}
-    <div class="script-sections">
-      <div class="script-card hook-card">
-        <div class="script-card-header">
-          <div class="script-meta">
-            <span class="badge badge-blue">HOOK</span>
-            <span class="script-subtitle">Los primeros 1-3 segundos</span>
+    <div class="result-layout">
+      {# Left: Video thumbnail #}
+      <div class="video-thumb-card ed-no-print">
+        <div class="video-thumb-wrap">
+          <img id="video-thumb-img" src="" alt="Primer frame del vídeo" class="hidden" />
+          <div id="thumb-placeholder" class="thumb-placeholder">
+            <span class="thumb-placeholder-icon">🎬</span>
+            <span>Frame del vídeo</span>
           </div>
-          <button class="copy-btn" data-target="hook-text">Copiar</button>
         </div>
-        <div id="hook-text" class="script-content"></div>
+        <div class="video-source">
+          <span style="font-size:1rem">🔗</span>
+          <a id="result-url" class="video-source-url" href="#" target="_blank" rel="noopener noreferrer"></a>
+        </div>
+        <div class="ed-ayuda">
+          <p><b>Este guión es tuyo: escríbelo encima.</b> Cámbialo hasta que suene a ti —
+          tus palabras, tu forma de hablar, tus datos. La estructura es lo único que no
+          conviene tocar.</p>
+          <p>Se guarda solo mientras escribes.</p>
+        </div>
       </div>
 
-      <div class="script-card dev-card">
-        <div class="script-card-header">
-          <div class="script-meta">
-            <span class="badge badge-orange">DESARROLLO</span>
-            <span class="script-subtitle">El cuerpo del vídeo</span>
-          </div>
-          <button class="copy-btn" data-target="dev-text">Copiar</button>
-        </div>
-        <div id="dev-text" class="script-content"></div>
-      </div>
-
-      <div class="script-card conc-card">
-        <div class="script-card-header">
-          <div class="script-meta">
-            <span class="badge badge-green">CTA</span>
-            <span class="script-subtitle">Un único llamamiento al final</span>
-          </div>
-          <button class="copy-btn" data-target="conc-text">Copiar</button>
-        </div>
-        <div id="conc-text" class="script-content"></div>
-      </div>
-
-      <div class="script-card caption-card">
-        <div class="script-card-header">
-          <div class="script-meta">
-            <span class="badge badge-purple">CAPTION</span>
-            <span class="script-subtitle">Listo para copiar y pegar</span>
-          </div>
-          <button class="copy-btn" data-target="caption-text">Copiar</button>
-        </div>
-        <div id="caption-text" class="script-content caption-content"></div>
+      {# Right: Script sections #}
+      <div class="script-sections">
+        {% include "_editor_secciones.html" %}
       </div>
     </div>
   </div>
@@ -160,7 +124,7 @@
        data-hook="{{ s.hook or '' }}"
        data-dev="{{ s.development or '' }}"
        data-conc="{{ s.conclusion or '' }}"
-       data-caption="{{ s.caption or '' }}"
+       data-id="{{ s.id }}"
        data-url="{{ s.source_url or '' }}"
        data-thumb="{{ s.thumbnail_path or '' }}"
        data-estructura="{{ s.estructura_detectada or '' }}">
@@ -184,8 +148,7 @@
       <button class="btn btn-ghost btn-sm recent-copy-btn"
               data-hook="{{ s.hook or '' }}"
               data-dev="{{ s.development or '' }}"
-              data-conc="{{ s.conclusion or '' }}"
-              data-caption="{{ s.caption or '' }}">
+              data-conc="{{ s.conclusion or '' }}">
         Copiar
       </button>
     </div>
@@ -254,5 +217,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/app.js?v=3"></script>
+<script src="/static/js/editor.js?v=1"></script>
+<script src="/static/js/app.js?v=4"></script>
 {% endblock %}

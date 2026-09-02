@@ -1,279 +1,65 @@
 {% extends "base.html" %}
-{% block title %}{{ titulo }} — Editor de guiones{% endblock %}
+{% block title %}{{ titulo }} — Free Agent Academy{% endblock %}
 
 {% block content %}
 <div class="page-header ed-page-header">
   <div>
-    <div class="idea-num">Editor de guiones</div>
+    <div class="idea-num">Guión editable</div>
     <h1 class="page-title">{{ titulo }}</h1>
   </div>
   <a href="{{ url_volver }}" class="btn btn-secondary">← Volver</a>
 </div>
 
-{# ── Barra de herramientas ── #}
-<div class="card ed-toolbar" id="ed-toolbar">
-  <div class="ed-tools">
-    <button type="button" class="ed-tool" data-cmd="bold" title="Negrita (⌘B)"><b>B</b></button>
-    <button type="button" class="ed-tool" data-cmd="italic" title="Cursiva (⌘I)"><i>I</i></button>
-    <button type="button" class="ed-tool" data-cmd="insertUnorderedList" title="Lista">≡</button>
-    <span class="ed-sep"></span>
-    <button type="button" class="ed-tool ed-tool--wide" id="ed-restaurar" title="Volver al guión original">↺ Restaurar</button>
+<div id="ed-raiz">
+  {% include "_editor_barra.html" %}
+
+  {% if estructura_detectada %}
+  <div class="estructura-badge ed-no-print">
+    <span class="estructura-label">Estructura detectada</span>
+    <span>{{ estructura_detectada }}</span>
   </div>
+  {% endif %}
 
-  <div class="ed-right">
-    <span class="ed-estado" id="ed-estado" data-estado="{{ 'editado' if editado else 'limpio' }}">
-      {% if editado %}Editado{% else %}Sin cambios{% endif %}
-    </span>
-    <button type="button" class="btn btn-ghost btn-sm" id="ed-copiar">📋 Copiar todo</button>
-    <button type="button" class="btn btn-primary btn-sm" id="ed-pdf">📄 Descargar PDF</button>
-  </div>
-</div>
-
-{% if estructura_detectada %}
-<div class="estructura-badge ed-no-print">
-  <span class="estructura-label">Estructura detectada</span>
-  <span>{{ estructura_detectada }}</span>
-</div>
-{% endif %}
-
-<div class="result-layout">
-  {# Izquierda: vídeo de referencia #}
-  <div class="video-thumb-card ed-no-print">
-    <div class="video-thumb-wrap">
-      {% if thumbnail_path %}
-      <img src="{{ thumbnail_path }}" alt="Frame del vídeo de referencia" />
-      {% else %}
-      <div class="thumb-placeholder">
-        <span class="thumb-placeholder-icon">🎬</span>
-        <span>Frame del vídeo</span>
-      </div>
-      {% endif %}
-    </div>
-    <div class="video-source">
-      <span style="font-size:1rem">🔗</span>
-      <a class="video-source-url" href="{{ source_url }}" target="_blank" rel="noopener noreferrer">
-        {{ source_url[:48] }}{% if source_url|length > 48 %}…{% endif %}
-      </a>
-    </div>
-    <div class="ed-ayuda">
-      <p><b>Este guión es un punto de partida.</b> Cámbialo hasta que suene a ti: tus palabras,
-      tu forma de hablar, tus datos. La estructura es lo que no conviene tocar.</p>
-      <p>Se guarda solo mientras escribes. El original siempre se puede recuperar.</p>
-    </div>
-  </div>
-
-  {# Derecha: el guión editable #}
-  <div class="script-sections" id="ed-doc">
-    <div class="ed-marca">
-      <span class="logo-free">Free</span><span class="logo-agent">Agent</span><span class="logo-academy"> Academy</span>
-    </div>
-    <h2 class="ed-marca-titulo">{{ titulo }}</h2>
-
-    <div class="script-card hook-card ed-card">
-      <div class="script-card-header">
-        <div class="script-meta">
-          <span class="badge badge-blue">HOOK</span>
-          <span class="script-subtitle">Los primeros 1-3 segundos</span>
+  <div class="result-layout">
+    <div class="video-thumb-card ed-no-print">
+      <div class="video-thumb-wrap">
+        {% if thumbnail_path %}
+        <img src="{{ thumbnail_path }}" alt="Frame del vídeo de referencia" />
+        {% else %}
+        <div class="thumb-placeholder">
+          <span class="thumb-placeholder-icon">🎬</span>
+          <span>Frame del vídeo</span>
         </div>
-        <span class="ed-dur" data-for="hook"></span>
+        {% endif %}
       </div>
-      <div class="script-content ed-edit" id="ed-hook" data-seccion="hook"
-           contenteditable="true" role="textbox" aria-multiline="true"
-           aria-label="Hook">{{ secciones.hook | safe }}</div>
+      <div class="video-source">
+        <span style="font-size:1rem">🔗</span>
+        <a class="video-source-url" href="{{ source_url }}" target="_blank" rel="noopener noreferrer">
+          {{ source_url[:48] }}{% if source_url|length > 48 %}…{% endif %}
+        </a>
+      </div>
+      <div class="ed-ayuda">
+        <p><b>Este guión es tuyo: escríbelo encima.</b> Cámbialo hasta que suene a ti —
+        tus palabras, tu forma de hablar, tus datos. La estructura es lo único que no
+        conviene tocar.</p>
+        <p>Se guarda solo mientras escribes, y el original siempre se puede recuperar.</p>
+      </div>
     </div>
 
-    <div class="script-card dev-card ed-card">
-      <div class="script-card-header">
-        <div class="script-meta">
-          <span class="badge badge-orange">DESARROLLO</span>
-          <span class="script-subtitle">El cuerpo del vídeo</span>
-        </div>
-        <span class="ed-dur" data-for="development"></span>
-      </div>
-      <div class="script-content ed-edit" id="ed-development" data-seccion="development"
-           contenteditable="true" role="textbox" aria-multiline="true"
-           aria-label="Desarrollo">{{ secciones.development | safe }}</div>
+    <div class="script-sections">
+      {% include "_editor_secciones.html" %}
     </div>
-
-    <div class="script-card conc-card ed-card">
-      <div class="script-card-header">
-        <div class="script-meta">
-          <span class="badge badge-green">CTA</span>
-          <span class="script-subtitle">Un único llamamiento al final</span>
-        </div>
-        <span class="ed-dur" data-for="conclusion"></span>
-      </div>
-      <div class="script-content ed-edit" id="ed-conclusion" data-seccion="conclusion"
-           contenteditable="true" role="textbox" aria-multiline="true"
-           aria-label="CTA">{{ secciones.conclusion | safe }}</div>
-    </div>
-
-    <div class="script-card caption-card ed-card">
-      <div class="script-card-header">
-        <div class="script-meta">
-          <span class="badge badge-purple">CAPTION</span>
-          <span class="script-subtitle">Para pegar en Instagram</span>
-        </div>
-      </div>
-      <div class="script-content caption-content ed-edit" id="ed-caption" data-seccion="caption"
-           contenteditable="true" role="textbox" aria-multiline="true"
-           aria-label="Caption">{{ secciones.caption | safe }}</div>
-    </div>
-
-    <div class="ed-total" id="ed-total"></div>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/js/editor.js?v=1"></script>
 <script>
-(function () {
-  const URL_GUARDAR   = {{ url_guardar | tojson }};
-  const URL_RESTAURAR = {{ url_restaurar | tojson }};
-  const SECCIONES = ["hook", "development", "conclusion", "caption"];
-  // Ritmo de habla en vídeo corto en español: ~175 palabras por minuto.
-  const PALABRAS_POR_SEG = 175 / 60;
-
-  const estado = document.getElementById("ed-estado");
-  const total  = document.getElementById("ed-total");
-  const campos = {};
-  SECCIONES.forEach(s => campos[s] = document.getElementById("ed-" + s));
-
-  let temporizador = null;
-  let sinGuardar = false;
-
-  function marcar(texto, clase) {
-    estado.textContent = texto;
-    estado.dataset.estado = clase;
-  }
-
-  function palabras(el) {
-    const t = (el.innerText || "").trim();
-    return t ? t.split(/\s+/).length : 0;
-  }
-
-  function segundos(el) { return palabras(el) / PALABRAS_POR_SEG; }
-
-  function pinta(seg) {
-    if (seg < 1) return "—";
-    return seg < 60 ? Math.round(seg) + "s"
-                    : Math.floor(seg / 60) + "m " + Math.round(seg % 60) + "s";
-  }
-
-  function recalcular() {
-    let suma = 0;
-    SECCIONES.forEach(s => {
-      if (s === "caption") return;          // el caption no se dice en el vídeo
-      const seg = segundos(campos[s]);
-      suma += seg;
-      const marca = document.querySelector(`.ed-dur[data-for="${s}"]`);
-      if (!marca) return;
-      marca.textContent = pinta(seg);
-      // El hook, según la metodología, va entre 1 y 3 segundos
-      marca.classList.toggle("ed-dur--alerta", s === "hook" && seg > 3.5);
-    });
-
-    let aviso = "";
-    if (suma >= 5) {
-      if (suma > 95) aviso = "Se está alargando. Robert corta sus vídeos a un minuto o minuto y medio.";
-      else if (suma < 15) aviso = "Muy corto todavía.";
-      else aviso = "En el rango de un reel.";
-    }
-    total.innerHTML = suma < 1 ? "" :
-      `<b>Duración estimada: ${pinta(suma)}</b>` + (aviso ? `<span>${aviso}</span>` : "");
-  }
-
-  async function guardar() {
-    const cuerpo = {};
-    SECCIONES.forEach(s => cuerpo[s] = campos[s].innerHTML);
-    marcar("Guardando…", "guardando");
-    try {
-      const res = await fetch(URL_GUARDAR, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cuerpo),
-      });
-      if (!res.ok) throw new Error();
-      sinGuardar = false;
-      marcar("Guardado ✓", "guardado");
-      setTimeout(() => { if (!sinGuardar) marcar("Editado", "editado"); }, 1800);
-    } catch (e) {
-      marcar("No se pudo guardar", "error");
-    }
-  }
-
-  function alEscribir() {
-    sinGuardar = true;
-    marcar("Sin guardar…", "pendiente");
-    recalcular();
-    clearTimeout(temporizador);
-    temporizador = setTimeout(guardar, 1200);
-  }
-
-  SECCIONES.forEach(s => {
-    campos[s].addEventListener("input", alEscribir);
-    // Pegar siempre como texto plano: si no, entra el formato del sitio de origen
-    campos[s].addEventListener("paste", e => {
-      e.preventDefault();
-      const txt = (e.clipboardData || window.clipboardData).getData("text/plain");
-      document.execCommand("insertText", false, txt);
-    });
+  EditorGuiones.init({
+    raiz:         document.getElementById("ed-raiz"),
+    urlGuardar:   {{ url_guardar | tojson }},
+    urlRestaurar: {{ url_restaurar | tojson }},
   });
-
-  // Formato
-  document.querySelectorAll(".ed-tool[data-cmd]").forEach(b => {
-    b.addEventListener("mousedown", e => e.preventDefault());  // no perder el cursor
-    b.addEventListener("click", () => {
-      document.execCommand(b.dataset.cmd, false, null);
-      alEscribir();
-    });
-  });
-
-  // Guardar con ⌘S / Ctrl+S
-  document.addEventListener("keydown", e => {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
-      e.preventDefault(); clearTimeout(temporizador); guardar();
-    }
-  });
-
-  window.addEventListener("beforeunload", e => {
-    if (sinGuardar) { e.preventDefault(); e.returnValue = ""; }
-  });
-
-  // Restaurar el original
-  document.getElementById("ed-restaurar").addEventListener("click", async () => {
-    if (!confirm("Se perderán tus cambios y volverá el guión original. ¿Seguro?")) return;
-    try {
-      const res = await fetch(URL_RESTAURAR, { method: "POST" });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      SECCIONES.forEach(s => campos[s].textContent = data.secciones[s] || "");
-      sinGuardar = false;
-      marcar("Original restaurado", "guardado");
-      recalcular();
-    } catch (e) {
-      marcar("No se pudo restaurar", "error");
-    }
-  });
-
-  // Copiar todo
-  document.getElementById("ed-copiar").addEventListener("click", (ev) => {
-    const t = s => (campos[s].innerText || "").trim();
-    const texto = `🎣 HOOK\n${t("hook")}\n\n📖 DESARROLLO\n${t("development")}\n\n` +
-                  `✅ CTA\n${t("conclusion")}\n\n📲 CAPTION\n${t("caption")}`;
-    navigator.clipboard.writeText(texto);
-    const b = ev.currentTarget, orig = b.textContent;
-    b.textContent = "¡Copiado!";
-    setTimeout(() => b.textContent = orig, 1500);
-  });
-
-  // PDF: el diálogo de impresión del navegador, con "Guardar como PDF"
-  document.getElementById("ed-pdf").addEventListener("click", async () => {
-    if (sinGuardar) { clearTimeout(temporizador); await guardar(); }
-    window.print();
-  });
-
-  recalcular();
-})();
 </script>
 {% endblock %}

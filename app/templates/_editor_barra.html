@@ -1,0 +1,22 @@
+{# Barra del editor. Se reutiliza en el generador, el historial y las ideas. #}
+<div class="card ed-toolbar ed-no-print">
+  <span class="ed-editable-pista">✏️ Escribe encima para adaptarlo</span>
+
+  <div class="ed-tools">
+    <button type="button" class="ed-tool" data-cmd="bold" title="Negrita (⌘B)"><b>B</b></button>
+    <button type="button" class="ed-tool" data-cmd="italic" title="Cursiva (⌘I)"><i>I</i></button>
+    <button type="button" class="ed-tool" data-cmd="insertUnorderedList" title="Lista">≡</button>
+    {% if url_restaurar is defined and url_restaurar %}
+    <span class="ed-sep"></span>
+    <button type="button" class="ed-tool ed-tool--wide" data-ed-restaurar title="Volver al guión original">↺ Restaurar</button>
+    {% endif %}
+  </div>
+
+  <div class="ed-right">
+    <span class="ed-estado" data-ed-estado="{{ 'editado' if editado else 'listo' }}">
+      {% if editado %}Tus cambios están guardados{% else %}Editable — escribe encima{% endif %}
+    </span>
+    <button type="button" class="btn btn-ghost btn-sm" data-ed-copiar>📋 Copiar</button>
+    <button type="button" class="btn btn-primary btn-sm" data-ed-pdf>📄 Descargar PDF</button>
+  </div>
+</div>

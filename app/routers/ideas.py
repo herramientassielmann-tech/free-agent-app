@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import User, StarterScript, StarterScriptCheck
+from app.models import User, StarterScript, StarterScriptCheck, StarterScriptEdit
 from app.auth import get_current_user
 
 router = APIRouter()
@@ -46,7 +46,9 @@ async def idea_detalle(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Vista grande de un guión, igual que la del generador."""
+    """Vista grande de un guión. Es editable desde el primer momento: el
+    realtor escribe encima para adaptarlo a su forma de hablar. Como estos
+    guiones son comunes a todos, la edición se guarda como copia personal."""
     script = db.query(StarterScript).filter(StarterScript.id == sid).first()
     if not script:
         raise HTTPException(status_code=404, detail="Guión no encontrado.")
@@ -60,6 +62,19 @@ async def idea_detalle(
     todos = db.query(StarterScript).order_by(StarterScript.position).all()
     idx = next((i for i, s in enumerate(todos) if s.id == sid), 0)
 
+    # Su versión, si ya la ha tocado; si no, el guión tal cual
+    from app.routers.editor import _leer_edicion, _secciones
+    original = {
+        "hook": script.hook or "",
+        "development": script.development or "",
+        "conclusion": script.conclusion or "",
+    }
+    fila = db.query(StarterScriptEdit).filter(
+        StarterScriptEdit.user_id == current_user.id,
+        StarterScriptEdit.starter_script_id == sid,
+    ).first()
+    edicion = _leer_edicion(fila.edicion) if fila else None
+
     return templates.TemplateResponse(
         "ideas_detalle.html",
         {
@@ -71,6 +86,11 @@ async def idea_detalle(
             "total": len(todos),
             "anterior": todos[idx - 1] if idx > 0 else None,
             "siguiente": todos[idx + 1] if idx < len(todos) - 1 else None,
+            "titulo": script.titulo or "Idea inicial",
+            "secciones": _secciones(original, edicion),
+            "editado": bool(edicion),
+            "url_guardar": f"/editor/idea/{script.id}/guardar",
+            "url_restaurar": f"/editor/idea/{script.id}/restaurar",
         },
     )
 

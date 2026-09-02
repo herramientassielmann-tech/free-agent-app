@@ -1573,10 +1573,10 @@ a:hover { color: #3d9eff; }
   padding: 3px 10px; border-radius: var(--r-pill); background: var(--s2);
   white-space: nowrap;
 }
-.ed-estado[data-estado="guardado"] { color: var(--green); background: rgba(48,209,88,.12); }
-.ed-estado[data-estado="guardando"],
-.ed-estado[data-estado="pendiente"] { color: var(--orange); background: rgba(255,159,10,.12); }
-.ed-estado[data-estado="error"]     { color: var(--red);   background: rgba(255,69,58,.12); }
+.ed-estado[data-ed-estado="guardado"] { color: var(--green); background: rgba(48,209,88,.12); }
+.ed-estado[data-ed-estado="guardando"],
+.ed-estado[data-ed-estado="pendiente"] { color: var(--orange); background: rgba(255,159,10,.12); }
+.ed-estado[data-ed-estado="error"]     { color: var(--red);   background: rgba(255,69,58,.12); }
 
 /* Secciones editables */
 .ed-card { transition: border-color .15s; }
@@ -1671,3 +1671,27 @@ a:hover { color: #3d9eff; }
   }
   .ed-total b, .ed-total span { color: #777 !important; }
 }
+
+/* ── El guión nace editable: que se note ── */
+.ed-editable-pista {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .78rem; color: var(--blue);
+  background: var(--blue-dim); border: 1px solid rgba(10,132,255,.22);
+  padding: 4px 11px; border-radius: var(--r-pill); white-space: nowrap;
+}
+.ed-estado[data-ed-estado="listo"] { color: var(--blue); background: var(--blue-dim); }
+
+/* Los campos parecen campos aunque no los toques */
+.ed-edit {
+  border: 1px dashed transparent;
+  border-radius: var(--r-sm);
+  padding: 9px 11px; margin: -9px -11px;
+  transition: background .15s, border-color .15s, box-shadow .15s;
+}
+.ed-card:hover .ed-edit { border-color: var(--border-hover); }
+.ed-edit:hover  { background: rgba(255,255,255,.025); border-color: var(--border-hover); }
+.ed-edit:focus  {
+  outline: none; border-style: solid; border-color: transparent;
+  background: rgba(10,132,255,.06); box-shadow: 0 0 0 1px var(--blue-glow);
+}
+@media print { .ed-edit { border: none !important; } }

@@ -15,6 +15,17 @@ const STEPS = [
 
 let stepTimers = [];
 
+/* El resultado ES el editor: se monta al cargar, aunque todavía esté vacío.
+   El guardado se activa en cuanto el guión existe en la BD y tiene id. */
+const editorGuion = (window.EditorGuiones && document.getElementById('ed-raiz'))
+  ? EditorGuiones.init({ raiz: document.getElementById('ed-raiz'), urlGuardar: null })
+  : null;
+
+function setSeccion(nombre, texto) {
+  const el = document.querySelector(`[data-seccion="${nombre}"]`);
+  if (el) el.textContent = texto;
+}
+
 if (generateBtn) {
   generateBtn.addEventListener('click', handleGenerate);
 }
@@ -108,20 +119,14 @@ function animateSteps() {
 
 /* ── Fill result ────────────────────────────── */
 function fillResult(data, url) {
-  setText('hook-text',    data.hook       || '');
-  setText('dev-text',     data.desarrollo || '');
-  setText('conc-text',    data.conclusion || '');
-  setText('caption-text', data.caption    || '');
+  setSeccion('hook',        data.hook       || '');
+  setSeccion('development', data.desarrollo || '');
+  setSeccion('conclusion',  data.conclusion || '');
 
-  // Enlace al editor (solo admin: el enlace no existe para el resto)
-  const editLink = document.getElementById('edit-script-link');
-  if (editLink) {
-    if (data.script_id) {
-      editLink.href = '/editor/guion/' + data.script_id;
-      editLink.classList.remove('hidden');
-    } else {
-      editLink.classList.add('hidden');
-    }
+  // El guión nace editable: en cuanto existe en la BD, se puede guardar encima
+  if (editorGuion) {
+    editorGuion.recalcular();
+    if (data.script_id) editorGuion.activarGuardado('/editor/guion/' + data.script_id + '/guardar');
   }
 
   // Source URL (enlace clicable)
@@ -151,11 +156,6 @@ function fillResult(data, url) {
       badge.classList.add('hidden');
     }
   }
-}
-
-function setText(id, text) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = text;
 }
 
 /* ── Quota ──────────────────────────────────── */
@@ -200,17 +200,6 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
   });
 });
 
-const copyAllBtn = document.getElementById('copy-all-btn');
-if (copyAllBtn) {
-  copyAllBtn.addEventListener('click', () => {
-    const hook    = document.getElementById('hook-text')?.textContent    || '';
-    const dev     = document.getElementById('dev-text')?.textContent     || '';
-    const conc    = document.getElementById('conc-text')?.textContent    || '';
-    const caption = document.getElementById('caption-text')?.textContent || '';
-    const all = buildScriptText(hook, dev, conc, caption);
-    copyText(all, copyAllBtn);
-  });
-}
 
 /* ── Click en guión reciente → abrir en sección de resultado ── */
 document.querySelectorAll('.recent-item--clickable').forEach(item => {
@@ -220,7 +209,7 @@ document.querySelectorAll('.recent-item--clickable').forEach(item => {
       hook:                 item.dataset.hook       || '',
       desarrollo:           item.dataset.dev        || '',
       conclusion:           item.dataset.conc       || '',
-      caption:              item.dataset.caption    || '',
+      script_id:            item.dataset.id         || '',
       thumbnail_path:       item.dataset.thumb      || '',
       estructura_detectada: item.dataset.estructura || '',
     };
@@ -235,13 +224,13 @@ document.querySelectorAll('.recent-item--clickable').forEach(item => {
 /* ── Copy from recent list ──────────────────── */
 document.querySelectorAll('.recent-copy-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    const text = buildScriptText(btn.dataset.hook, btn.dataset.dev, btn.dataset.conc, btn.dataset.caption);
+    const text = buildScriptText(btn.dataset.hook, btn.dataset.dev, btn.dataset.conc);
     copyText(text, btn);
   });
 });
 
-function buildScriptText(hook, dev, conc, caption) {
-  return `🎣 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CTA\n${conc}\n\n📲 CAPTION\n${caption}`;
+function buildScriptText(hook, dev, conc) {
+  return `🎣 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CTA\n${conc}`;
 }
 
 /* ── Password change modal ──────────────────── */
