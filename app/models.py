@@ -99,6 +99,11 @@ class Script(Base):
     custom_instructions: Mapped[Optional[str]] = mapped_column(Text)
     thumbnail_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     estructura_detectada: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Versión editada por el realtor en el editor de guiones. JSON con las
+    # secciones {hook, development, conclusion, caption}. El guión original
+    # generado por la IA nunca se toca, para poder restaurarlo.
+    edicion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    edited_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     user: Mapped["User"] = relationship("User", back_populates="scripts")
@@ -143,6 +148,30 @@ class StarterScriptCheck(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     script: Mapped["StarterScript"] = relationship("StarterScript", back_populates="checks")
+
+
+class StarterScriptEdit(Base):
+    """Copia personal de UN realtor sobre UN guión inicial.
+
+    Los guiones de "Ideas Iniciales" son comunes a todos, así que la edición no
+    puede tocar el original: cada realtor guarda aquí su propia versión y solo
+    él la ve. Si no hay fila, ese realtor todavía ve el guión tal cual."""
+    __tablename__ = "starter_script_edits"
+    __table_args__ = (
+        UniqueConstraint("user_id", "starter_script_id", name="uq_starter_edit_user_script"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    starter_script_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("starter_scripts.id"), nullable=False, index=True
+    )
+    # JSON con las secciones {hook, development, conclusion, caption}
+    edicion: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
 
 class LeadConversation(Base):

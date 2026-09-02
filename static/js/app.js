@@ -113,6 +113,17 @@ function fillResult(data, url) {
   setText('conc-text',    data.conclusion || '');
   setText('caption-text', data.caption    || '');
 
+  // Enlace al editor (solo admin: el enlace no existe para el resto)
+  const editLink = document.getElementById('edit-script-link');
+  if (editLink) {
+    if (data.script_id) {
+      editLink.href = '/editor/guion/' + data.script_id;
+      editLink.classList.remove('hidden');
+    } else {
+      editLink.classList.add('hidden');
+    }
+  }
+
   // Source URL (enlace clicable)
   const urlEl = document.getElementById('result-url');
   if (urlEl) {

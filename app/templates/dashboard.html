@@ -70,6 +70,9 @@
 <div id="result-section" class="hidden">
   <div class="result-header">
     <h2 class="result-title">Guión generado</h2>
+    {% if user.is_admin %}
+    <a class="btn btn-ghost btn-sm hidden" id="edit-script-link" href="#">✏️ Editar guión</a>
+    {% endif %}
     <button class="btn btn-ghost btn-sm" id="copy-all-btn">📋 Copiar todo</button>
   </div>
 
@@ -251,5 +254,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/app.js?v=2"></script>
+<script src="/static/js/app.js?v=3"></script>
 {% endblock %}

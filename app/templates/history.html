@@ -50,6 +50,9 @@
     {# Actions #}
     <div class="history-actions">
       <button class="btn btn-ghost history-toggle" data-id="{{ script.id }}">Ver guión</button>
+      {% if user.is_admin %}
+      <a class="btn btn-ghost" href="/editor/guion/{{ script.id }}">✏️ Editar</a>
+      {% endif %}
       <button class="btn btn-primary history-copy-btn"
               data-hook="{{ script.hook or '' }}"
               data-dev="{{ script.development or '' }}"
