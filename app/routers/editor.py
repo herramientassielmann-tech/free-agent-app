@@ -8,8 +8,8 @@ y sacarlo en PDF con el branding de la academia.
 El original generado NUNCA se sobrescribe. La edición se guarda aparte, así que
 siempre se puede volver atrás.
 
-De momento solo lo ve el admin (require_admin). Cuando se valide, basta con
-cambiar la dependencia a get_current_user.
+Disponible para todos los realtors. El aislamiento entre cuentas lo garantizan
+_mi_script (filtra por user_id) y StarterScriptEdit (una fila por realtor).
 """
 import json
 from datetime import datetime
@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User, Script, StarterScript, StarterScriptEdit
-from app.auth import require_admin
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/editor")
 templates = Jinja2Templates(directory="app/templates")
@@ -124,7 +124,7 @@ def _mi_script(sid: int, user: User, db: Session) -> Script:
 async def editar_guion(
     sid: int,
     request: Request,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     script = _mi_script(sid, current_user, db)
@@ -156,7 +156,7 @@ async def editar_guion(
 async def guardar_guion(
     sid: int,
     payload: GuardarRequest,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     script = _mi_script(sid, current_user, db)
@@ -169,7 +169,7 @@ async def guardar_guion(
 @router.post("/guion/{sid}/restaurar")
 async def restaurar_guion(
     sid: int,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     script = _mi_script(sid, current_user, db)
@@ -192,7 +192,7 @@ async def restaurar_guion(
 async def editar_idea(
     sid: int,
     request: Request,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     idea = db.query(StarterScript).filter(StarterScript.id == sid).first()
@@ -235,7 +235,7 @@ async def editar_idea(
 async def guardar_idea(
     sid: int,
     payload: GuardarRequest,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     idea = db.query(StarterScript).filter(StarterScript.id == sid).first()
@@ -266,7 +266,7 @@ async def guardar_idea(
 @router.post("/idea/{sid}/restaurar")
 async def restaurar_idea(
     sid: int,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     idea = db.query(StarterScript).filter(StarterScript.id == sid).first()
