@@ -145,17 +145,6 @@ function fillResult(data, url) {
     if (thumbPlch) thumbPlch.classList.add('hidden');
   }
 
-  // Estructura detectada
-  const badge     = document.getElementById('estructura-badge');
-  const badgeText = document.getElementById('estructura-text');
-  if (badge && badgeText) {
-    if (data.estructura_detectada) {
-      badgeText.textContent = data.estructura_detectada;
-      badge.classList.remove('hidden');
-    } else {
-      badge.classList.add('hidden');
-    }
-  }
 }
 
 /* ── Quota ──────────────────────────────────── */

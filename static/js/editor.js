@@ -34,7 +34,6 @@ window.EditorGuiones = (function () {
     if (!campos.hook) return null;
 
     const estado = raiz.querySelector("[data-ed-estado]");
-    const total  = raiz.querySelector("[data-ed-total]");
 
     let urlGuardar = cfg.urlGuardar || null;
     let temporizador = null;
@@ -52,27 +51,16 @@ window.EditorGuiones = (function () {
     }
 
     function recalcular() {
-      let suma = 0;
       SECCIONES.forEach(s => {
         const el = campos[s];
         if (!el) return;
-        const seg = segundos(el);
-        suma += seg;
         const marca = raiz.querySelector(`.ed-dur[data-for="${s}"]`);
         if (!marca) return;
+        const seg = segundos(el);
         marca.textContent = pinta(seg);
         // El hook, según la metodología, va entre 1 y 3 segundos
         marca.classList.toggle("ed-dur--alerta", s === "hook" && seg > 3.5);
       });
-      if (!total) return;
-      let aviso = "";
-      if (suma >= 5) {
-        if (suma > 95) aviso = "Se está alargando. Robert corta sus vídeos a un minuto o minuto y medio.";
-        else if (suma < 15) aviso = "Muy corto todavía.";
-        else aviso = "En el rango de un reel.";
-      }
-      total.innerHTML = suma < 1 ? "" :
-        `<b>Duración estimada: ${pinta(suma)}</b>` + (aviso ? `<span>${aviso}</span>` : "");
     }
 
     async function guardar() {

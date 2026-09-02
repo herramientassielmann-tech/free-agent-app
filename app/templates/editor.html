@@ -13,13 +13,6 @@
 <div id="ed-raiz">
   {% include "_editor_barra.html" %}
 
-  {% if estructura_detectada %}
-  <div class="estructura-badge ed-no-print">
-    <span class="estructura-label">Estructura detectada</span>
-    <span>{{ estructura_detectada }}</span>
-  </div>
-  {% endif %}
-
   <div class="result-layout">
     <div class="video-thumb-card ed-no-print">
       <div class="video-thumb-wrap">
@@ -38,12 +31,6 @@
           {{ source_url[:48] }}{% if source_url|length > 48 %}…{% endif %}
         </a>
       </div>
-      <div class="ed-ayuda">
-        <p><b>Este guión es tuyo: escríbelo encima.</b> Cámbialo hasta que suene a ti —
-        tus palabras, tu forma de hablar, tus datos. La estructura es lo único que no
-        conviene tocar.</p>
-        <p>Se guarda solo mientras escribes, y el original siempre se puede recuperar.</p>
-      </div>
     </div>
 
     <div class="script-sections">
@@ -54,7 +41,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/editor.js?v=1"></script>
+<script src="/static/js/editor.js?v=2"></script>
 <script>
   EditorGuiones.init({
     raiz:         document.getElementById("ed-raiz"),

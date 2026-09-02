@@ -75,11 +75,6 @@
   <div id="ed-raiz">
     {% include "_editor_barra.html" %}
 
-    <div id="estructura-badge" class="estructura-badge hidden ed-no-print">
-      <span class="estructura-label">Estructura detectada</span>
-      <span id="estructura-text"></span>
-    </div>
-
     <div class="result-layout">
       {# Left: Video thumbnail #}
       <div class="video-thumb-card ed-no-print">
@@ -93,12 +88,6 @@
         <div class="video-source">
           <span style="font-size:1rem">🔗</span>
           <a id="result-url" class="video-source-url" href="#" target="_blank" rel="noopener noreferrer"></a>
-        </div>
-        <div class="ed-ayuda">
-          <p><b>Este guión es tuyo: escríbelo encima.</b> Cámbialo hasta que suene a ti —
-          tus palabras, tu forma de hablar, tus datos. La estructura es lo único que no
-          conviene tocar.</p>
-          <p>Se guarda solo mientras escribes.</p>
         </div>
       </div>
 
@@ -217,6 +206,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/editor.js?v=1"></script>
-<script src="/static/js/app.js?v=4"></script>
+<script src="/static/js/editor.js?v=2"></script>
+<script src="/static/js/app.js?v=5"></script>
 {% endblock %}

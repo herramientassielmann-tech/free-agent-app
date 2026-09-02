@@ -22,13 +22,6 @@
 <div id="ed-raiz">
   {% include "_editor_barra.html" %}
 
-  {% if s.estructura_detectada %}
-  <div class="estructura-badge ed-no-print">
-    <span class="estructura-label">Estructura detectada</span>
-    <span>{{ s.estructura_detectada }}</span>
-  </div>
-  {% endif %}
-
   <div class="result-layout">
     <div class="video-thumb-card ed-no-print">
       <div class="video-thumb-wrap">
@@ -46,12 +39,6 @@
         <a class="video-source-url" href="{{ s.source_url }}" target="_blank" rel="noopener noreferrer">
           {{ s.source_url[:48] }}{% if s.source_url|length > 48 %}…{% endif %}
         </a>
-      </div>
-      <div class="ed-ayuda">
-        <p><b>Este guión es tuyo: escríbelo encima.</b> Cámbialo hasta que suene a ti —
-        tus palabras, tu zona, tus datos. La estructura es lo único que no conviene tocar.</p>
-        <p>Se guarda solo mientras escribes, y solo lo ves tú. El guión original de la
-        academia no se toca, y siempre puedes volver a él.</p>
       </div>
     </div>
 
@@ -73,7 +60,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/editor.js?v=1"></script>
+<script src="/static/js/editor.js?v=2"></script>
 <script>
   EditorGuiones.init({
     raiz:         document.getElementById("ed-raiz"),
