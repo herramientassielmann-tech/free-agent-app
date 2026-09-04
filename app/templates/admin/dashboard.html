@@ -10,6 +10,39 @@
   <a href="/admin/users/new" class="btn btn-primary">+ Nuevo Realtor</a>
 </div>
 
+{# ── Salud de las descargas ── #}
+{% if salud_descargas %}
+  {% if salud_descargas.rotas %}
+  <div class="salud-aviso salud-aviso--roto">
+    <span class="salud-icono">⚠️</span>
+    <div>
+      <b>Los realtors no pueden generar guiones de {{ salud_descargas.rotas|join(' ni ') }}.</b>
+      <p>Ya se ha intentado actualizar yt-dlp automáticamente y sigue fallando, así que
+      hace falta mirarlo a mano. Versión actual: {{ salud_descargas.yt_dlp }}.</p>
+    </div>
+  </div>
+  {% elif salud_descargas.horas is not none and salud_descargas.horas > 48 %}
+  <div class="salud-aviso salud-aviso--viejo">
+    <span class="salud-icono">🕐</span>
+    <div>
+      <b>Nadie está vigilando las descargas.</b>
+      <p>La última comprobación fue hace {{ salud_descargas.horas }} horas. El temporizador
+      debería pasar cada día — revisa <code>freeagent-salud.timer</code> en el servidor.</p>
+    </div>
+  </div>
+  {% else %}
+  <div class="salud-aviso salud-aviso--ok">
+    <span class="salud-icono">✅</span>
+    <div>
+      <b>Descargas funcionando.</b>
+      <p>Instagram y TikTok comprobados
+      {% if salud_descargas.horas == 0 %}hace menos de una hora{% else %}hace {{ salud_descargas.horas }} h{% endif %}.
+      yt-dlp {{ salud_descargas.yt_dlp }}{% if salud_descargas.actualizacion %} — se actualizó solo ({{ salud_descargas.actualizacion }}){% endif %}.</p>
+    </div>
+  </div>
+  {% endif %}
+{% endif %}
+
 <div class="stats-grid">
   <div class="card stat-card">
     <p class="stat-label">Guiones hoy</p>

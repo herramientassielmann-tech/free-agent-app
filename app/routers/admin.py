@@ -36,6 +36,30 @@ def _user_stats(user: User, db: Session) -> dict:
     return {"scripts_month": scripts_month, "scripts_total": scripts_total}
 
 
+def _salud_descargas() -> dict | None:
+    """Última revisión de las descargas, si el temporizador ya ha corrido.
+
+    Lo escribe scripts/salud_descargas.py. Devuelve None si todavía no existe,
+    para no dar una alarma falsa antes de la primera comprobación."""
+    import json
+    from pathlib import Path
+    fichero = Path(__file__).resolve().parent.parent.parent / "estado_descargas.json"
+    if not fichero.exists():
+        return None
+    try:
+        datos = json.loads(fichero.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return None
+    # Una revisión vieja también es señal de alarma: significa que el
+    # temporizador no está corriendo y nadie está vigilando.
+    try:
+        revisado = datetime.fromisoformat(datos["revisado"].rstrip("Z"))
+        datos["horas"] = round((datetime.utcnow() - revisado).total_seconds() / 3600)
+    except (KeyError, ValueError):
+        datos["horas"] = None
+    return datos
+
+
 @router.get("", response_class=HTMLResponse)
 @router.get("/", response_class=HTMLResponse)
 async def admin_dashboard(
@@ -66,6 +90,7 @@ async def admin_dashboard(
         {
             "request": request,
             "user": current_user,
+            "salud_descargas": _salud_descargas(),
             "total_scripts_month": total_scripts_month,
             "total_scripts_today": total_scripts_today,
             "total_scripts_all": total_scripts_all,

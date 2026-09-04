@@ -1688,3 +1688,23 @@ a:hover { color: #3d9eff; }
   outline: none; border-style: solid; border-color: transparent;
   background: rgba(10,132,255,.06); box-shadow: 0 0 0 1px var(--blue-glow);
 }
+
+/* ── Aviso de salud de las descargas (panel de admin) ── */
+.salud-aviso {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 14px 18px; margin-bottom: 22px;
+  border-radius: var(--r-md); border: 1px solid var(--border);
+  background: var(--s1);
+}
+.salud-icono { font-size: 1.15rem; line-height: 1.3; flex-shrink: 0; }
+.salud-aviso b { display: block; font-size: .9rem; color: var(--t1); }
+.salud-aviso p { margin: 3px 0 0; font-size: .82rem; color: var(--t2); line-height: 1.5; }
+.salud-aviso code {
+  font-family: ui-monospace, Menlo, monospace; font-size: .78rem;
+  background: var(--s3); padding: 1px 5px; border-radius: 4px;
+}
+.salud-aviso--roto  { border-color: rgba(255,69,58,.35);  background: rgba(255,69,58,.07); }
+.salud-aviso--roto b { color: var(--red); }
+.salud-aviso--viejo { border-color: rgba(255,159,10,.32); background: rgba(255,159,10,.06); }
+.salud-aviso--viejo b { color: var(--orange); }
+.salud-aviso--ok    { border-color: rgba(48,209,88,.22);  background: rgba(48,209,88,.05); }
