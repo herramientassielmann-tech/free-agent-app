@@ -41,6 +41,34 @@ def _save_thumbnail(src: Path) -> str | None:
     return f"/static/thumbnails/{dest_name}"
 
 
+
+def _error_descarga(e: Exception, red: str) -> ValueError:
+    """Traduce el fallo de yt-dlp a algo que el realtor pueda entender y accionar.
+
+    Sin esto sale un 500 con la traza técnica y parece culpa suya."""
+    msg = str(e).lower()
+    if "rate-limit" in msg or "login required" in msg or "not available" in msg:
+        return ValueError(
+            f"{red} no nos ha dejado descargar este vídeo. Suele pasar si el vídeo "
+            "es privado, se ha borrado, o si la cuenta desde la que descargamos "
+            "necesita renovarse. Prueba con otro vídeo; si fallan todos, avisa al "
+            "administrador."
+        )
+    if "ip address is blocked" in msg:
+        return ValueError(
+            f"{red} está bloqueando temporalmente al servidor. Vuelve a intentarlo "
+            "en un rato; si sigue igual, avisa al administrador."
+        )
+    if "private" in msg or "unavailable" in msg:
+        return ValueError(
+            f"Este vídeo de {red} es privado o ya no existe. Prueba con otro."
+        )
+    return ValueError(
+        f"No se pudo descargar el vídeo de {red}. Comprueba que el enlace es "
+        "correcto y que el vídeo es público."
+    )
+
+
 # ── Instagram via yt-dlp + cookies ──────────────────────────────────────────
 
 def _instagram_download(url: str) -> dict:
@@ -57,16 +85,26 @@ def _instagram_download(url: str) -> dict:
         )
 
     with tempfile.TemporaryDirectory() as tmpdir:
+        # yt-dlp REESCRIBE el fichero de cookies al terminar. Si Instagram
+        # invalida la sesión, guarda el fichero ya sin `sessionid` y destruye la
+        # credencial para siempre. Por eso trabaja sobre una copia desechable:
+        # el fichero bueno del servidor no se toca nunca.
+        cookies_copia = os.path.join(tmpdir, "cookies.txt")
+        shutil.copyfile(cookies_path, cookies_copia)
+
         ydl_opts = {
             "format": "bestaudio/best",
             "outtmpl": os.path.join(tmpdir, "media.%(ext)s"),
             "writethumbnail": True,
             "quiet": True,
             "no_warnings": True,
-            "cookiefile": str(cookies_path),
+            "cookiefile": cookies_copia,
         }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+        except Exception as e:
+            raise _error_descarga(e, "Instagram") from e
 
         transcript = None
         thumbnail_tmp = None
@@ -99,8 +137,11 @@ def _tiktok_download(url: str) -> dict:
             "quiet": True,
             "no_warnings": True,
         }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+        except Exception as e:
+            raise _error_descarga(e, "TikTok") from e
 
         video_file = next(
             (f for f in Path(tmpdir).iterdir() if f.suffix.lower() in WHISPER_EXTS),
