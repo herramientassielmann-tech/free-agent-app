@@ -174,6 +174,36 @@ class StarterScriptEdit(Base):
     )
 
 
+class ClipReunion(Base):
+    """Un trozo de una llamada 1-a-1 donde se resuelve una duda concreta.
+
+    De las llamadas con los alumnos salen explicaciones que sirven para todos:
+    cómo perder el miedo a la cámara, por qué no aprender a editar, qué CTA usar.
+    Aquí queda cada una recortada y con título, agrupada por alumno.
+
+    El fichero vive en Drive, no en el servidor: son grabaciones con la cara y
+    los datos del alumno, y ocupan. Aquí solo se guarda el enlace."""
+    __tablename__ = "clips_reunion"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    alumno: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    titulo: Mapped[str] = mapped_column(String(300), nullable=False)
+    resumen: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    tema: Mapped[Optional[str]] = mapped_column(String(120), nullable=True, index=True)
+    # De qué reunión sale y en qué momento
+    fecha_reunion: Mapped[str] = mapped_column(String(20), nullable=False)
+    inicio_seg: Mapped[int] = mapped_column(Integer, nullable=False)
+    duracion_seg: Mapped[int] = mapped_column(Integer, nullable=False)
+    tipo: Mapped[str] = mapped_column(String(10), nullable=False)  # 'video' | 'audio'
+    drive_id: Mapped[str] = mapped_column(String(120), nullable=False)
+    drive_url: Mapped[str] = mapped_column(String(500), nullable=False)
+    # Carpeta del alumno en Drive. Se repite en cada clip suyo a propósito: así
+    # el enlace a la carpeta sale de los propios datos y no hay que mantener
+    # una tabla aparte que se desincronice.
+    carpeta_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class LeadConversation(Base):
     """Un hilo de chat con un lead concreto: el realtor pega lo que dice el
     cliente y recibe una sugerencia de respuesta. Nunca se envía nada solo."""

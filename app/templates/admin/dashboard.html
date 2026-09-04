@@ -10,6 +10,19 @@
   <a href="/admin/users/new" class="btn btn-primary">+ Nuevo Realtor</a>
 </div>
 
+{# ── Biblioteca de Respuestas ── #}
+{% if clips_biblioteca %}
+<a class="bib-acceso" href="/biblioteca">
+  <span class="bib-acceso-icono">🎬</span>
+  <div>
+    <b>Biblioteca de Respuestas</b>
+    <p>{{ clips_biblioteca }} momentos recortados de las llamadas con los alumnos,
+    con enlace a la carpeta de cada uno en Drive.</p>
+  </div>
+  <span class="bib-acceso-flecha">→</span>
+</a>
+{% endif %}
+
 {# ── Salud de las descargas ── #}
 {% if salud_descargas %}
   {% if salud_descargas.rotas %}

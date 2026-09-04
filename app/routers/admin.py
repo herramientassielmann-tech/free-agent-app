@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import User, Script, RealtorProfile
+from app.models import User, Script, RealtorProfile, ClipReunion
 from app.auth import require_admin, hash_password, create_access_token, get_real_user, decode_token
 from app.services.profile_extractor import extract_profile_from_transcript
 from app.services.ig_optimizer import optimize_ig_profile, ig_handle_from_link
@@ -91,6 +91,7 @@ async def admin_dashboard(
             "request": request,
             "user": current_user,
             "salud_descargas": _salud_descargas(),
+            "clips_biblioteca": db.query(ClipReunion).count(),
             "total_scripts_month": total_scripts_month,
             "total_scripts_today": total_scripts_today,
             "total_scripts_all": total_scripts_all,

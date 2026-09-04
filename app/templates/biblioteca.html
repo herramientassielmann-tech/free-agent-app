@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Biblioteca de Respuestas — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Biblioteca de Respuestas</h1>
+    <p class="page-subtitle">
+      {% if total %}
+      {{ total }} momentos sacados de las llamadas con los alumnos · {{ minutos }} min en total.
+      {% else %}
+      Trozos de las llamadas 1-a-1 donde se resuelve una duda concreta.
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+{% if not total %}
+<div class="empty-state">
+  <span class="empty-icon">🎬</span>
+  <p class="empty-title">Todavía no hay clips</p>
+  <p class="empty-text">Se generan desde el servidor con <code>scripts/generar_biblioteca.py</code>,
+  que recorta las reuniones de Fireflies y las sube a Drive.</p>
+</div>
+{% else %}
+
+{% if repetidos %}
+<div class="card bib-repetidos">
+  <b>Estos temas los explicas a más de un alumno</b>
+  <p>Cuando algo se repite en varias llamadas, suele salir más a cuenta llevarlo a
+  la formación que volver a contarlo cada semana.</p>
+  <div class="bib-chips">
+    {% for tema, alumnos in repetidos %}
+    <span class="bib-chip">{{ tema|replace('-', ' ') }} <i>{{ alumnos|join(', ') }}</i></span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% for alumno, clips in por_alumno.items() %}
+<div class="bib-alumno">
+  <div class="bib-alumno-head">
+    <h2>{{ alumno }}</h2>
+    {% if carpetas.get(alumno) %}
+    <a class="bib-carpeta" href="{{ carpetas[alumno] }}" target="_blank" rel="noopener noreferrer">
+      📁 Carpeta de {{ alumno }} en Drive
+    </a>
+    {% endif %}
+    <span>{{ clips|length }} clips · {{ (clips|sum(attribute='duracion_seg') / 60)|round|int }} min</span>
+  </div>
+
+  <div class="bib-lista">
+    {% for c in clips %}
+    <a class="bib-clip" href="{{ c.drive_url }}" target="_blank" rel="noopener noreferrer">
+      <span class="bib-tipo bib-tipo--{{ c.tipo }}">{{ 'Vídeo' if c.tipo == 'video' else 'Audio' }}</span>
+      <span class="bib-texto">
+        <b>{{ c.titulo }}</b>
+        {% if c.resumen %}<i>{{ c.resumen }}</i>{% endif %}
+      </span>
+      <span class="bib-meta">
+        <b>{{ (c.duracion_seg / 60)|round(1) }} min</b>
+        <i>{{ c.fecha_reunion }}</i>
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}
