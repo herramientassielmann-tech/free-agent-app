@@ -12,7 +12,9 @@
  *   });
  */
 window.EditorGuiones = (function () {
-  const SECCIONES = ["hook", "development", "conclusion"];
+  const SECCIONES = ["hook", "development", "conclusion", "caption"];
+  // El caption se escribe, no se dice: no suma a la duración del vídeo.
+  const HABLADAS = ["hook", "development", "conclusion"];
   // Ritmo de habla en vídeo corto en español: ~175 palabras por minuto.
   const PALABRAS_POR_SEG = 175 / 60;
 
@@ -51,7 +53,7 @@ window.EditorGuiones = (function () {
     }
 
     function recalcular() {
-      SECCIONES.forEach(s => {
+      HABLADAS.forEach(s => {
         const el = campos[s];
         if (!el) return;
         const marca = raiz.querySelector(`.ed-dur[data-for="${s}"]`);
@@ -150,7 +152,8 @@ window.EditorGuiones = (function () {
       btnCopiar.addEventListener("click", () => {
         const t = s => campos[s] ? (campos[s].innerText || "").trim() : "";
         navigator.clipboard.writeText(
-          `🎣 HOOK\n${t("hook")}\n\n📖 DESARROLLO\n${t("development")}\n\n✅ CTA\n${t("conclusion")}`
+          `🎣 HOOK\n${t("hook")}\n\n📖 DESARROLLO\n${t("development")}\n\n` +
+          `✅ CTA\n${t("conclusion")}\n\n📲 CAPTION\n${t("caption")}`
         );
         const orig = btnCopiar.textContent;
         btnCopiar.textContent = "¡Copiado!";

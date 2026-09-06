@@ -53,7 +53,8 @@
       <button class="btn btn-primary history-copy-btn"
               data-hook="{{ script.hook or '' }}"
               data-dev="{{ script.development or '' }}"
-              data-conc="{{ script.conclusion or '' }}">
+              data-conc="{{ script.conclusion or '' }}"
+              data-caption="{{ script.caption or '' }}">
         Copiar
       </button>
     </div>
@@ -98,13 +99,14 @@
   // Copy full script
   document.querySelectorAll('.history-copy-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const text = buildScript(btn.dataset.hook, btn.dataset.dev, btn.dataset.conc);
+      const text = buildScript(btn.dataset.hook, btn.dataset.dev, btn.dataset.conc, btn.dataset.caption);
       copyToClipboard(text, btn, 'Copiar', '¡Copiado!');
     });
   });
 
-  function buildScript(hook, dev, conc) {
-    return `🎣 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CTA\n${conc}`;
+  function buildScript(hook, dev, conc, caption) {
+    return `🎣 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CTA\n${conc}` +
+           (caption ? `\n\n📲 CAPTION\n${caption}` : '');
   }
 
   function copyToClipboard(text, btn, original, done) {

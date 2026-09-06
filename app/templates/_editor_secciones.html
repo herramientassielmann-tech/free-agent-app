@@ -42,3 +42,16 @@
   <div class="script-content" data-seccion="conclusion"
        aria-label="CTA">{{ s.get('conclusion', '') | safe }}</div>
 </div>
+
+{# El caption no se dice a cámara: no cuenta para la duración y no va al PDF,
+   porque además sus emojis se incrustan como imágenes y ensucian la impresión. #}
+<div class="script-card caption-card ed-card ed-no-print">
+  <div class="script-card-header">
+    <div class="script-meta">
+      <span class="badge badge-purple">CAPTION</span>
+      <span class="script-subtitle">Para pegar en Instagram</span>
+    </div>
+  </div>
+  <div class="script-content caption-content" data-seccion="caption"
+       aria-label="Caption">{{ s.get('caption', '') | safe }}</div>
+</div>

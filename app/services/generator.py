@@ -96,6 +96,8 @@ Divide tu adaptación (que ya tiene la misma longitud que el original) en las tr
 - conclusion: el cierre / llamada a la acción del original, re-vestido.
 Unidas, las tres partes deben leerse como la transcripción original pero en el mundo del realtor, y sumar la misma longitud.
 
+Aparte, genera un "caption" corto para el post (esto sí es nuevo; no forma parte de la transcripción hablada).
+
 ════════════════════════════════════════
 FORMATO DE RESPUESTA (JSON estricto, sin texto adicional)
 ════════════════════════════════════════
@@ -104,7 +106,8 @@ FORMATO DE RESPUESTA (JSON estricto, sin texto adicional)
   "estructura_detectada": "1 línea: de qué va el vídeo original y a qué tema inmobiliario lo has adaptado",
   "hook": "El arranque del original, adaptado (misma longitud)",
   "desarrollo": "La parte central del original, adaptada — MISMA longitud, sin extender",
-  "conclusion": "El cierre/CTA del original, adaptado"
+  "conclusion": "El cierre/CTA del original, adaptado",
+  "caption": "Caption corto con emojis y hashtags inmobiliarios en español"
 }}"""
 
 
@@ -150,7 +153,7 @@ Adapta esta transcripción palabra por palabra al perfil del realtor: mismo núm
 
     parsed = json.loads(raw[json_start:json_end])
 
-    required_keys = {"hook", "desarrollo", "conclusion"}
+    required_keys = {"hook", "desarrollo", "conclusion", "caption"}
     if not required_keys.issubset(parsed.keys()):
         raise ValueError(f"Faltan campos en la respuesta: {required_keys - parsed.keys()}")
 

@@ -2,7 +2,7 @@
 
 Un guión generado es un punto de partida, no un texto definitivo: el realtor
 tiene que adaptarlo a su forma de hablar. Aquí puede editarlo por secciones,
-manteniendo la estructura de la metodología (hook / desarrollo / CTA),
+manteniendo la estructura de la metodología (hook / desarrollo / CTA / caption),
 y sacarlo en PDF con el branding de la academia.
 
 El original generado NUNCA se sobrescribe. La edición se guarda aparte, así que
@@ -29,7 +29,7 @@ from app.auth import get_current_user
 router = APIRouter(prefix="/editor")
 templates = Jinja2Templates(directory="app/templates")
 
-SECCIONES = ("hook", "development", "conclusion")
+SECCIONES = ("hook", "development", "conclusion", "caption")
 
 # El editor guarda HTML (negrita, cursiva, listas). Se limpia SIEMPRE en el
 # servidor: sin esto, un guión guardado podría ejecutar código en el navegador
@@ -84,6 +84,7 @@ class GuardarRequest(BaseModel):
     hook: str = ""
     development: str = ""
     conclusion: str = ""
+    caption: str = ""
 
     def as_dict(self) -> dict:
         return {s: limpiar_html(getattr(self, s) or "") for s in SECCIONES}
@@ -132,6 +133,7 @@ async def editar_guion(
         "hook": script.hook or "",
         "development": script.development or "",
         "conclusion": script.conclusion or "",
+        "caption": script.caption or "",
     }
     edicion = _leer_edicion(script.edicion)
 
@@ -182,6 +184,7 @@ async def restaurar_guion(
             "hook": script.hook or "",
             "development": script.development or "",
             "conclusion": script.conclusion or "",
+            "caption": script.caption or "",
         },
     })
 
@@ -203,6 +206,7 @@ async def editar_idea(
         "hook": idea.hook or "",
         "development": idea.development or "",
         "conclusion": idea.conclusion or "",
+        "caption": idea.caption or "",
     }
     fila = (
         db.query(StarterScriptEdit)
@@ -291,5 +295,6 @@ async def restaurar_idea(
             "hook": idea.hook or "",
             "development": idea.development or "",
             "conclusion": idea.conclusion or "",
+            "caption": idea.caption or "",
         },
     })

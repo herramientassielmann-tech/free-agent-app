@@ -113,6 +113,7 @@
        data-hook="{{ s.hook or '' }}"
        data-dev="{{ s.development or '' }}"
        data-conc="{{ s.conclusion or '' }}"
+       data-caption="{{ s.caption or '' }}"
        data-id="{{ s.id }}"
        data-url="{{ s.source_url or '' }}"
        data-thumb="{{ s.thumbnail_path or '' }}"
@@ -137,7 +138,8 @@
       <button class="btn btn-ghost btn-sm recent-copy-btn"
               data-hook="{{ s.hook or '' }}"
               data-dev="{{ s.development or '' }}"
-              data-conc="{{ s.conclusion or '' }}">
+              data-conc="{{ s.conclusion or '' }}"
+              data-caption="{{ s.caption or '' }}">
         Copiar
       </button>
     </div>
@@ -206,6 +208,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/editor.js?v=2"></script>
-<script src="/static/js/app.js?v=5"></script>
+<script src="/static/js/editor.js?v=3"></script>
+<script src="/static/js/app.js?v=6"></script>
 {% endblock %}

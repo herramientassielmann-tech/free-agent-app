@@ -122,6 +122,7 @@ function fillResult(data, url) {
   setSeccion('hook',        data.hook       || '');
   setSeccion('development', data.desarrollo || '');
   setSeccion('conclusion',  data.conclusion || '');
+  setSeccion('caption',     data.caption    || '');
 
   // El guión nace editable: en cuanto existe en la BD, se puede guardar encima
   if (editorGuion) {
@@ -198,6 +199,7 @@ document.querySelectorAll('.recent-item--clickable').forEach(item => {
       hook:                 item.dataset.hook       || '',
       desarrollo:           item.dataset.dev        || '',
       conclusion:           item.dataset.conc       || '',
+      caption:              item.dataset.caption    || '',
       script_id:            item.dataset.id         || '',
       thumbnail_path:       item.dataset.thumb      || '',
       estructura_detectada: item.dataset.estructura || '',
@@ -213,13 +215,14 @@ document.querySelectorAll('.recent-item--clickable').forEach(item => {
 /* ── Copy from recent list ──────────────────── */
 document.querySelectorAll('.recent-copy-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    const text = buildScriptText(btn.dataset.hook, btn.dataset.dev, btn.dataset.conc);
+    const text = buildScriptText(btn.dataset.hook, btn.dataset.dev, btn.dataset.conc, btn.dataset.caption);
     copyText(text, btn);
   });
 });
 
-function buildScriptText(hook, dev, conc) {
-  return `🎣 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CTA\n${conc}`;
+function buildScriptText(hook, dev, conc, caption) {
+  return `🎣 HOOK\n${hook}\n\n📖 DESARROLLO\n${dev}\n\n✅ CTA\n${conc}` +
+         (caption ? `\n\n📲 CAPTION\n${caption}` : '');
 }
 
 /* ── Password change modal ──────────────────── */

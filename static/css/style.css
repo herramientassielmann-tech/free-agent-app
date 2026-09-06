@@ -1617,6 +1617,11 @@ a:hover { color: #3d9eff; }
 
   body * { visibility: hidden !important; }
   .script-sections, .script-sections * { visibility: visible !important; }
+  /* Lo marcado como ed-no-print se va aunque esté dentro del guión: el caption
+     es para pegar en Instagram, no para el papel, y sus emojis se incrustan
+     como imágenes que en el diálogo de impresión salen como recuadros. */
+  .script-sections .ed-no-print,
+  .script-sections .ed-no-print * { display: none !important; visibility: hidden !important; }
   .script-sections {
     position: absolute !important; top: 0 !important; left: 0 !important;
     width: 100% !important; display: block !important;
