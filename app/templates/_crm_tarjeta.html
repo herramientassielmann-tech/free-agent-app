@@ -5,6 +5,6 @@
   <div class="crm-pie">
     {% if l.origen %}<span class="crm-origen">{{ l.origen }}</span>{% endif %}
     {% if l.presupuesto %}<span class="crm-presupuesto">{{ l.presupuesto }}</span>{% endif %}
-    <span class="crm-dias" title="Días desde el último contacto">{{ l.dias }}d</span>
+    <span class="crm-dias" title="Días desde el último contacto">{% if l.urgencia == 'alta' %}⚠ {% elif l.urgencia == 'media' %}⏳ {% endif %}{{ l.dias }}d</span>
   </div>
 </article>

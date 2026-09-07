@@ -1784,144 +1784,223 @@ a:hover { color: #3d9eff; }
 .bib-acceso-flecha { margin-left: auto; color: var(--t3); flex-shrink: 0; }
 
 /* ══════════════════════════════════════════════════════════════
-   CRM DE LEADS
+   CRM DE LEADS — zona en claro
+   ══════════════════════════════════════════════════════════════
+   El resto de la app va en negro, pero un CRM no es lo mismo: es una pantalla
+   de leer y escanear texto denso, y ahí el claro se lee más rápido. El blanco
+   sobre negro además produce halación (un halo alrededor de las letras) que
+   cansa la vista, sobre todo con astigmatismo. Por eso Trello, Asana, Pipedrive
+   y HubSpot van todos en claro.
+
+   No es un recoloreado: en claro la jerarquía se construye con sombras y peso
+   tipográfico, no con bordes tenues, así que las tarjetas se elevan del fondo
+   en vez de dibujarse con una línea.
    ══════════════════════════════════════════════════════════════ */
-.crm-olvidados { margin-bottom: 20px; border-left: 3px solid var(--orange); }
-.crm-olvidados b { font-size: .92rem; }
-.crm-olvidados p { font-size: .82rem; color: var(--t2); margin: 4px 0 12px; line-height: 1.5; max-width: 62ch; }
+.crm-zona {
+  /* Neutros con un punto de azul, para que no parezcan grises apagados */
+  --c-lienzo:  #F1F4F8;
+  --c-columna: #E7ECF2;
+  --c-tarjeta: #FFFFFF;
+  --c-linea:   #D8E0E9;
+  --c-tinta:   #16202C;
+  /* Tres niveles de texto, los tres por encima de 4.5:1 sobre tarjeta blanca Y
+     sobre el gris de columna. El terciario original (#8695A3) se quedaba en
+     2.58 sobre la columna: bonito y por debajo del mínimo legible. */
+  --c-suave:   #495765;
+  --c-tenue:   #5A6874;
+  --c-azul:    #0A6FD4;   /* más profundo que el azul de la app: contrasta sobre blanco */
+  --c-azul-luz:#E8F1FC;
+  /* Semánticos, todos con contraste suficiente sobre claro */
+  --c-verde:   #1E7F4B;
+  --c-ambar:   #9A5B00;
+  --c-ambar-luz:#FDF3E2;
+  --c-rojo:    #B3261E;
+  --c-rojo-luz:#FDEDEC;
+
+  color: var(--c-tinta);
+}
+/* La franja clara ocupa toda el área de contenido, no solo un recuadro.
+   El color va literal: --c-lienzo se define en .crm-zona, que está DENTRO de
+   .main-area, y las variables CSS heredan hacia abajo, nunca hacia arriba. */
+.main-area:has(.crm-zona) { background: #F1F4F8; }
+.crm-zona .page-title { color: var(--c-tinta); }
+.crm-zona .page-subtitle { color: var(--c-suave); }
+
+/* ── Aviso de olvidados ── */
+.crm-olvidados {
+  background: var(--c-ambar-luz); border: 1px solid #F0DCBA;
+  border-left: 3px solid var(--c-ambar); border-radius: var(--r-md);
+  padding: 15px 18px; margin-bottom: 22px;
+}
+.crm-olvidados b { font-size: .92rem; color: var(--c-tinta); }
+.crm-olvidados p {
+  font-size: .83rem; color: #6E5A34; margin: 4px 0 12px;
+  line-height: 1.5; max-width: 64ch;
+}
 .crm-olvidados-lista { display: flex; flex-wrap: wrap; gap: 8px; }
 .crm-olvidado {
-  display: inline-flex; align-items: baseline; gap: 8px;
-  padding: 6px 12px; border-radius: var(--r-pill); cursor: pointer;
-  background: rgba(255,159,10,.12); border: 1px solid rgba(255,159,10,.25);
-  color: var(--t1); font-size: .82rem;
+  display: inline-flex; align-items: baseline; gap: 8px; cursor: pointer;
+  padding: 6px 13px; border-radius: var(--r-pill);
+  background: #fff; border: 1px solid #EBD5B0; color: var(--c-tinta);
+  font-size: .83rem;
 }
-.crm-olvidado:hover { background: rgba(255,159,10,.2); }
-.crm-olvidado i { font-style: normal; color: var(--orange); font-size: .74rem; }
+.crm-olvidado:hover { border-color: var(--c-ambar); background: #FFFDF9; }
+.crm-olvidado i { font-style: normal; color: var(--c-ambar); font-size: .75rem; font-weight: 600; }
 
 /* ── Tablero ── */
 .crm-tablero {
-  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(228px, 1fr);
-  gap: 12px; overflow-x: auto; padding-bottom: 14px; align-items: start;
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(238px, 1fr);
+  gap: 12px; overflow-x: auto; padding-bottom: 16px; align-items: start;
 }
 .crm-col {
-  background: var(--s1); border: 1px solid var(--border);
-  border-radius: var(--r-lg); padding: 14px 12px; min-height: 220px;
+  background: var(--c-columna); border-radius: var(--r-lg);
+  padding: 14px 12px; min-height: 240px;
 }
 .crm-col-head { display: flex; align-items: center; gap: 8px; }
-.crm-col-head b { font-size: .88rem; }
+.crm-col-head b { font-size: .86rem; font-weight: 700; color: var(--c-tinta); }
 .crm-cuenta {
-  margin-left: auto; font-size: .72rem; color: var(--t2);
-  background: var(--s3); border-radius: var(--r-pill); padding: 1px 8px;
+  margin-left: auto; font-size: .73rem; font-weight: 600; color: var(--c-suave);
+  background: #fff; border-radius: var(--r-pill); padding: 2px 9px;
   font-variant-numeric: tabular-nums;
 }
-.crm-col-ayuda { font-size: .72rem; color: var(--t3); margin: 3px 0 12px; line-height: 1.4; }
-.crm-lista { display: flex; flex-direction: column; gap: 8px; min-height: 60px; }
+.crm-col-ayuda { font-size: .73rem; color: var(--c-tenue); margin: 4px 0 12px; line-height: 1.4; }
+.crm-lista { display: flex; flex-direction: column; gap: 8px; min-height: 70px; }
 
-/* ── Tarjeta ── */
+/* ── Tarjeta: se eleva con sombra, no se dibuja con borde ── */
 .crm-tarjeta {
-  background: var(--s2); border: 1px solid var(--border);
-  border-left: 3px solid var(--t3);
-  border-radius: var(--r-md); padding: 11px 12px; cursor: grab;
+  background: var(--c-tarjeta); border-radius: var(--r-md);
+  border-left: 3px solid var(--c-linea);
+  box-shadow: 0 1px 2px rgba(22,32,44,.07), 0 1px 1px rgba(22,32,44,.04);
+  padding: 11px 13px; cursor: grab;
   display: flex; flex-direction: column; gap: 5px;
-  transition: background .15s, border-color .15s;
+  transition: box-shadow .15s, transform .15s;
 }
-.crm-tarjeta:hover { background: var(--s3); border-color: var(--border-hover); }
+.crm-tarjeta:hover {
+  box-shadow: 0 3px 10px rgba(22,32,44,.12), 0 1px 2px rgba(22,32,44,.06);
+  transform: translateY(-1px);
+}
 .crm-tarjeta:active { cursor: grabbing; }
-.crm-urg--baja  { border-left-color: var(--green); }
-.crm-urg--media { border-left-color: var(--orange); }
-.crm-urg--alta  { border-left-color: var(--red); }
+.crm-urg--baja  { border-left-color: var(--c-verde); }
+.crm-urg--media { border-left-color: var(--c-ambar); }
+.crm-urg--alta  { border-left-color: var(--c-rojo); }
 
-.crm-nombre { font-size: .88rem; font-weight: 600; }
+.crm-nombre { font-size: .89rem; font-weight: 600; color: var(--c-tinta); }
 .crm-interes {
-  font-size: .77rem; color: var(--t2); line-height: 1.4;
+  font-size: .78rem; color: var(--c-suave); line-height: 1.45;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .crm-pie { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
 .crm-origen, .crm-presupuesto {
-  font-size: .68rem; padding: 2px 7px; border-radius: 4px;
-  background: var(--s4); color: var(--t2);
+  font-size: .69rem; padding: 2px 8px; border-radius: 4px;
+  background: #EEF2F7; color: var(--c-suave); font-weight: 500;
 }
+/* El color NUNCA es el único indicador: la urgencia lleva también icono y texto */
 .crm-dias {
-  margin-left: auto; font-size: .7rem; color: var(--t3);
-  font-variant-numeric: tabular-nums;
+  margin-left: auto; font-size: .71rem; color: var(--c-tenue);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
 }
-.crm-urg--media .crm-dias { color: var(--orange); }
-.crm-urg--alta  .crm-dias { color: var(--red); }
+.crm-urg--media .crm-dias { color: var(--c-ambar); font-weight: 600; }
+.crm-urg--alta  .crm-dias { color: var(--c-rojo);  font-weight: 600; }
 
-.crm-fantasma { opacity: .35; }
-.crm-arrastrando { transform: rotate(1.5deg); }
+.crm-fantasma { opacity: .4; }
+.crm-arrastrando {
+  transform: rotate(1.5deg);
+  box-shadow: 0 10px 26px rgba(22,32,44,.2) !important;
+}
 
 /* ── Panel lateral ── */
-/* `display:flex` de la clase gana al display:none del atributo hidden, y el
-   panel se queda invisible pero tapando los clics del tablero. */
 .crm-panel[hidden], .crm-fondo[hidden] { display: none !important; }
-
 .crm-fondo {
-  position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 300;
-  backdrop-filter: blur(2px);
+  position: fixed; inset: 0; background: rgba(22,32,44,.45); z-index: 300;
 }
 .crm-panel {
-  position: fixed; top: 0; right: 0; bottom: 0; width: min(430px, 100%);
-  background: var(--s1); border-left: 1px solid var(--border);
-  z-index: 310; padding: 22px; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 16px;
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100%);
+  background: #fff; z-index: 310; padding: 24px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 18px;
+  box-shadow: -8px 0 30px rgba(22,32,44,.16);
+  color: var(--c-tinta);
 }
 .crm-panel-head { display: flex; align-items: flex-start; gap: 12px; }
 .crm-panel-head h2 {
   font-family: 'Montserrat', sans-serif; font-weight: 900;
-  font-size: 1.2rem; letter-spacing: -.3px;
+  font-size: 1.25rem; letter-spacing: -.3px; color: var(--c-tinta);
 }
-.crm-panel-head span { font-size: .77rem; color: var(--t2); }
+.crm-panel-head span { font-size: .78rem; color: var(--c-suave); }
 .crm-cerrar {
-  margin-left: auto; background: none; border: none; color: var(--t2);
-  font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 0 4px;
+  margin-left: auto; background: none; border: none; color: var(--c-tenue);
+  font-size: 1.6rem; line-height: 1; cursor: pointer; padding: 0 4px;
 }
-.crm-cerrar:hover { color: var(--t1); }
-.crm-panel-acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.crm-cerrar:hover { color: var(--c-tinta); }
 
-.crm-panel-datos { display: flex; flex-direction: column; gap: 1px; }
-.crm-dato {
-  display: flex; gap: 12px; padding: 8px 0;
-  border-bottom: 1px solid var(--border); font-size: .82rem;
+.crm-panel-acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.crm-panel .btn-secondary {
+  background: #fff; color: var(--c-tinta); border: 1px solid var(--c-linea);
 }
-.crm-dato b { flex: 0 0 92px; color: var(--t2); font-weight: 500; }
-.crm-dato span { flex: 1; }
+.crm-panel .btn-secondary:hover { background: #F6F8FB; color: var(--c-tinta); }
+.crm-panel .btn-ghost { color: var(--c-suave); }
+.crm-panel .btn-ghost:hover { background: #F1F4F8; color: var(--c-tinta); }
+
+.crm-panel-datos { display: flex; flex-direction: column; }
+.crm-dato {
+  display: flex; gap: 12px; padding: 9px 0;
+  border-bottom: 1px solid var(--c-linea); font-size: .84rem;
+}
+.crm-dato b { flex: 0 0 96px; color: var(--c-suave); font-weight: 500; }
+.crm-dato span { flex: 1; color: var(--c-tinta); }
 
 .crm-nota-nueva { display: flex; flex-direction: column; gap: 8px; }
 .crm-nota-nueva textarea {
-  width: 100%; resize: vertical; font-family: inherit; font-size: .85rem;
-  background: var(--s2); color: var(--t1); padding: 10px 12px;
-  border: 1px solid var(--border); border-radius: var(--r-md);
+  width: 100%; resize: vertical; font-family: inherit; font-size: .86rem;
+  background: #F7F9FC; color: var(--c-tinta); padding: 11px 13px;
+  border: 1px solid var(--c-linea); border-radius: var(--r-md);
 }
+.crm-nota-nueva textarea::placeholder { color: var(--c-tenue); }
 .crm-nota-nueva textarea:focus {
-  outline: none; border-color: var(--blue); background: var(--s3);
+  outline: none; background: #fff; border-color: var(--c-azul);
+  box-shadow: 0 0 0 3px rgba(10,111,212,.12);
 }
 .crm-nota-nueva .btn { align-self: flex-start; }
 
-.crm-notas { display: flex; flex-direction: column; gap: 10px; }
-.crm-nota { border-left: 2px solid var(--border); padding-left: 12px; }
-.crm-nota p { font-size: .84rem; line-height: 1.5; white-space: pre-wrap; }
-.crm-nota time { font-size: .7rem; color: var(--t3); }
-.crm-sin-notas { font-size: .82rem; color: var(--t3); }
+.crm-notas { display: flex; flex-direction: column; gap: 12px; }
+.crm-nota { border-left: 2px solid var(--c-linea); padding-left: 13px; }
+.crm-nota p { font-size: .85rem; line-height: 1.55; white-space: pre-wrap; color: var(--c-tinta); }
+.crm-nota time { font-size: .71rem; color: var(--c-tenue); }
+.crm-sin-notas { font-size: .83rem; color: var(--c-tenue); }
 
 .crm-borrar {
   margin-top: auto; align-self: flex-start; background: none; border: none;
-  color: var(--t3); font-size: .78rem; cursor: pointer; padding: 6px 0;
+  color: var(--c-tenue); font-size: .79rem; cursor: pointer; padding: 6px 0;
 }
-.crm-borrar:hover { color: var(--red); }
+.crm-borrar:hover { color: var(--c-rojo); text-decoration: underline; }
 
 /* ── Formulario ── */
-.crm-form { max-width: 520px; width: 100%; gap: 0; }
-.crm-form h2 {
-  font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.15rem;
+.crm-form {
+  max-width: 540px; width: 100%; gap: 0;
+  background: #fff !important; color: var(--c-tinta);
 }
-.crm-form-ayuda { font-size: .8rem; color: var(--t2); margin: 4px 0 18px; }
+.crm-form h2 {
+  font-family: 'Montserrat', sans-serif; font-weight: 900;
+  font-size: 1.18rem; color: var(--c-tinta);
+}
+.crm-form-ayuda { font-size: .82rem; color: var(--c-suave); margin: 5px 0 20px; }
+.crm-form .form-label { color: var(--c-suave); }
+.crm-form .form-hint { color: var(--c-tenue); }
+.crm-form .form-input {
+  background: #F7F9FC; color: var(--c-tinta); border: 1px solid var(--c-linea);
+}
+.crm-form .form-input::placeholder { color: var(--c-tenue); }
+.crm-form .form-input:focus {
+  background: #fff; border-color: var(--c-azul);
+  box-shadow: 0 0 0 3px rgba(10,111,212,.12);
+}
+.crm-form .btn-secondary {
+  background: #fff; color: var(--c-tinta); border: 1px solid var(--c-linea);
+}
 .crm-form-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.crm-form-botones { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+.crm-form-botones { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
 
 @media (max-width: 640px) {
-  .crm-tablero { grid-auto-columns: minmax(200px, 82vw); }
+  .crm-tablero { grid-auto-columns: minmax(206px, 84vw); }
   .crm-form-fila { grid-template-columns: 1fr; }
   .crm-panel { width: 100%; }
 }

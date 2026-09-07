@@ -39,7 +39,7 @@
     trozos.push(`<div class="crm-pie">
       ${l.origen ? '<span class="crm-origen"></span>' : ""}
       ${l.presupuesto ? '<span class="crm-presupuesto"></span>' : ""}
-      <span class="crm-dias">${l.dias}d</span></div>`);
+      <span class="crm-dias">${l.urgencia === "alta" ? "⚠ " : l.urgencia === "media" ? "⏳ " : ""}${l.dias}d</span></div>`);
     art.innerHTML = trozos.join("");
     // textContent, no innerHTML: el nombre lo escribe el usuario
     art.querySelector(".crm-nombre").textContent = l.nombre;
