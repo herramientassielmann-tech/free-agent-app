@@ -174,6 +174,57 @@ class StarterScriptEdit(Base):
     )
 
 
+class Lead(Base):
+    """Una persona que ha contactado al realtor. El CRM más simple posible.
+
+    Decisiones de diseño, sacadas de por qué los realtors abandonan los CRMs:
+      - Pocos campos. Solo el nombre es obligatorio; todo lo demás se rellena
+        cuando se sabe. Un formulario de doce campos no se rellena nunca.
+      - `ultimo_contacto` es el campo que de verdad importa: el 74% de los leads
+        que acaban comprando lo hacen más de seis meses después, cuando el agente
+        ya dejó de seguirles. El tablero avisa de a quién llevas días sin tocar.
+      - Nadie se borra. Los que no responden van a "frío", no a la papelera.
+    """
+    __tablename__ = "leads"
+
+    ETAPAS = ("nuevo", "conversando", "cualificado", "propuesta", "cerrado", "frio")
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
+                                         nullable=False, index=True)
+    nombre: Mapped[str] = mapped_column(String(150), nullable=False)
+    origen: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    contacto: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    telefono: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    interes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    presupuesto: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
+    etapa: Mapped[str] = mapped_column(String(20), nullable=False, default="nuevo", index=True)
+    posicion: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # Se actualiza al crear el lead y cada vez que se apunta una nota
+    ultimo_contacto: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    notas: Mapped[List["LeadNota"]] = relationship(
+        "LeadNota", back_populates="lead",
+        order_by="LeadNota.created_at.desc()", cascade="all, delete-orphan",
+    )
+
+
+class LeadNota(Base):
+    """Lo que pasó en un contacto. Escribir una nota tiene que costar segundos."""
+    __tablename__ = "lead_notas"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    lead_id: Mapped[int] = mapped_column(Integer, ForeignKey("leads.id"),
+                                         nullable=False, index=True)
+    texto: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    lead: Mapped["Lead"] = relationship("Lead", back_populates="notas")
+
+
 class ClipReunion(Base):
     """Un trozo de una llamada 1-a-1 donde se resuelve una duda concreta.
 

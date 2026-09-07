@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Mis Leads — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Mis Leads</h1>
+    <p class="page-subtitle">
+      {% if total %}{{ total }} personas en seguimiento. Arrastra las tarjetas según avanza la conversación.
+      {% else %}Cada persona que te escribe, aquí. Arrastra las tarjetas según avanza la conversación.{% endif %}
+    </p>
+  </div>
+  <button type="button" class="btn btn-primary" id="crm-nuevo">+ Nuevo lead</button>
+</div>
+
+{% if olvidados %}
+<div class="card crm-olvidados">
+  <b>⏰ Llevas días sin hablar con estas personas</b>
+  <p>La mayoría de operaciones se cierran meses después del primer mensaje, con quien sigue ahí.
+  No hace falta vender: basta con aparecer.</p>
+  <div class="crm-olvidados-lista">
+    {% for o in olvidados %}
+    <button type="button" class="crm-olvidado" data-id="{{ o.id }}">
+      <b>{{ o.nombre }}</b><i>{{ o.dias }} días</i>
+    </button>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="crm-tablero" id="crm-tablero">
+  {% for clave, titulo, ayuda in etapas %}
+  <div class="crm-col" data-etapa="{{ clave }}">
+    <div class="crm-col-head">
+      <b>{{ titulo }}</b>
+      <span class="crm-cuenta" data-cuenta="{{ clave }}">{{ por_etapa[clave]|length }}</span>
+    </div>
+    <p class="crm-col-ayuda">{{ ayuda }}</p>
+    <div class="crm-lista" data-lista="{{ clave }}">
+      {% for l in por_etapa[clave] %}
+      {% include "_crm_tarjeta.html" %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{# ── Panel lateral del lead ── #}
+<div class="crm-panel" id="crm-panel" hidden>
+  <div class="crm-panel-head">
+    <div>
+      <h2 id="crm-panel-nombre"></h2>
+      <span id="crm-panel-meta"></span>
+    </div>
+    <button type="button" class="crm-cerrar" id="crm-cerrar" aria-label="Cerrar">×</button>
+  </div>
+
+  <div class="crm-panel-acciones">
+    <a class="btn btn-primary btn-sm" id="crm-wa" href="#" target="_blank" rel="noopener" hidden>💬 WhatsApp</a>
+    <button type="button" class="btn btn-secondary btn-sm" id="crm-contactado">✓ He hablado con él/ella</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="crm-editar">Editar datos</button>
+  </div>
+
+  <div class="crm-panel-datos" id="crm-panel-datos"></div>
+
+  <div class="crm-nota-nueva">
+    <textarea id="crm-nota" rows="2" placeholder="¿Qué habéis hablado? Una línea basta…"></textarea>
+    <button type="button" class="btn btn-primary btn-sm" id="crm-guardar-nota">Apuntar</button>
+  </div>
+
+  <div class="crm-notas" id="crm-notas"></div>
+
+  <button type="button" class="crm-borrar" id="crm-borrar">Eliminar este lead</button>
+</div>
+<div class="crm-fondo" id="crm-fondo" hidden></div>
+
+{# ── Formulario de alta / edición ── #}
+<div class="modal-overlay hidden" id="crm-modal" aria-modal="true" role="dialog">
+  <div class="modal-card crm-form">
+    <h2 id="crm-form-titulo">Nuevo lead</h2>
+    <p class="crm-form-ayuda">Solo el nombre es obligatorio. Lo demás, cuando lo sepas.</p>
+
+    <div id="crm-form-error" class="alert alert-error hidden"></div>
+
+    <div class="form-group">
+      <label class="form-label" for="f-nombre">Nombre</label>
+      <input class="form-input" id="f-nombre" placeholder="Cómo se llama" />
+    </div>
+    <div class="crm-form-fila">
+      <div class="form-group">
+        <label class="form-label" for="f-origen">De dónde viene</label>
+        <select class="form-input" id="f-origen">
+          <option value="">—</option>
+          {% for o in origenes %}<option value="{{ o }}">{{ o }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="f-telefono">Teléfono <span class="form-hint">para WhatsApp</span></label>
+        <input class="form-input" id="f-telefono" placeholder="+34 600 000 000" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="f-contacto">Usuario o email <span class="form-hint">opcional</span></label>
+      <input class="form-input" id="f-contacto" placeholder="@sucuenta" />
+    </div>
+    <div class="crm-form-fila">
+      <div class="form-group">
+        <label class="form-label" for="f-interes">Qué busca</label>
+        <input class="form-input" id="f-interes" placeholder="Piso para invertir en la costa" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="f-presupuesto">Presupuesto</label>
+        <input class="form-input" id="f-presupuesto" placeholder="200-300k" />
+      </div>
+    </div>
+
+    <div class="crm-form-botones">
+      <button type="button" class="btn btn-secondary" id="crm-form-cancelar">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="crm-form-guardar">Guardar</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/sortable.min.js"></script>
+<script src="/static/js/crm.js?v=1"></script>
+{% endblock %}

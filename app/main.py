@@ -14,7 +14,7 @@ from app.database import engine, SessionLocal
 from app.models import Base, User
 from app.auth import hash_password
 from app.config import ADMIN_EMAIL, ADMIN_PASSWORD
-from app.routers import auth, scripts, profile, admin, chatbot, robert, ideas, editor, biblioteca
+from app.routers import auth, scripts, profile, admin, chatbot, robert, ideas, editor, biblioteca, crm
 
 
 def _create_admin_if_missing(db: Session):
@@ -115,6 +115,7 @@ app.include_router(chatbot.router)
 app.include_router(ideas.router)
 app.include_router(editor.router)
 app.include_router(biblioteca.router)
+app.include_router(crm.router)
 app.include_router(robert.router)
 
 
