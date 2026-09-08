@@ -124,6 +124,22 @@ function fillResult(data, url) {
   setSeccion('conclusion',  data.conclusion || '');
   setSeccion('caption',     data.caption    || '');
 
+  // Qué decidió el sistema con este vídeo. Se enseña para que el realtor
+  // pueda avisarnos cuando la decisión sea la equivocada.
+  const modo = document.getElementById('gen-modo');
+  if (modo) {
+    if (data.ambito) {
+      const esDelSector = data.ambito === 'real_estate';
+      modo.textContent = esDelSector
+        ? 'Ya era contenido del sector · se ha respetado el original'
+        : 'Contenido de otro tema · adaptado a inmobiliario';
+      modo.className = 'gen-modo gen-modo--' + (esDelSector ? 'fiel' : 'adaptado');
+      modo.title = data.ambito_motivo || '';
+    } else {
+      modo.className = 'gen-modo hidden';
+    }
+  }
+
   // El guión nace editable: en cuanto existe en la BD, se puede guardar encima
   if (editorGuion) {
     editorGuion.recalcular();

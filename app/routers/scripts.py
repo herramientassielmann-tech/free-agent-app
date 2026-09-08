@@ -130,6 +130,8 @@ async def generate(
         "desarrollo": result["desarrollo"],
         "conclusion": result["conclusion"],
         "caption": result["caption"],
+        "ambito": result.get("ambito"),
+        "ambito_motivo": result.get("ambito_motivo"),
         "estructura_detectada": estructura,
         "script_id": script.id,
         "thumbnail_path": thumbnail_path,
