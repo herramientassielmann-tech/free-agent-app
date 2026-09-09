@@ -28,5 +28,19 @@ INSTAGRAM_PASSWORD = get_env("INSTAGRAM_PASSWORD", default=None, required=False)
 INSTAGRAM_SESSION_FILE = get_env("INSTAGRAM_SESSION_FILE", default="/var/www/freeagent/insta_session", required=False)
 INSTAGRAM_COOKIES_FILE = get_env("INSTAGRAM_COOKIES_FILE", default="/var/www/freeagent/instagram_cookies.txt", required=False)
 
+# ── Avisos por email (Resend) ──────────────────────────────────────────────
+# Todo opcional: sin RESEND_API_KEY la app funciona igual, simplemente no
+# manda nada. Así el despliegue no depende de tener el DNS ya propagado.
+RESEND_API_KEY = get_env("RESEND_API_KEY", default=None, required=False)
+# El remitente debe ser un dominio verificado en Resend. Se usa un subdominio
+# propio (avisos.) para no tocar el SPF de robertsielmann.com, que ya está en
+# uso por Google Workspace: dos registros SPF en un dominio los invalidan.
+EMAIL_FROM = get_env("EMAIL_FROM",
+                     default="Free Agent Academy <tareas@avisos.robertsielmann.com>",
+                     required=False)
+# A dónde van las respuestas si un realtor contesta al aviso.
+EMAIL_REPLY_TO = get_env("EMAIL_REPLY_TO", default=None, required=False)
+APP_URL = get_env("APP_URL", default="https://tool.robertsielmann.com", required=False)
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 8

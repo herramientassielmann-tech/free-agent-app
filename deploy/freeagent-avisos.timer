@@ -1,0 +1,15 @@
+[Unit]
+Description=Manda los avisos de tareas una vez al día
+
+[Timer]
+# El servidor va en UTC; se fija la zona para que sean las 8 de Madrid tanto
+# en verano como en invierno, sin tener que tocar nada al cambiar la hora.
+OnCalendar=*-*-* 08:00:00 Europe/Madrid
+# Si el servidor estuvo apagado a esa hora, se manda al arrancar en vez de
+# saltarse el día.
+Persistent=true
+# Unos minutos de desfase: nada depende del minuto exacto.
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

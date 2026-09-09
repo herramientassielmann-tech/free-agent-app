@@ -1,0 +1,10 @@
+[Unit]
+Description=Avisos por email de tareas vencidas del CRM
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/var/www/freeagent
+ExecStart=/var/www/freeagent/.venv/bin/python3 scripts/avisar_tareas.py
