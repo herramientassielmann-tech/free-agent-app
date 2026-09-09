@@ -11,7 +11,10 @@
       {% else %}Cada persona que te escribe, aquí. Arrastra las tarjetas según avanza la conversación.{% endif %}
     </p>
   </div>
-  <button type="button" class="btn btn-primary" id="crm-nuevo">+ Nuevo lead</button>
+  <div class="crm-acciones-cabecera">
+    <a href="/crm/tareas" class="btn btn-secondary">☑ Tareas</a>
+    <button type="button" class="btn btn-primary" id="crm-nuevo">+ Nuevo lead</button>
+  </div>
 </div>
 
 {% if olvidados %}
@@ -63,6 +66,19 @@
   </div>
 
   <div class="crm-panel-datos" id="crm-panel-datos"></div>
+
+  <div class="crm-tareas-bloque">
+    <div class="crm-tareas-head">
+      <b>Tareas</b>
+      <a href="/crm/tareas" class="crm-ver-registro">Ver todo lo hecho →</a>
+    </div>
+    <div class="crm-tareas-lista" id="crm-tareas-lista"></div>
+    <div class="crm-tarea-nueva">
+      <input id="crm-tarea-texto" placeholder="Llamar, mandar el brochure…" />
+      <input id="crm-tarea-fecha" type="date" title="Para cuándo (opcional)" />
+      <button type="button" class="btn btn-secondary btn-sm" id="crm-tarea-add">Añadir</button>
+    </div>
+  </div>
 
   <div class="crm-nota-nueva">
     <textarea id="crm-nota" rows="2" placeholder="¿Qué habéis hablado? Una línea basta…"></textarea>
@@ -126,5 +142,5 @@
 
 {% block scripts %}
 <script src="/static/js/sortable.min.js"></script>
-<script src="/static/js/crm.js?v=2"></script>
+<script src="/static/js/crm.js?v=3"></script>
 {% endblock %}

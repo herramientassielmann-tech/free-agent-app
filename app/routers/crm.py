@@ -16,7 +16,8 @@ Nadie se borra: quien no responde va a "frío" y se revisa de vez en cuando.
 
 De momento solo lo ve el admin.
 """
-from datetime import datetime
+from collections import OrderedDict
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -26,7 +27,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, Lead, LeadNota
+from app.models import User, Lead, LeadNota, LeadTarea
 from app.auth import require_admin
 
 router = APIRouter(prefix="/crm")
@@ -69,6 +70,35 @@ class NotaIn(BaseModel):
     texto: str
 
 
+class TareaIn(BaseModel):
+    texto: str
+    fecha_limite: Optional[str] = None   # "YYYY-MM-DD" o vacío
+
+
+def _fecha(valor: Optional[str]) -> Optional[datetime]:
+    if not valor:
+        return None
+    try:
+        return datetime.strptime(valor.strip()[:10], "%Y-%m-%d")
+    except ValueError:
+        return None
+
+
+def _tarea_json(t: LeadTarea) -> dict:
+    hoy = datetime.utcnow().date()
+    limite = t.fecha_limite.date() if t.fecha_limite else None
+    return {
+        "id": t.id,
+        "texto": t.texto,
+        "fecha_limite": limite.isoformat() if limite else None,
+        "hecha": t.hecha,
+        # "vencida" solo tiene sentido si está pendiente y tenía fecha
+        "vencida": bool(limite and not t.hecha and limite < hoy),
+        "hoy": bool(limite and not t.hecha and limite == hoy),
+        "completada_en": t.completada_en.strftime("%d/%m/%Y") if t.completada_en else None,
+    }
+
+
 def _mi_lead(lid: int, user: User, db: Session) -> Lead:
     lead = db.query(Lead).filter(Lead.id == lid, Lead.user_id == user.id).first()
     if not lead:
@@ -95,6 +125,11 @@ def _json(lead: Lead) -> dict:
         "dias": d,
         "urgencia": "alta" if d >= alerta else ("media" if d >= aviso else "baja"),
         "notas": len(lead.notas),
+        "tareas_pendientes": sum(1 for t in lead.tareas if not t.hecha),
+        "tareas_vencidas": sum(
+            1 for t in lead.tareas
+            if not t.hecha and t.fecha_limite and t.fecha_limite.date() < datetime.utcnow().date()
+        ),
     }
 
 
@@ -211,6 +246,9 @@ async def detalle(
             {"texto": n.texto, "fecha": n.created_at.strftime("%d/%m/%Y · %H:%M")}
             for n in lead.notas
         ],
+        "tareas": [_tarea_json(t) for t in
+                   sorted(lead.tareas,
+                          key=lambda t: (t.hecha, t.fecha_limite or datetime.max))],
     })
 
 
@@ -257,3 +295,123 @@ async def borrar(
     db.delete(lead)
     db.commit()
     return JSONResponse({"borrado": True})
+
+
+# ── Tareas ───────────────────────────────────────────────────────────────────
+
+@router.post("/leads/{lid}/tareas")
+async def crear_tarea(
+    lid: int,
+    payload: TareaIn,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    lead = _mi_lead(lid, current_user, db)
+    texto = (payload.texto or "").strip()
+    if not texto:
+        raise HTTPException(status_code=422, detail="La tarea está vacía.")
+    tarea = LeadTarea(lead_id=lead.id, texto=texto[:300],
+                      fecha_limite=_fecha(payload.fecha_limite))
+    db.add(tarea)
+    db.commit()
+    db.refresh(tarea)
+    db.refresh(lead)
+    return JSONResponse({"tarea": _tarea_json(tarea), "lead": _json(lead)})
+
+
+@router.post("/tareas/{tid}/toggle")
+async def marcar_tarea(
+    tid: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    tarea = (
+        db.query(LeadTarea).join(Lead)
+        .filter(LeadTarea.id == tid, Lead.user_id == current_user.id)
+        .first()
+    )
+    if not tarea:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    tarea.hecha = not tarea.hecha
+    # La fecha de cierre es lo que alimenta el registro de "lo que llevo hecho"
+    tarea.completada_en = datetime.utcnow() if tarea.hecha else None
+    db.commit()
+    db.refresh(tarea)
+    lead = db.query(Lead).filter(Lead.id == tarea.lead_id).first()
+    return JSONResponse({"tarea": _tarea_json(tarea), "lead": _json(lead)})
+
+
+@router.delete("/tareas/{tid}")
+async def borrar_tarea(
+    tid: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    tarea = (
+        db.query(LeadTarea).join(Lead)
+        .filter(LeadTarea.id == tid, Lead.user_id == current_user.id)
+        .first()
+    )
+    if not tarea:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    db.delete(tarea)
+    db.commit()
+    return JSONResponse({"borrado": True})
+
+
+@router.get("/tareas", response_class=HTMLResponse)
+async def registro(
+    request: Request,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Lo que queda por hacer y, sobre todo, lo que ya se ha hecho.
+
+    Ver el trabajo acumulado es lo que sostiene el hábito: en este negocio los
+    resultados tardan meses en llegar, y sin un registro de lo hecho solo queda
+    la sensación de que no avanzas."""
+    tareas = (
+        db.query(LeadTarea).join(Lead)
+        .filter(Lead.user_id == current_user.id)
+        .order_by(LeadTarea.fecha_limite.is_(None), LeadTarea.fecha_limite)
+        .all()
+    )
+    nombres = {l.id: l.nombre for l in db.query(Lead).filter(Lead.user_id == current_user.id).all()}
+    hoy = datetime.utcnow().date()
+
+    def fila(t):
+        return {**_tarea_json(t), "lead": nombres.get(t.lead_id, "—"), "lead_id": t.lead_id}
+
+    pendientes = [fila(t) for t in tareas if not t.hecha]
+    vencidas = [p for p in pendientes if p["vencida"]]
+    de_hoy   = [p for p in pendientes if p["hoy"]]
+    proximas = [p for p in pendientes if not p["vencida"] and not p["hoy"]]
+
+    # Hechas, agrupadas por semana, de más reciente a más antigua
+    hechas = sorted((t for t in tareas if t.hecha and t.completada_en),
+                    key=lambda t: t.completada_en, reverse=True)
+    semanas = OrderedDict()
+    for t in hechas:
+        d = t.completada_en.date()
+        lunes = d - timedelta(days=d.weekday())
+        if lunes == hoy - timedelta(days=hoy.weekday()):
+            etiqueta = "Esta semana"
+        elif lunes == hoy - timedelta(days=hoy.weekday() + 7):
+            etiqueta = "La semana pasada"
+        else:
+            etiqueta = f"Semana del {lunes.strftime('%d/%m')}"
+        semanas.setdefault(etiqueta, []).append(fila(t))
+
+    inicio_mes = hoy.replace(day=1)
+    return templates.TemplateResponse("crm_tareas.html", {
+        "request": request,
+        "user": current_user,
+        "vencidas": vencidas,
+        "de_hoy": de_hoy,
+        "proximas": proximas,
+        "semanas": semanas,
+        "hechas_semana": sum(1 for t in hechas
+                             if t.completada_en.date() >= hoy - timedelta(days=hoy.weekday())),
+        "hechas_mes": sum(1 for t in hechas if t.completada_en.date() >= inicio_mes),
+        "total_hechas": len(hechas),
+    })

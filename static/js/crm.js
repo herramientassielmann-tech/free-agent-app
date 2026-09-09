@@ -39,6 +39,7 @@
     trozos.push(`<div class="crm-pie">
       ${l.origen ? '<span class="crm-origen"></span>' : ""}
       ${l.presupuesto ? '<span class="crm-presupuesto"></span>' : ""}
+      ${l.tareas_pendientes ? `<span class="crm-tareas ${l.tareas_vencidas ? "crm-tareas--vencida" : ""}">${l.tareas_vencidas ? "⚠ " : "☑ "}${l.tareas_pendientes}</span>` : ""}
       <span class="crm-dias">${l.urgencia === "alta" ? "⚠ " : l.urgencia === "media" ? "⏳ " : ""}${l.dias}d</span></div>`);
     art.innerHTML = trozos.join("");
     // textContent, no innerHTML: el nombre lo escribe el usuario
@@ -79,6 +80,13 @@
       delay: 120,
       delayOnTouchOnly: true,
       touchStartThreshold: 5,
+      // Sin esto el tablero no se mueve al arrastrar hacia un lado, y las
+      // columnas que quedan fuera de pantalla son inalcanzables.
+      scroll: tablero,
+      scrollSensitivity: 110,
+      scrollSpeed: 22,
+      bubbleScroll: true,
+      forceAutoScrollFallback: true,
       onEnd: async (ev) => {
         const id = ev.item.dataset.id;
         const etapa = ev.to.dataset.lista;
@@ -106,7 +114,7 @@
 
   async function abrirPanel(id) {
     try {
-      const { lead, notas } = await api(`/crm/leads/${id}`);
+      const { lead, notas, tareas } = await api(`/crm/leads/${id}`);
       abierto = id;
       $("crm-panel-nombre").textContent = lead.nombre;
       $("crm-panel-meta").textContent =
@@ -148,9 +156,90 @@
         d.append(t, f); cont.appendChild(d);
       });
 
+      pintarTareas(tareas);
       panel.hidden = false; fondo.hidden = false;
     } catch (e) { alert(e.message); }
   }
+
+  function pintarTareas(tareas) {
+    const cont = $("crm-tareas-lista");
+    cont.innerHTML = "";
+    if (!tareas.length) {
+      const p = document.createElement("p");
+      p.className = "crm-sin-notas";
+      p.textContent = "Sin tareas. Añade lo próximo que tengas que hacer.";
+      cont.appendChild(p);
+      return;
+    }
+    tareas.forEach(t => {
+      const fila = document.createElement("div");
+      fila.className = "crm-tarea" + (t.hecha ? " crm-tarea--hecha" : "")
+                     + (t.vencida ? " crm-tarea--vencida" : "")
+                     + (t.hoy ? " crm-tarea--hoy" : "");
+
+      const check = document.createElement("button");
+      check.type = "button";
+      check.className = "crm-tarea-check" + (t.hecha ? " crm-tarea-check--on" : "");
+      check.textContent = t.hecha ? "✓" : "";
+      check.setAttribute("aria-label", t.hecha ? "Desmarcar" : "Marcar como hecha");
+      check.addEventListener("click", async () => {
+        check.disabled = true;
+        try {
+          const r = await api(`/crm/tareas/${t.id}/toggle`, { method: "POST" });
+          actualizarTarjeta(r.lead);
+          abrirPanel(abierto);
+        } catch (e) { alert(e.message); check.disabled = false; }
+      });
+
+      const txt = document.createElement("span");
+      txt.className = "crm-tarea-texto";
+      txt.textContent = t.texto;
+
+      const meta = document.createElement("span");
+      meta.className = "crm-tarea-fecha";
+      if (t.hecha) meta.textContent = t.completada_en ? "Hecha el " + t.completada_en : "Hecha";
+      else if (t.vencida) meta.textContent = "Venció el " + fechaCorta(t.fecha_limite);
+      else if (t.hoy) meta.textContent = "Es hoy";
+      else if (t.fecha_limite) meta.textContent = fechaCorta(t.fecha_limite);
+
+      const borrar = document.createElement("button");
+      borrar.type = "button"; borrar.className = "crm-tarea-x";
+      borrar.textContent = "×"; borrar.setAttribute("aria-label", "Eliminar tarea");
+      borrar.addEventListener("click", async () => {
+        try {
+          await api(`/crm/tareas/${t.id}`, { method: "DELETE" });
+          abrirPanel(abierto);
+        } catch (e) { alert(e.message); }
+      });
+
+      fila.append(check, txt, meta, borrar);
+      cont.appendChild(fila);
+    });
+  }
+
+  function fechaCorta(iso) {
+    if (!iso) return "";
+    const [a, m, d] = iso.split("-");
+    return `${d}/${m}`;
+  }
+
+  async function anadirTarea() {
+    const texto = $("crm-tarea-texto").value.trim();
+    if (!texto || !abierto) return;
+    try {
+      const r = await api(`/crm/leads/${abierto}/tareas`, {
+        method: "POST",
+        body: JSON.stringify({ texto, fecha_limite: $("crm-tarea-fecha").value || null }),
+      });
+      $("crm-tarea-texto").value = ""; $("crm-tarea-fecha").value = "";
+      actualizarTarjeta(r.lead);
+      abrirPanel(abierto);
+    } catch (e) { alert(e.message); }
+  }
+  $("crm-tarea-add").addEventListener("click", anadirTarea);
+  $("crm-tarea-texto").addEventListener("keydown", e => {
+    if (e.key === "Enter") anadirTarea();
+  });
 
   tablero.addEventListener("click", e => {
     const t = e.target.closest(".crm-tarjeta");

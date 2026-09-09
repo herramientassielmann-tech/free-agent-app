@@ -5,6 +5,10 @@
   <div class="crm-pie">
     {% if l.origen %}<span class="crm-origen">{{ l.origen }}</span>{% endif %}
     {% if l.presupuesto %}<span class="crm-presupuesto">{{ l.presupuesto }}</span>{% endif %}
+    {% if l.tareas_pendientes %}
+    <span class="crm-tareas {% if l.tareas_vencidas %}crm-tareas--vencida{% endif %}"
+          title="{{ l.tareas_pendientes }} tarea{{ 's' if l.tareas_pendientes != 1 }} pendiente{{ 's' if l.tareas_pendientes != 1 }}">{% if l.tareas_vencidas %}⚠ {% else %}☑ {% endif %}{{ l.tareas_pendientes }}</span>
+    {% endif %}
     <span class="crm-dias" title="Días desde el último contacto">{% if l.urgencia == 'alta' %}⚠ {% elif l.urgencia == 'media' %}⏳ {% endif %}{{ l.dias }}d</span>
   </div>
 </article>

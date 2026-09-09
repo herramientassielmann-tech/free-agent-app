@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Tareas — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="crm-zona">
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Tus tareas</h1>
+    <p class="page-subtitle">Lo que queda por hacer y, sobre todo, lo que ya llevas hecho.</p>
+  </div>
+  <a href="/crm" class="btn btn-secondary">← Volver al tablero</a>
+</div>
+
+<div class="tar-marcador">
+  <div><b>{{ hechas_semana }}</b><span>esta semana</span></div>
+  <div><b>{{ hechas_mes }}</b><span>este mes</span></div>
+  <div><b>{{ total_hechas }}</b><span>en total</span></div>
+  <div><b>{{ vencidas|length + de_hoy|length + proximas|length }}</b><span>pendientes</span></div>
+</div>
+
+{% macro fila(t, hecha=False) %}
+<div class="tar-fila {% if t.vencida %}tar-fila--vencida{% elif t.hoy %}tar-fila--hoy{% endif %}">
+  <button type="button" class="tar-check {% if hecha %}tar-check--on{% endif %}"
+          data-id="{{ t.id }}">{% if hecha %}✓{% endif %}</button>
+  <span class="tar-texto {% if hecha %}tar-texto--hecha{% endif %}">{{ t.texto }}</span>
+  <a class="tar-lead" href="/crm">{{ t.lead }}</a>
+  <span class="tar-fecha">
+    {%- if hecha %}{{ t.completada_en }}
+    {%- elif t.vencida %}venció el {{ t.fecha_limite[8:10] }}/{{ t.fecha_limite[5:7] }}
+    {%- elif t.hoy %}hoy
+    {%- elif t.fecha_limite %}{{ t.fecha_limite[8:10] }}/{{ t.fecha_limite[5:7] }}
+    {%- else %}sin fecha{% endif %}
+  </span>
+</div>
+{% endmacro %}
+
+{% if vencidas %}
+<section class="tar-bloque">
+  <h2 class="tar-titulo tar-titulo--rojo">Vencidas · {{ vencidas|length }}</h2>
+  <div class="tar-lista">{% for t in vencidas %}{{ fila(t) }}{% endfor %}</div>
+</section>
+{% endif %}
+
+{% if de_hoy %}
+<section class="tar-bloque">
+  <h2 class="tar-titulo tar-titulo--ambar">Para hoy · {{ de_hoy|length }}</h2>
+  <div class="tar-lista">{% for t in de_hoy %}{{ fila(t) }}{% endfor %}</div>
+</section>
+{% endif %}
+
+{% if proximas %}
+<section class="tar-bloque">
+  <h2 class="tar-titulo">Próximas · {{ proximas|length }}</h2>
+  <div class="tar-lista">{% for t in proximas %}{{ fila(t) }}{% endfor %}</div>
+</section>
+{% endif %}
+
+{% if not vencidas and not de_hoy and not proximas %}
+<div class="tar-vacio">
+  <b>No tienes nada pendiente.</b>
+  <p>Las tareas se añaden desde la ficha de cada lead, en el tablero.</p>
+</div>
+{% endif %}
+
+{% if semanas %}
+<section class="tar-bloque">
+  <h2 class="tar-titulo tar-titulo--verde">Lo que llevas hecho</h2>
+  <p class="tar-nota">En este negocio los resultados tardan meses en llegar. Ver el trabajo
+  acumulado es lo que sostiene el hábito cuando todavía no se nota.</p>
+  {% for etiqueta, lista in semanas.items() %}
+  <div class="tar-semana">
+    <h3>{{ etiqueta }} <span>{{ lista|length }}</span></h3>
+    <div class="tar-lista">{% for t in lista %}{{ fila(t, hecha=True) }}{% endfor %}</div>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll(".tar-check").forEach(b => {
+    b.addEventListener("click", async () => {
+      b.disabled = true;
+      try {
+        const res = await fetch(`/crm/tareas/${b.dataset.id}/toggle`, { method: "POST" });
+        if (!res.ok) throw new Error();
+        location.reload();
+      } catch (e) {
+        alert("No se pudo guardar el cambio. Inténtalo otra vez.");
+        b.disabled = false;
+      }
+    });
+  });
+</script>
+{% endblock %}

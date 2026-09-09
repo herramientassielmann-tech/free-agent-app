@@ -210,6 +210,34 @@ class Lead(Base):
         "LeadNota", back_populates="lead",
         order_by="LeadNota.created_at.desc()", cascade="all, delete-orphan",
     )
+    tareas: Mapped[List["LeadTarea"]] = relationship(
+        "LeadTarea", back_populates="lead",
+        order_by="LeadTarea.hecha, LeadTarea.fecha_limite", cascade="all, delete-orphan",
+    )
+
+
+class LeadTarea(Base):
+    """Algo pendiente con un lead: llamar el martes, mandar el brochure, etc.
+
+    Se guarda `completada_en` además del booleano porque el valor no está solo
+    en saber qué queda por hacer, sino en poder mirar atrás y ver lo que has
+    hecho esta semana y este mes. Sin la fecha de cierre ese registro no existe.
+    """
+    __tablename__ = "lead_tareas"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    lead_id: Mapped[int] = mapped_column(Integer, ForeignKey("leads.id"),
+                                         nullable=False, index=True)
+    texto: Mapped[str] = mapped_column(String(300), nullable=False)
+    # Sin fecha es una tarea suelta; con fecha entra en los avisos de vencidas
+    fecha_limite: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
+    hecha: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
+    completada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    # Se marca cuando se avisa por email, para no avisar dos veces de lo mismo
+    avisada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    lead: Mapped["Lead"] = relationship("Lead", back_populates="tareas")
 
 
 class LeadNota(Base):

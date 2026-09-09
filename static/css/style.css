@@ -2012,3 +2012,128 @@ a:hover { color: #3d9eff; }
 }
 .gen-modo--fiel     { background: rgba(48,209,88,.12);  color: var(--green); }
 .gen-modo--adaptado { background: var(--blue-dim);      color: var(--blue); }
+
+/* ── Tareas del CRM ── */
+.crm-tareas {
+  font-size: .69rem; padding: 2px 8px; border-radius: 4px; font-weight: 600;
+  background: #EEF2F7; color: var(--c-suave);
+}
+.crm-tareas--vencida { background: var(--c-rojo-luz); color: var(--c-rojo); }
+
+.crm-tareas-bloque { display: flex; flex-direction: column; gap: 10px; }
+.crm-tareas-head { display: flex; align-items: baseline; gap: 10px; }
+.crm-tareas-head b { font-size: .9rem; }
+.crm-ver-registro { margin-left: auto; font-size: .76rem; color: var(--c-azul); }
+.crm-tareas-lista { display: flex; flex-direction: column; }
+
+.crm-tarea {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--c-linea); font-size: .84rem;
+}
+.crm-tarea-check {
+  flex-shrink: 0; width: 19px; height: 19px; border-radius: 5px; cursor: pointer;
+  border: 1.5px solid var(--c-linea); background: #fff; color: #fff;
+  font-size: .7rem; line-height: 1; display: grid; place-items: center;
+}
+.crm-tarea-check:hover { border-color: var(--c-azul); }
+.crm-tarea-check--on { background: var(--c-verde); border-color: var(--c-verde); }
+.crm-tarea-texto { flex: 1; min-width: 0; }
+.crm-tarea--hecha .crm-tarea-texto { color: var(--c-tenue); text-decoration: line-through; }
+.crm-tarea-fecha { flex-shrink: 0; font-size: .73rem; color: var(--c-tenue); }
+.crm-tarea--vencida .crm-tarea-fecha { color: var(--c-rojo); font-weight: 600; }
+.crm-tarea--hoy .crm-tarea-fecha { color: var(--c-ambar); font-weight: 600; }
+.crm-tarea-x {
+  flex-shrink: 0; background: none; border: none; color: var(--c-linea);
+  font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 0 2px;
+}
+.crm-tarea-x:hover { color: var(--c-rojo); }
+
+.crm-tarea-nueva { display: flex; gap: 8px; }
+.crm-tarea-nueva input {
+  font-family: inherit; font-size: .84rem; padding: 9px 11px;
+  background: #F7F9FC; color: var(--c-tinta);
+  border: 1px solid var(--c-linea); border-radius: var(--r-md);
+}
+.crm-tarea-nueva input:first-child { flex: 1; min-width: 0; }
+.crm-tarea-nueva input[type="date"] { flex-shrink: 0; width: 8.4rem; color: var(--c-suave); }
+.crm-tarea-nueva input:focus {
+  outline: none; background: #fff; border-color: var(--c-azul);
+  box-shadow: 0 0 0 3px rgba(10,111,212,.12);
+}
+
+/* ── Página de tareas ── */
+.tar-marcador {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1px; background: var(--c-linea); border: 1px solid var(--c-linea);
+  border-radius: var(--r-md); overflow: hidden; margin-bottom: 26px;
+}
+.tar-marcador div { background: #fff; padding: 14px 16px; }
+.tar-marcador b {
+  display: block; font-size: 1.6rem; font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em; color: var(--c-tinta);
+}
+.tar-marcador span { font-size: .78rem; color: var(--c-suave); }
+
+.tar-bloque { margin-bottom: 30px; }
+.tar-titulo {
+  font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.05rem;
+  color: var(--c-tinta); margin-bottom: 10px;
+}
+.tar-titulo--rojo  { color: var(--c-rojo); }
+.tar-titulo--ambar { color: var(--c-ambar); }
+.tar-titulo--verde { color: var(--c-verde); }
+.tar-nota { font-size: .82rem; color: var(--c-suave); margin: -4px 0 16px; max-width: 62ch; line-height: 1.5; }
+
+.tar-lista { background: #fff; border: 1px solid var(--c-linea); border-radius: var(--r-md); overflow: hidden; }
+.tar-fila {
+  display: flex; align-items: center; gap: 12px; padding: 11px 15px; font-size: .86rem;
+}
+.tar-fila + .tar-fila { border-top: 1px solid var(--c-linea); }
+.tar-fila--vencida { background: var(--c-rojo-luz); }
+.tar-fila--hoy { background: var(--c-ambar-luz); }
+.tar-check {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 5px; cursor: pointer;
+  border: 1.5px solid var(--c-linea); background: #fff; color: #fff;
+  font-size: .72rem; line-height: 1; display: grid; place-items: center;
+}
+.tar-check:hover { border-color: var(--c-azul); }
+.tar-check--on { background: var(--c-verde); border-color: var(--c-verde); }
+.tar-texto { flex: 1; min-width: 0; color: var(--c-tinta); }
+.tar-texto--hecha { color: var(--c-tenue); text-decoration: line-through; }
+.tar-lead {
+  flex-shrink: 0; font-size: .76rem; color: var(--c-suave);
+  background: #EEF2F7; padding: 2px 9px; border-radius: var(--r-pill);
+}
+.tar-lead:hover { color: var(--c-azul); }
+.tar-fecha { flex-shrink: 0; font-size: .76rem; color: var(--c-tenue); min-width: 5.6rem; text-align: right; }
+
+.tar-semana { margin-top: 16px; }
+.tar-semana h3 {
+  font-size: .83rem; font-weight: 600; color: var(--c-suave);
+  margin-bottom: 7px; display: flex; align-items: baseline; gap: 8px;
+}
+.tar-semana h3 span {
+  font-size: .72rem; background: #EEF2F7; color: var(--c-suave);
+  padding: 1px 8px; border-radius: var(--r-pill);
+}
+.tar-vacio {
+  background: #fff; border: 1px solid var(--c-linea); border-radius: var(--r-md);
+  padding: 26px; text-align: center;
+}
+.tar-vacio b { color: var(--c-tinta); }
+.tar-vacio p { font-size: .84rem; color: var(--c-suave); margin-top: 5px; }
+
+@media (max-width: 640px) {
+  .crm-tarea-nueva { flex-wrap: wrap; }
+  .crm-tarea-nueva input:first-child { flex: 1 1 100%; }
+  .tar-lead { display: none; }
+}
+
+/* Los botones heredados del tema oscuro, adaptados a la zona clara */
+.crm-zona .btn-secondary {
+  background: #fff; color: var(--c-tinta); border: 1px solid var(--c-linea);
+}
+.crm-zona .btn-secondary:hover { background: #F6F8FB; color: var(--c-tinta); }
+.crm-zona .btn-ghost { color: var(--c-suave); }
+.crm-zona .btn-ghost:hover { background: #E7ECF2; color: var(--c-tinta); }
+.crm-acciones-cabecera { display: flex; gap: 8px; flex-wrap: wrap; }
