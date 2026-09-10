@@ -31,6 +31,80 @@ def _whisper_transcribe(audio_path: str) -> str:
     return result.text
 
 
+# Whisper acepta hasta 25 MB. A 64 kbps mono, eso son casi 50 minutos de audio:
+# ningún reel se acerca, así que el límite deja de ser un problema en cuanto se
+# manda audio en vez de vídeo.
+LIMITE_WHISPER_MB = 24
+
+
+def _extraer_audio(origen: Path, destino: Path) -> bool:
+    """Saca la pista de audio del vídeo con ffmpeg. True si lo consiguió.
+
+    Por qué no mandar el vídeo directamente, que es lo que se hacía antes:
+    Whisper acepta contenedores de vídeo, pero solo algunos, y TikTok e
+    Instagram cambian de códec sin avisar. Un mp4 que ayer entraba hoy devuelve
+    400 y el realtor ve un error 500 sin explicación. Extrayendo el audio a mp3
+    mono de 16 kHz —que es justo lo que Whisper usa por dentro— el formato deja
+    de depender de lo que sirva la plataforma, el fichero pasa de 15 MB a menos
+    de 1, y sube más rápido.
+    """
+    r = subprocess.run(
+        ["ffmpeg", "-i", str(origen), "-vn", "-ac", "1", "-ar", "16000",
+         "-c:a", "libmp3lame", "-b:a", "64k", str(destino), "-y", "-loglevel", "error"],
+        check=False,
+        capture_output=True,
+    )
+    return r.returncode == 0 and destino.exists() and destino.stat().st_size > 0
+
+
+def _transcribir(media: Path, red: str) -> str:
+    """Transcribe un fichero descargado, extrayendo antes el audio.
+
+    Cualquier fallo sale traducido: un 500 con la traza dentro hace que el
+    realtor crea que ha hecho algo mal y deje de intentarlo.
+    """
+    audio = media.with_name("audio_extraido.mp3")
+    if _extraer_audio(media, audio):
+        fichero = audio
+    else:
+        # Sin pista de audio no hay nada que transcribir. Es un vídeo mudo,
+        # o la descarga trajo solo la imagen.
+        if not _tiene_audio(media):
+            raise ValueError(
+                f"Este vídeo de {red} no tiene audio, así que no hay nada que "
+                "transcribir. Prueba con otro vídeo en el que se hable."
+            )
+        fichero = media  # ffmpeg falló pero hay audio: probamos tal cual
+
+    tam_mb = fichero.stat().st_size / 1024 / 1024
+    if tam_mb > LIMITE_WHISPER_MB:
+        raise ValueError(
+            f"Este vídeo es demasiado largo para transcribirlo ({tam_mb:.0f} MB de "
+            "audio). Prueba con un vídeo más corto."
+        )
+
+    try:
+        return _whisper_transcribe(str(fichero))
+    except Exception as e:
+        raise ValueError(
+            f"No se pudo transcribir el audio de este vídeo de {red}. "
+            "Suele ser cosa del vídeo en concreto: prueba con otro y, si fallan "
+            "varios seguidos, avisa al administrador."
+        ) from e
+
+
+def _tiene_audio(media: Path) -> bool:
+    """True si el fichero trae al menos una pista de audio."""
+    r = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "a",
+         "-show_entries", "stream=codec_type", "-of", "csv=p=0", str(media)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return "audio" in (r.stdout or "")
+
+
 def _save_thumbnail(src: Path) -> str | None:
     """Copia un archivo de thumbnail al directorio permanente y devuelve la URL."""
     if src is None or not src.exists():
@@ -110,7 +184,7 @@ def _instagram_download(url: str) -> dict:
         thumbnail_tmp = None
         for f in Path(tmpdir).iterdir():
             if f.suffix.lower() in WHISPER_EXTS and transcript is None:
-                transcript = _whisper_transcribe(str(f))
+                transcript = _transcribir(f, "Instagram")
             elif f.suffix.lower() in THUMB_EXTS and thumbnail_tmp is None:
                 thumbnail_tmp = f
 
@@ -158,7 +232,7 @@ def _tiktok_download(url: str) -> dict:
             capture_output=True,
         )
 
-        transcript = _whisper_transcribe(str(video_file))
+        transcript = _transcribir(video_file, "TikTok")
         thumbnail_path = _save_thumbnail(thumb_tmp if thumb_tmp.exists() else None)
 
     return {"transcript": transcript, "thumbnail_path": thumbnail_path}
