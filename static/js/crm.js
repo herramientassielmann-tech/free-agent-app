@@ -36,11 +36,14 @@
     art.dataset.id = l.id;
     const trozos = [`<b class="crm-nombre"></b>`];
     if (l.interes) trozos.push(`<span class="crm-interes"></span>`);
-    trozos.push(`<div class="crm-pie">
-      ${l.origen ? '<span class="crm-origen"></span>' : ""}
-      ${l.presupuesto ? '<span class="crm-presupuesto"></span>' : ""}
-      ${l.tareas_pendientes ? `<span class="crm-tareas ${l.tareas_vencidas ? "crm-tareas--vencida" : ""}">${l.tareas_vencidas ? "⚠ " : "☑ "}${l.tareas_pendientes}</span>` : ""}
-      <span class="crm-visto crm-visto--${l.urgencia}" title="Hablasteis el ${l.contacto_fecha} · hace ${l.dias} día${l.dias === 1 ? "" : "s"}">${l.urgencia === "alta" ? "⚠" : l.urgencia === "media" ? "⏳" : "✓"} ${l.contacto_fecha}</span></div>`);
+    // El seguimiento vive en el panel, no aquí: el tablero se lee de un vistazo
+    // y una fecha por tarjeta lo convierte en una hoja de cálculo.
+    if (l.origen || l.presupuesto || l.tareas_pendientes) {
+      trozos.push(`<div class="crm-pie">
+        ${l.origen ? '<span class="crm-origen"></span>' : ""}
+        ${l.presupuesto ? '<span class="crm-presupuesto"></span>' : ""}
+        ${l.tareas_pendientes ? `<span class="crm-tareas ${l.tareas_vencidas ? "crm-tareas--vencida" : ""}">${l.tareas_vencidas ? "⚠ " : "☑ "}${l.tareas_pendientes}</span>` : ""}</div>`);
+    }
     art.innerHTML = trozos.join("");
     // textContent, no innerHTML: el nombre lo escribe el usuario
     art.querySelector(".crm-nombre").textContent = l.nombre;
@@ -59,6 +62,99 @@
       tablero.querySelector(`[data-lista="${l.etapa}"]`)?.prepend(nueva);
     }
     contar();
+  }
+
+  function pintarMeta(lead) {
+    const hablado = lead.dias === 0
+      ? "✓ Hablasteis hoy"
+      : `✓ Hablasteis el ${lead.contacto_fecha} · hace ${lead.dias} día${lead.dias === 1 ? "" : "s"}`;
+    const meta = $("crm-panel-meta");
+    meta.textContent = [lead.origen, lead.contacto, hablado].filter(Boolean).join(" · ");
+    meta.className = "crm-meta-visto crm-meta-visto--" + lead.urgencia;
+  }
+
+  /* ── Seguimiento: la cadena de veces que has hablado ───────── */
+
+  const REDUCIR = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function pintarTick(c) {
+    const d = document.createElement("div");
+    d.className = "crm-tick";
+    d.title = "Hablasteis el " + c.completa;
+    const i = document.createElement("span");
+    i.className = "crm-tick-icono"; i.textContent = "✓";
+    const f = document.createElement("span");
+    f.className = "crm-tick-fecha"; f.textContent = c.fecha;
+    d.append(i, f);
+    return d;
+  }
+
+  function pintarCuenta(n) {
+    $("crm-seguimiento-cuenta").textContent =
+      n ? `${n} contacto${n === 1 ? "" : "s"}` : "";
+  }
+
+  /* Llegan del servidor del más reciente al más antiguo, que es el orden en
+   * que se pintan: el último arriba y el primero abajo. */
+  function pintarSeguimiento(contactos) {
+    const cont = $("crm-seguimiento");
+    cont.innerHTML = "";
+    pintarCuenta(contactos.length);
+    if (!contactos.length) {
+      const p = document.createElement("p");
+      p.className = "crm-sin-notas";
+      p.textContent = "Aún no has marcado ningún contacto.";
+      cont.appendChild(p);
+      return;
+    }
+    contactos.forEach(c => cont.appendChild(pintarTick(c)));
+  }
+
+  /* La bolita verde que cae del botón a la lista y se vuelve el tick.
+   *
+   * El recorrido no es adorno: enseña de dónde sale el tick y dónde se queda,
+   * que es lo que hace entender la lista sin tener que leer nada. Se estira al
+   * caer y se achata al llegar, que es lo que la hace parecer líquida en vez
+   * de un círculo que se desplaza. */
+  async function animarContacto(contacto, contactos) {
+    const boton = $("crm-contactado");
+    const lista = $("crm-seguimiento");
+    const previos = contactos.filter(c => c.id !== contacto.id);
+
+    if (REDUCIR || !boton || !lista) { pintarSeguimiento(contactos); return; }
+
+    // Si el destino está fuera de pantalla la bolita caería a ninguna parte.
+    lista.scrollIntoView({ behavior: "smooth", block: "center" });
+    await new Promise(r => setTimeout(r, 340));
+
+    pintarSeguimiento(previos);   // la lista sin el nuevo: aterriza sobre ella
+    pintarCuenta(contactos.length);
+
+    const rb = boton.getBoundingClientRect();
+    const rl = lista.getBoundingClientRect();
+    const D = 15;
+    const y0 = rb.top + rb.height / 2 - D / 2;
+    const caida = Math.max(rl.top + 9 - y0, 28);
+
+    const bolita = document.createElement("div");
+    bolita.className = "crm-bolita";
+    bolita.style.left = (rb.left + rb.width / 2 - D / 2) + "px";
+    bolita.style.top = y0 + "px";
+    document.body.appendChild(bolita);
+
+    await bolita.animate([
+      { transform: "translateY(0) scale(1,1)", offset: 0 },
+      { transform: `translateY(${caida * .45}px) scale(.80,1.32)`, offset: .42 },
+      { transform: `translateY(${caida}px) scale(1.38,.66)`, offset: .78 },
+      { transform: `translateY(${caida}px) scale(1,1)`, offset: .90 },
+      { transform: `translateY(${caida}px) scale(.2,.2)`, opacity: 0, offset: 1 },
+    ], { duration: 720, easing: "cubic-bezier(.35,.02,.28,1)", fill: "forwards" }).finished;
+
+    bolita.remove();
+    lista.querySelector(".crm-sin-notas")?.remove();
+    const el = pintarTick(contacto);
+    el.classList.add("crm-tick--nuevo");
+    lista.prepend(el);
   }
 
   /* Quita a alguien del aviso de «llevas días sin hablar con…».
@@ -126,15 +222,10 @@
 
   async function abrirPanel(id) {
     try {
-      const { lead, notas, tareas } = await api(`/crm/leads/${id}`);
+      const { lead, notas, tareas, contactos } = await api(`/crm/leads/${id}`);
       abierto = id;
       $("crm-panel-nombre").textContent = lead.nombre;
-      const hablado = lead.dias === 0
-        ? `✓ Hablasteis hoy`
-        : `✓ Hablasteis el ${lead.contacto_fecha} · hace ${lead.dias} día${lead.dias === 1 ? "" : "s"}`;
-      $("crm-panel-meta").textContent =
-        [lead.origen, lead.contacto, hablado].filter(Boolean).join(" · ");
-      $("crm-panel-meta").className = "crm-meta-visto crm-meta-visto--" + lead.urgencia;
+      pintarMeta(lead);
 
       const wa = $("crm-wa");
       if (lead.telefono) {
@@ -172,6 +263,7 @@
       });
 
       pintarTareas(tareas);
+      pintarSeguimiento(contactos || []);
       panel.hidden = false; fondo.hidden = false;
     } catch (e) { alert(e.message); }
   }
@@ -290,10 +382,14 @@
   $("crm-contactado").addEventListener("click", async () => {
     if (!abierto) return;
     try {
-      const { lead } = await api(`/crm/leads/${abierto}/contactado`, { method: "POST" });
+      const { lead, contacto, contactos } =
+        await api(`/crm/leads/${abierto}/contactado`, { method: "POST" });
       actualizarTarjeta(lead);
       quitarDeOlvidados(lead.id);
-      abrirPanel(abierto);
+      pintarMeta(lead);
+      // Nada de volver a abrir el panel: eso repintaría la lista y se llevaría
+      // por delante la animación justo cuando el tick está aterrizando.
+      await animarContacto(contacto, contactos || []);
     } catch (e) { alert(e.message); }
   });
 

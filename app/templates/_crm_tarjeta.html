@@ -2,6 +2,8 @@
 <article class="crm-tarjeta crm-urg--{{ l.urgencia }}" data-id="{{ l.id }}">
   <b class="crm-nombre">{{ l.nombre }}</b>
   {% if l.interes %}<span class="crm-interes">{{ l.interes }}</span>{% endif %}
+  {# Sin el tick, el pie puede quedarse sin nada que enseñar #}
+  {% if l.origen or l.presupuesto or l.tareas_pendientes %}
   <div class="crm-pie">
     {% if l.origen %}<span class="crm-origen">{{ l.origen }}</span>{% endif %}
     {% if l.presupuesto %}<span class="crm-presupuesto">{{ l.presupuesto }}</span>{% endif %}
@@ -9,7 +11,6 @@
     <span class="crm-tareas {% if l.tareas_vencidas %}crm-tareas--vencida{% endif %}"
           title="{{ l.tareas_pendientes }} tarea{{ 's' if l.tareas_pendientes != 1 }} pendiente{{ 's' if l.tareas_pendientes != 1 }}">{% if l.tareas_vencidas %}⚠ {% else %}☑ {% endif %}{{ l.tareas_pendientes }}</span>
     {% endif %}
-    <span class="crm-visto crm-visto--{{ l.urgencia }}"
-          title="Hablasteis el {{ l.contacto_fecha }} · hace {{ l.dias }} día{{ 's' if l.dias != 1 }}">{% if l.urgencia == 'alta' %}⚠{% elif l.urgencia == 'media' %}⏳{% else %}✓{% endif %} {{ l.contacto_fecha }}</span>
   </div>
+  {% endif %}
 </article>

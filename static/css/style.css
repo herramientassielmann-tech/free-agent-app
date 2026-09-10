@@ -1812,7 +1812,9 @@ a:hover { color: #3d9eff; }
   --c-azul-luz:#E8F1FC;
   /* Semánticos, todos con contraste suficiente sobre claro */
   --c-verde:   #1E7F4B;
-  --c-verde-luz:#E8F5EE;
+  --c-verde-luz:#E8F5EE;   /* reposo del tick */
+  --c-verde-roce:#CFEBDD;  /* el ratón encima: menta más honda */
+  --c-verde-vivo:#2FBF6B;  /* la bolita y el destello al aterrizar */
   --c-ambar:   #9A5B00;
   --c-ambar-luz:#FDF3E2;
   --c-rojo:    #B3261E;
@@ -1895,20 +1897,8 @@ a:hover { color: #3d9eff; }
   font-size: .69rem; padding: 2px 8px; border-radius: 4px;
   background: #EEF2F7; color: var(--c-suave); font-weight: 500;
 }
-/* Marca de «ya hablé con esta persona, y fue este día».
-   La fecha absoluta vale más que «hace 3 días»: es lo que el realtor puede
-   cruzar con su agenda y su memoria.
-   El color NUNCA es el único indicador: cada estado lleva también su icono. */
-.crm-visto {
-  margin-left: auto; font-size: .69rem; font-weight: 600;
-  padding: 2px 8px; border-radius: 4px; white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  background: var(--c-verde-luz); color: var(--c-verde);
-}
-.crm-visto--media { background: var(--c-ambar-luz); color: var(--c-ambar); }
-.crm-visto--alta  { background: var(--c-rojo-luz);  color: var(--c-rojo); }
-
-/* La misma marca en la cabecera del panel lateral */
+/* Cuándo se habló por última vez, en la cabecera del panel. El detalle
+   completo vive en los ticks de seguimiento, más abajo. */
 .crm-meta-visto { font-size: .82rem; color: var(--c-suave); }
 .crm-meta-visto--media { color: var(--c-ambar); }
 .crm-meta-visto--alta  { color: var(--c-rojo); }
@@ -1977,6 +1967,85 @@ a:hover { color: #3d9eff; }
 .crm-nota p { font-size: .85rem; line-height: 1.55; white-space: pre-wrap; color: var(--c-tinta); }
 .crm-nota time { font-size: .71rem; color: var(--c-tenue); }
 .crm-sin-notas { font-size: .83rem; color: var(--c-tenue); }
+
+
+/* ── Seguimiento: la cadena de contactos ──────────────────────────────────
+   Tres verdes distintos y a propósito: el de reposo, el del ratón encima y el
+   destello del que acaba de aterrizar. Si fueran el mismo, pasar el ratón
+   parecería que has marcado un contacto nuevo. */
+.crm-seguimiento-bloque { display: flex; flex-direction: column; gap: 9px; }
+.crm-seguimiento-head { display: flex; align-items: baseline; gap: 10px; }
+.crm-seguimiento-head b { font-size: .9rem; }
+.crm-seguimiento-cuenta {
+  font-size: .74rem; color: var(--c-tenue); font-variant-numeric: tabular-nums;
+}
+
+.crm-seguimiento {
+  position: relative; display: flex; flex-direction: column;
+  gap: 6px; padding-left: 15px;
+}
+/* El hilo del que cuelgan los ticks: hace que se lean como una cadena y no
+   como fechas sueltas. Se desvanece hacia abajo, hacia el primer contacto. */
+.crm-seguimiento:has(.crm-tick)::before {
+  content: ""; position: absolute; left: 4px; top: 11px; bottom: 11px;
+  width: 2px; border-radius: 2px;
+  background: linear-gradient(var(--c-verde-roce), rgba(207,235,221,.45));
+}
+
+.crm-tick {
+  align-self: flex-start; position: relative;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 4px 12px 4px 10px; border-radius: 999px;
+  background: var(--c-verde-luz); color: var(--c-verde);
+  font-size: .74rem; font-weight: 600; font-variant-numeric: tabular-nums;
+  cursor: default;
+  transition: background .22s cubic-bezier(.4,0,.2,1),
+              box-shadow .22s cubic-bezier(.4,0,.2,1),
+              transform .26s cubic-bezier(.34,1.45,.64,1);
+}
+/* El punto que engancha el tick al hilo */
+.crm-tick::before {
+  content: ""; position: absolute; left: -11px; top: 50%;
+  width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%;
+  background: var(--c-verde-roce); box-shadow: 0 0 0 2px #fff;
+  transition: background .22s ease;
+}
+.crm-tick:hover {
+  background: var(--c-verde-roce);
+  box-shadow: 0 0 0 3px rgba(30,127,75,.10);
+  transform: translateX(3px);
+}
+.crm-tick:hover::before { background: var(--c-verde); }
+.crm-tick-icono { font-size: .8rem; line-height: 1; }
+
+/* La bolita que cae del botón. El degradado la hace parecer una gota y no un
+   círculo plano; el resto lo ponen el estirón al caer y el achatamiento al
+   llegar, que van en el JS. */
+.crm-bolita {
+  position: fixed; z-index: 400; width: 15px; height: 15px; border-radius: 50%;
+  background: radial-gradient(circle at 36% 26%, #9CF0C8 0 12%, var(--c-verde-vivo) 46%, #109050);
+  box-shadow: 0 4px 12px rgba(30,127,75,.45), inset 0 -1px 2px rgba(0,0,0,.16);
+  pointer-events: none;
+}
+
+/* El aterrizaje: destella en verde vivo con el texto en blanco y se asienta
+   en el verde de reposo. Ese destello no se parece al del ratón encima. */
+@keyframes crm-tick-aterriza {
+  0%   { opacity: 0; transform: scale(.25);
+         background: var(--c-verde-vivo); color: #fff; }
+  45%  { opacity: 1; transform: scale(1.16);
+         background: var(--c-verde-vivo); color: #fff; }
+  70%  { background: var(--c-verde-vivo); color: #fff; }
+  100% { opacity: 1; transform: scale(1);
+         background: var(--c-verde-luz); color: var(--c-verde); }
+}
+.crm-tick--nuevo { animation: crm-tick-aterriza .78s cubic-bezier(.34,1.5,.64,1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .crm-tick, .crm-tick::before { transition: none; }
+  .crm-tick--nuevo { animation: none; }
+  .crm-tick:hover { transform: none; }
+}
 
 .crm-borrar {
   margin-top: auto; align-self: flex-start; background: none; border: none;

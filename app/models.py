@@ -214,6 +214,10 @@ class Lead(Base):
         "LeadTarea", back_populates="lead",
         order_by="LeadTarea.hecha, LeadTarea.fecha_limite", cascade="all, delete-orphan",
     )
+    contactos: Mapped[List["LeadContacto"]] = relationship(
+        "LeadContacto", back_populates="lead",
+        order_by="LeadContacto.fecha.desc()", cascade="all, delete-orphan",
+    )
 
 
 class LeadTarea(Base):
@@ -238,6 +242,30 @@ class LeadTarea(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     lead: Mapped["Lead"] = relationship("Lead", back_populates="tareas")
+
+
+class LeadContacto(Base):
+    """Un tick de seguimiento: una vez que el realtor habló con este lead.
+
+    `Lead.ultimo_contacto` guarda solo la última fecha y la sobrescribe, así que
+    sirve para avisar de a quién llevas días sin tocar pero no puede enseñar la
+    cadena. Y la cadena es justo lo que sostiene el hábito: ver siete ticks
+    seguidos convence de que estás haciendo el seguimiento mucho más que un
+    "hace 3 días" que mañana dirá otra cosa.
+
+    Se crea tanto al pulsar "he hablado" como al apuntar una nota, porque
+    apuntar algo ES haber hablado. Así el tick de arriba y `ultimo_contacto`
+    nunca se contradicen.
+    """
+    __tablename__ = "lead_contactos"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    lead_id: Mapped[int] = mapped_column(Integer, ForeignKey("leads.id"),
+                                         nullable=False, index=True)
+    fecha: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow,
+                                            nullable=False, index=True)
+
+    lead: Mapped["Lead"] = relationship("Lead", back_populates="contactos")
 
 
 class LeadNota(Base):

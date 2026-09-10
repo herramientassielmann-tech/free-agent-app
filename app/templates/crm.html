@@ -87,6 +87,16 @@
 
   <div class="crm-notas" id="crm-notas"></div>
 
+  {# Los ticks de seguimiento: la cadena de veces que has hablado con esta
+     persona, la última arriba y la primera abajo. #}
+  <div class="crm-seguimiento-bloque">
+    <div class="crm-seguimiento-head">
+      <b>Seguimiento</b>
+      <span class="crm-seguimiento-cuenta" id="crm-seguimiento-cuenta"></span>
+    </div>
+    <div class="crm-seguimiento" id="crm-seguimiento"></div>
+  </div>
+
   <button type="button" class="crm-borrar" id="crm-borrar">Eliminar este lead</button>
 </div>
 <div class="crm-fondo" id="crm-fondo" hidden></div>
@@ -142,5 +152,5 @@
 
 {% block scripts %}
 <script src="/static/js/sortable.min.js"></script>
-<script src="/static/js/crm.js?v=4"></script>
+<script src="/static/js/crm.js?v=5"></script>
 {% endblock %}

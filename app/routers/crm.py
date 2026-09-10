@@ -27,7 +27,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, Lead, LeadNota, LeadTarea
+from app.models import User, Lead, LeadNota, LeadTarea, LeadContacto
 from app.auth import require_admin
 
 router = APIRouter(prefix="/crm")
@@ -97,6 +97,22 @@ def _tarea_json(t: LeadTarea) -> dict:
         "hoy": bool(limite and not t.hecha and limite == hoy),
         "completada_en": t.completada_en.strftime("%d/%m/%Y") if t.completada_en else None,
     }
+
+
+def _contactos_json(lead: Lead) -> list:
+    """Los ticks de seguimiento, del más reciente al más antiguo.
+
+    Ese orden es el que se pinta: el último arriba y el primero abajo, para que
+    la lista crezca hacia arriba según se va hablando.
+    """
+    return [
+        {
+            "id": c.id,
+            "fecha": c.fecha.strftime("%d/%m"),
+            "completa": c.fecha.strftime("%d/%m/%Y · %H:%M"),
+        }
+        for c in sorted(lead.contactos, key=lambda c: c.fecha, reverse=True)
+    ]
 
 
 def _mi_lead(lid: int, user: User, db: Session) -> Lead:
@@ -252,6 +268,7 @@ async def detalle(
         "tareas": [_tarea_json(t) for t in
                    sorted(lead.tareas,
                           key=lambda t: (t.hecha, t.fecha_limite or datetime.max))],
+        "contactos": _contactos_json(lead),
     })
 
 
@@ -266,12 +283,20 @@ async def apuntar(
     texto = (payload.texto or "").strip()
     if not texto:
         raise HTTPException(status_code=422, detail="La nota está vacía.")
+    ahora = datetime.utcnow()
     db.add(LeadNota(lead_id=lead.id, texto=texto))
-    # Apuntar una nota ES el contacto: no hay que marcarlo aparte
-    lead.ultimo_contacto = datetime.utcnow()
+    # Apuntar una nota ES el contacto: no hay que marcarlo aparte, y deja su
+    # tick igual que el botón, para que la cadena de seguimiento esté completa.
+    contacto = LeadContacto(lead_id=lead.id, fecha=ahora)
+    db.add(contacto)
+    lead.ultimo_contacto = ahora
     db.commit()
     db.refresh(lead)
-    return JSONResponse({"lead": _json(lead)})
+    db.refresh(contacto)
+    return JSONResponse({
+        "lead": _json(lead),
+        "contactos": _contactos_json(lead),
+    })
 
 
 @router.post("/leads/{lid}/contactado")
@@ -282,10 +307,24 @@ async def contactado(
 ):
     """Para cuando hablas con alguien y no hay nada que apuntar."""
     lead = _mi_lead(lid, current_user, db)
-    lead.ultimo_contacto = datetime.utcnow()
+    ahora = datetime.utcnow()
+    contacto = LeadContacto(lead_id=lead.id, fecha=ahora)
+    db.add(contacto)
+    lead.ultimo_contacto = ahora
     db.commit()
     db.refresh(lead)
-    return JSONResponse({"lead": _json(lead)})
+    db.refresh(contacto)
+    # Se devuelve el tick recién creado aparte de la lista: es el que el panel
+    # anima al aterrizar, y necesita saber cuál es.
+    return JSONResponse({
+        "lead": _json(lead),
+        "contacto": {
+            "id": contacto.id,
+            "fecha": contacto.fecha.strftime("%d/%m"),
+            "completa": contacto.fecha.strftime("%d/%m/%Y · %H:%M"),
+        },
+        "contactos": _contactos_json(lead),
+    })
 
 
 @router.delete("/leads/{lid}")
