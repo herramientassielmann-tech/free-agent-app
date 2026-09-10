@@ -2018,28 +2018,53 @@ a:hover { color: #3d9eff; }
 .crm-tick:hover::before { background: var(--c-verde); }
 .crm-tick-icono { font-size: .8rem; line-height: 1; }
 
-/* La bolita que cae del botón. El degradado la hace parecer una gota y no un
-   círculo plano; el resto lo ponen el estirón al caer y el achatamiento al
-   llegar, que van en el JS. */
+/* La bolita que viaja del botón al hueco del tick. El degradado la hace
+   parecer una gota y no un círculo plano; el estirón al caer, el achatamiento
+   al llegar y el arco van en el JS. */
 .crm-bolita {
-  position: fixed; z-index: 400; width: 15px; height: 15px; border-radius: 50%;
-  background: radial-gradient(circle at 36% 26%, #9CF0C8 0 12%, var(--c-verde-vivo) 46%, #109050);
-  box-shadow: 0 4px 12px rgba(30,127,75,.45), inset 0 -1px 2px rgba(0,0,0,.16);
+  position: fixed; z-index: 400; width: 20px; height: 20px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 24%, #7BEBB4 0 8%, #22B863 42%, #067A41);
+  box-shadow: 0 6px 20px rgba(6,122,65,.55),
+              0 0 0 5px rgba(34,184,99,.22),
+              inset 0 -2px 3px rgba(0,0,0,.22);
+  pointer-events: none; will-change: transform;
+}
+
+/* La estela: copias que se apagan detrás. Es lo que hace que el recorrido se
+   vea en una pantalla a plena luz, donde una bola sola pasa desapercibida. */
+.crm-estela {
+  position: fixed; z-index: 399; width: 20px; height: 20px; border-radius: 50%;
+  background: #22B863; filter: blur(2px);
   pointer-events: none;
 }
+
+/* El aro que marca la salida y la llegada */
+.crm-onda {
+  position: fixed; z-index: 398; border-radius: 50%;
+  border: 2px solid var(--c-verde-vivo);
+  pointer-events: none;
+}
+
+/* El sitio que se abre para el tick antes de que llegue la bolita: los de
+   abajo se apartan despacio en vez de dar un salto. */
+.crm-hueco { flex: none; }
 
 /* El aterrizaje: destella en verde vivo con el texto en blanco y se asienta
    en el verde de reposo. Ese destello no se parece al del ratón encima. */
 @keyframes crm-tick-aterriza {
-  0%   { opacity: 0; transform: scale(.25);
+  0%   { opacity: 0; transform: scale(.2, 1.05);
+         background: var(--c-verde-vivo); color: #fff;
+         box-shadow: 0 0 0 0 rgba(47,191,107,.55); }
+  40%  { opacity: 1; transform: scale(1.22, .90);
+         background: var(--c-verde-vivo); color: #fff;
+         box-shadow: 0 0 0 8px rgba(47,191,107,0); }
+  62%  { transform: scale(.96, 1.06);
          background: var(--c-verde-vivo); color: #fff; }
-  45%  { opacity: 1; transform: scale(1.16);
-         background: var(--c-verde-vivo); color: #fff; }
-  70%  { background: var(--c-verde-vivo); color: #fff; }
-  100% { opacity: 1; transform: scale(1);
-         background: var(--c-verde-luz); color: var(--c-verde); }
+  100% { opacity: 1; transform: scale(1,1);
+         background: var(--c-verde-luz); color: var(--c-verde);
+         box-shadow: 0 0 0 0 rgba(47,191,107,0); }
 }
-.crm-tick--nuevo { animation: crm-tick-aterriza .78s cubic-bezier(.34,1.5,.64,1) both; }
+.crm-tick--nuevo { animation: crm-tick-aterriza .86s cubic-bezier(.34,1.5,.64,1) both; }
 
 @media (prefers-reduced-motion: reduce) {
   .crm-tick, .crm-tick::before { transition: none; }

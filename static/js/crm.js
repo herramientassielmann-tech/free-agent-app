@@ -110,12 +110,33 @@
     contactos.forEach(c => cont.appendChild(pintarTick(c)));
   }
 
-  /* La bolita verde que cae del botón a la lista y se vuelve el tick.
+  const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+  /* Un aro que se expande y se apaga. Marca de dónde sale la bolita y dónde
+   * aterriza, que es lo que hace que se vea el gesto entero y no solo el bicho
+   * moviéndose. */
+  function onda(x, y, tam) {
+    const o = document.createElement("div");
+    o.className = "crm-onda";
+    o.style.left = (x - tam / 2) + "px";
+    o.style.top = (y - tam / 2) + "px";
+    o.style.width = o.style.height = tam + "px";
+    document.body.appendChild(o);
+    o.animate(
+      [{ transform: "scale(.3)", opacity: .75 }, { transform: "scale(1)", opacity: 0 }],
+      { duration: 620, easing: "cubic-bezier(.2,.7,.3,1)" }
+    ).finished.then(() => o.remove());
+  }
+
+  /* La bolita va del botón hasta el hueco exacto donde va a quedarse el tick.
    *
-   * El recorrido no es adorno: enseña de dónde sale el tick y dónde se queda,
-   * que es lo que hace entender la lista sin tener que leer nada. Se estira al
-   * caer y se achata al llegar, que es lo que la hace parecer líquida en vez
-   * de un círculo que se desplaza. */
+   * Tres cosas la hacen legible y no un adorno:
+   *  · El hueco se abre ANTES, así los ticks de abajo se apartan despacio en
+   *    vez de dar un salto cuando aparece el nuevo.
+   *  · Va en arco y con un impulso hacia arriba al salir. En línea recta parece
+   *    un objeto soltado; en arco parece algo vivo que va a un sitio.
+   *  · Deja estela y rompe en un aro al llegar, que es lo que se ve de verdad
+   *    en una pantalla de portátil a plena luz. */
   async function animarContacto(contacto, contactos) {
     const boton = $("crm-contactado");
     const lista = $("crm-seguimiento");
@@ -123,38 +144,85 @@
 
     if (REDUCIR || !boton || !lista) { pintarSeguimiento(contactos); return; }
 
-    // Si el destino está fuera de pantalla la bolita caería a ninguna parte.
-    lista.scrollIntoView({ behavior: "smooth", block: "center" });
-    await new Promise(r => setTimeout(r, 340));
-
-    pintarSeguimiento(previos);   // la lista sin el nuevo: aterriza sobre ella
+    pintarSeguimiento(previos);
     pintarCuenta(contactos.length);
 
-    const rb = boton.getBoundingClientRect();
+    // Solo se espera al scroll si de verdad hace falta: si la lista ya se ve,
+    // esperar es tiempo muerto mirando una pantalla quieta.
     const rl = lista.getBoundingClientRect();
-    const D = 15;
-    const y0 = rb.top + rb.height / 2 - D / 2;
-    const caida = Math.max(rl.top + 9 - y0, 28);
+    if (rl.top < 8 || rl.bottom > window.innerHeight - 8) {
+      lista.scrollIntoView({ behavior: "smooth", block: "center" });
+      await esperar(340);
+    }
+
+    // 1. Se prepara el hueco. Se mide un tick de verdad si lo hay, para que el
+    //    destino sea exactamente el sitio que va a ocupar.
+    const modelo = lista.querySelector(".crm-tick");
+    const alto = modelo ? modelo.offsetHeight : 26;
+    const hueco = document.createElement("div");
+    hueco.className = "crm-hueco";
+    lista.querySelector(".crm-sin-notas")?.remove();
+    lista.prepend(hueco);
+
+    // 2. Origen y destino reales, en los dos ejes. El hueco todavía mide cero,
+    //    pero su borde de arriba ya está donde va a quedarse.
+    const D = 20;
+    const rb = boton.getBoundingClientRect();
+    const rh = hueco.getBoundingClientRect();
+    const x0 = rb.left + rb.width / 2;
+    const y0 = rb.top + rb.height / 2;
+    const x1 = rh.left + 13;               // donde empieza la píldora
+    const y1 = rh.top + alto / 2;
+    const dx = x1 - x0, dy = y1 - y0;
+
+    // El hueco se abre MIENTRAS la bolita vuela, no antes: los de abajo se
+    // apartan justo a tiempo y no hay un segundo de pantalla parada.
+    const apertura = hueco.animate(
+      [{ height: "0px" }, { height: alto + "px" }],
+      { duration: 620, easing: "cubic-bezier(.32,.72,0,1)", fill: "forwards" }
+    ).finished;
+
+    onda(x0, y0, 54);
 
     const bolita = document.createElement("div");
     bolita.className = "crm-bolita";
-    bolita.style.left = (rb.left + rb.width / 2 - D / 2) + "px";
-    bolita.style.top = y0 + "px";
+    bolita.style.left = (x0 - D / 2) + "px";
+    bolita.style.top = (y0 - D / 2) + "px";
     document.body.appendChild(bolita);
 
-    await bolita.animate([
-      { transform: "translateY(0) scale(1,1)", offset: 0 },
-      { transform: `translateY(${caida * .45}px) scale(.80,1.32)`, offset: .42 },
-      { transform: `translateY(${caida}px) scale(1.38,.66)`, offset: .78 },
-      { transform: `translateY(${caida}px) scale(1,1)`, offset: .90 },
-      { transform: `translateY(${caida}px) scale(.2,.2)`, opacity: 0, offset: 1 },
-    ], { duration: 720, easing: "cubic-bezier(.35,.02,.28,1)", fill: "forwards" }).finished;
+    const estela = setInterval(() => {
+      const r = bolita.getBoundingClientRect();
+      const g = document.createElement("div");
+      g.className = "crm-estela";
+      g.style.left = r.left + "px";
+      g.style.top = r.top + "px";
+      document.body.appendChild(g);
+      g.animate([{ opacity: .55, transform: "scale(.95)" },
+                 { opacity: 0, transform: "scale(.35)" }],
+                { duration: 460, easing: "ease-out" }).finished.then(() => g.remove());
+    }, 42);
 
-    bolita.remove();
-    lista.querySelector(".crm-sin-notas")?.remove();
+    await bolita.animate([
+      { transform: "translate(0,0) scale(1,1)", offset: 0 },
+      { transform: `translate(${dx * .05}px, -16px) scale(1.22,.80)`, offset: .16 },
+      { transform: `translate(${dx * .52}px, ${dy * .38}px) scale(.78,1.34)`, offset: .55 },
+      { transform: `translate(${dx * .99}px, ${dy * 1.04}px) scale(1.36,.68)`, offset: .84 },
+      { transform: `translate(${dx}px, ${dy}px) scale(1,1)`, offset: 1 },
+    ], { duration: 820, easing: "cubic-bezier(.42,.02,.24,1)", fill: "forwards" }).finished;
+
+    await apertura;
+    clearInterval(estela);
+    onda(x1, y1, 62);
+
+    // 3. La bolita se absorbe y el tick ocupa su sitio en el mismo instante.
+    bolita.animate([{ transform: `translate(${dx}px,${dy}px) scale(1)`, opacity: 1 },
+                    { transform: `translate(${dx}px,${dy}px) scale(.15)`, opacity: 0 }],
+                   { duration: 220, easing: "cubic-bezier(.5,0,.75,0)" })
+          .finished.then(() => bolita.remove());
+
     const el = pintarTick(contacto);
     el.classList.add("crm-tick--nuevo");
-    lista.prepend(el);
+    hueco.replaceWith(el);
   }
 
   /* Quita a alguien del aviso de «llevas días sin hablar con…».
