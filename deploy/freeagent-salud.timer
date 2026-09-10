@@ -1,0 +1,13 @@
+[Unit]
+Description=Revisión diaria de la generación de guiones
+
+[Timer]
+# A las 6:30 de Madrid: antes de que nadie se ponga a trabajar, y antes del
+# correo de tareas de las 8:00. Si algo se rompió de madrugada, cuando el
+# primer realtor entra ya está arreglado.
+OnCalendar=*-*-* 06:30:00 Europe/Madrid
+Persistent=true
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,12 @@
+[Unit]
+Description=Vigila que los guiones se siguen generando (y lo arregla solo)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/var/www/freeagent
+# Sin límite corto: una transcripción real puede tardar, y actualizar yt-dlp más.
+TimeoutStartSec=900
+ExecStart=/var/www/freeagent/.venv/bin/python3 scripts/salud_descargas.py

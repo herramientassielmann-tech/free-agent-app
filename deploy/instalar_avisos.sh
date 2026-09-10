@@ -35,12 +35,13 @@ if ! grep -q '^EMAIL_REPLY_TO=.\+' .env 2>/dev/null; then
 fi
 chmod 600 .env
 
-echo "── 2/4 · Temporizador ──"
-cp deploy/freeagent-avisos.service /etc/systemd/system/
-cp deploy/freeagent-avisos.timer   /etc/systemd/system/
+echo "── 2/4 · Temporizadores ──"
+cp deploy/freeagent-avisos.service deploy/freeagent-avisos.timer /etc/systemd/system/
+cp deploy/freeagent-salud.service  deploy/freeagent-salud.timer  /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable --now freeagent-avisos.timer
-echo "   Instalado y activado."
+systemctl enable --now freeagent-salud.timer
+echo "   Avisos de tareas y vigilante de guiones instalados y activados."
 
 echo "── 3/4 · Comprobación en seco (no envía nada) ──"
 .venv/bin/python3 scripts/avisar_tareas.py --ensayo
