@@ -9,6 +9,7 @@
     <span class="crm-tareas {% if l.tareas_vencidas %}crm-tareas--vencida{% endif %}"
           title="{{ l.tareas_pendientes }} tarea{{ 's' if l.tareas_pendientes != 1 }} pendiente{{ 's' if l.tareas_pendientes != 1 }}">{% if l.tareas_vencidas %}⚠ {% else %}☑ {% endif %}{{ l.tareas_pendientes }}</span>
     {% endif %}
-    <span class="crm-dias" title="Días desde el último contacto">{% if l.urgencia == 'alta' %}⚠ {% elif l.urgencia == 'media' %}⏳ {% endif %}{{ l.dias }}d</span>
+    <span class="crm-visto crm-visto--{{ l.urgencia }}"
+          title="Hablasteis el {{ l.contacto_fecha }} · hace {{ l.dias }} día{{ 's' if l.dias != 1 }}">{% if l.urgencia == 'alta' %}⚠{% elif l.urgencia == 'media' %}⏳{% else %}✓{% endif %} {{ l.contacto_fecha }}</span>
   </div>
 </article>

@@ -40,7 +40,7 @@
       ${l.origen ? '<span class="crm-origen"></span>' : ""}
       ${l.presupuesto ? '<span class="crm-presupuesto"></span>' : ""}
       ${l.tareas_pendientes ? `<span class="crm-tareas ${l.tareas_vencidas ? "crm-tareas--vencida" : ""}">${l.tareas_vencidas ? "⚠ " : "☑ "}${l.tareas_pendientes}</span>` : ""}
-      <span class="crm-dias">${l.urgencia === "alta" ? "⚠ " : l.urgencia === "media" ? "⏳ " : ""}${l.dias}d</span></div>`);
+      <span class="crm-visto crm-visto--${l.urgencia}" title="Hablasteis el ${l.contacto_fecha} · hace ${l.dias} día${l.dias === 1 ? "" : "s"}">${l.urgencia === "alta" ? "⚠" : l.urgencia === "media" ? "⏳" : "✓"} ${l.contacto_fecha}</span></div>`);
     art.innerHTML = trozos.join("");
     // textContent, no innerHTML: el nombre lo escribe el usuario
     art.querySelector(".crm-nombre").textContent = l.nombre;
@@ -59,6 +59,18 @@
       tablero.querySelector(`[data-lista="${l.etapa}"]`)?.prepend(nueva);
     }
     contar();
+  }
+
+  /* Quita a alguien del aviso de «llevas días sin hablar con…».
+   * Sin esto el aviso seguiría nombrando a quien acabas de llamar hasta
+   * recargar la página, que es justo cuando deja de tener sentido: pierdes
+   * la confianza en el aviso y acabas ignorándolo. */
+  function quitarDeOlvidados(id) {
+    const btn = document.querySelector(`.crm-olvidado[data-id="${id}"]`);
+    if (!btn) return;
+    btn.remove();
+    const caja = document.querySelector(".crm-olvidados");
+    if (caja && !caja.querySelector(".crm-olvidado")) caja.remove();
   }
 
   function contar() {
@@ -117,9 +129,12 @@
       const { lead, notas, tareas } = await api(`/crm/leads/${id}`);
       abierto = id;
       $("crm-panel-nombre").textContent = lead.nombre;
+      const hablado = lead.dias === 0
+        ? `✓ Hablasteis hoy`
+        : `✓ Hablasteis el ${lead.contacto_fecha} · hace ${lead.dias} día${lead.dias === 1 ? "" : "s"}`;
       $("crm-panel-meta").textContent =
-        [lead.origen, lead.contacto, `${lead.dias} días sin contacto`]
-          .filter(Boolean).join(" · ");
+        [lead.origen, lead.contacto, hablado].filter(Boolean).join(" · ");
+      $("crm-panel-meta").className = "crm-meta-visto crm-meta-visto--" + lead.urgencia;
 
       const wa = $("crm-wa");
       if (lead.telefono) {
@@ -263,6 +278,7 @@
       });
       $("crm-nota").value = "";
       actualizarTarjeta(lead);
+      quitarDeOlvidados(lead.id);   // apuntar algo también es haber hablado
       abrirPanel(abierto);
     } catch (e) { alert(e.message); }
   }
@@ -276,6 +292,7 @@
     try {
       const { lead } = await api(`/crm/leads/${abierto}/contactado`, { method: "POST" });
       actualizarTarjeta(lead);
+      quitarDeOlvidados(lead.id);
       abrirPanel(abierto);
     } catch (e) { alert(e.message); }
   });

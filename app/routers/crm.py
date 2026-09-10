@@ -123,6 +123,9 @@ def _json(lead: Lead) -> dict:
         "presupuesto": lead.presupuesto,
         "etapa": lead.etapa,
         "dias": d,
+        # Fecha breve del último contacto: al realtor le dice más "hablamos el
+        # 09/09" que "hace 3 días", porque es lo que puede cruzar con su agenda.
+        "contacto_fecha": (lead.ultimo_contacto or lead.created_at).strftime("%d/%m"),
         "urgencia": "alta" if d >= alerta else ("media" if d >= aviso else "baja"),
         "notas": len(lead.notas),
         "tareas_pendientes": sum(1 for t in lead.tareas if not t.hecha),

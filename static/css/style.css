@@ -1812,6 +1812,7 @@ a:hover { color: #3d9eff; }
   --c-azul-luz:#E8F1FC;
   /* Semánticos, todos con contraste suficiente sobre claro */
   --c-verde:   #1E7F4B;
+  --c-verde-luz:#E8F5EE;
   --c-ambar:   #9A5B00;
   --c-ambar-luz:#FDF3E2;
   --c-rojo:    #B3261E;
@@ -1894,13 +1895,23 @@ a:hover { color: #3d9eff; }
   font-size: .69rem; padding: 2px 8px; border-radius: 4px;
   background: #EEF2F7; color: var(--c-suave); font-weight: 500;
 }
-/* El color NUNCA es el único indicador: la urgencia lleva también icono y texto */
-.crm-dias {
-  margin-left: auto; font-size: .71rem; color: var(--c-tenue);
-  font-variant-numeric: tabular-nums; white-space: nowrap;
+/* Marca de «ya hablé con esta persona, y fue este día».
+   La fecha absoluta vale más que «hace 3 días»: es lo que el realtor puede
+   cruzar con su agenda y su memoria.
+   El color NUNCA es el único indicador: cada estado lleva también su icono. */
+.crm-visto {
+  margin-left: auto; font-size: .69rem; font-weight: 600;
+  padding: 2px 8px; border-radius: 4px; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  background: var(--c-verde-luz); color: var(--c-verde);
 }
-.crm-urg--media .crm-dias { color: var(--c-ambar); font-weight: 600; }
-.crm-urg--alta  .crm-dias { color: var(--c-rojo);  font-weight: 600; }
+.crm-visto--media { background: var(--c-ambar-luz); color: var(--c-ambar); }
+.crm-visto--alta  { background: var(--c-rojo-luz);  color: var(--c-rojo); }
+
+/* La misma marca en la cabecera del panel lateral */
+.crm-meta-visto { font-size: .82rem; color: var(--c-suave); }
+.crm-meta-visto--media { color: var(--c-ambar); }
+.crm-meta-visto--alta  { color: var(--c-rojo); }
 
 .crm-fantasma { opacity: .4; }
 .crm-arrastrando {
