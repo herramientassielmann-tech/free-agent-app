@@ -2290,79 +2290,105 @@ a:hover { color: #3d9eff; }
 .alta-vacio p { margin: 0; font-size: .9rem; }
 
 /* ── Seguimiento semanal de alumnos ────────────────────────────────────────
-   Números y no casillas: el contrato pide dos vídeos por semana, y una casilla
-   no distingue entre dos y siete. Grabado, editado y publicado van separados
-   porque enseñan dónde se atasca cada uno — y si el atasco es la edición, eso
-   es una venta del servicio de 15 $, no un tirón de orejas. */
+   Va en la zona clara del CRM: es una pantalla de repaso semanal, se mira con
+   luz y conviene que se lea como el tablero de leads y no como el panel oscuro.
+
+   Números y no casillas: una casilla no distingue entre dos vídeos y siete.
+   Grabado, editado y publicado separados porque enseñan dónde se atasca cada
+   uno — y si el atasco es la edición, eso es una venta del servicio de 15 $. */
+
+.alu-zona .card {
+  background: var(--c-tarjeta); border: 1px solid var(--c-linea);
+}
+.alu-zona .admin-table th {
+  color: var(--c-tenue); border-bottom: 1px solid var(--c-linea);
+}
+.alu-zona .admin-table td { border-bottom: 1px solid var(--c-linea); }
+.alu-zona .admin-table tr:last-child td { border-bottom: none; }
+
 .alu-envoltura { overflow-x: auto; }
 .alu-tabla th.alu-col, .alu-tabla td.alu-col { text-align: center; }
 .alu-tabla th.alu-col { font-size: .66rem; }
-/* Los trials van visualmente aparte: piden 1.000 seguidores y no cuentan
-   para el mínimo, así que no deben leerse como una columna más del compromiso. */
-.alu-col--suelta { border-left: 1px dashed var(--border); }
-.alu-paso--suelta { opacity: .78; }
+/* Los trials van visualmente aparte: piden 1.000 seguidores y no cuentan para
+   el mínimo, así que no deben leerse como una columna más del compromiso. */
+.alu-col--suelta { border-left: 1px dashed var(--c-linea); }
+.alu-paso--suelta { opacity: .72; }
 
-.alu-quien b { display: block; }
-.alu-historial { display: inline-flex; align-items: flex-end; gap: 2px; height: 20px; margin-top: 5px; }
-.alu-barra { width: 5px; background: var(--s4); border-radius: 1px; display: block; }
-.alu-barra--ok { background: var(--green); }
+.alu-quien b { display: block; color: var(--c-tinta); }
+.alu-historial {
+  display: inline-flex; align-items: flex-end; gap: 2px;
+  height: 20px; margin-top: 5px;
+}
+.alu-barra {
+  width: 5px; background: var(--c-columna); border-radius: 1px; display: block;
+  /* La barra de la semana que estás tocando crece mientras escribes */
+  transition: height .28s cubic-bezier(.32,.72,0,1), background .28s ease;
+}
+.alu-barra--ok { background: var(--c-verde-vivo); }
 
 .alu-paso {
   display: inline-flex; align-items: center; gap: 2px;
-  border: 1px solid var(--border); border-radius: 8px; padding: 2px;
-  background: var(--s1);
+  border: 1px solid var(--c-linea); border-radius: 8px; padding: 2px;
+  background: #FBFCFE;
 }
 .alu-mas-menos {
-  width: 22px; height: 24px; border: 0; background: transparent; color: var(--t2);
+  width: 22px; height: 24px; border: 0; background: transparent; color: var(--c-tenue);
   cursor: pointer; font-size: 1rem; line-height: 1; border-radius: 5px; padding: 0;
   font-family: inherit;
 }
-.alu-mas-menos:hover { background: var(--s3); color: var(--t1); }
+.alu-mas-menos:hover { background: var(--c-columna); color: var(--c-tinta); }
 .alu-num {
   width: 30px; text-align: center; border: 0; background: transparent;
-  color: var(--t1); font-size: .95rem; font-weight: 600; font-family: inherit;
+  color: var(--c-tinta); font-size: .95rem; font-weight: 600; font-family: inherit;
   font-variant-numeric: tabular-nums; padding: 0;
 }
-.alu-num:focus { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+.alu-num:focus { outline: 2px solid var(--c-azul); outline-offset: 2px; border-radius: 4px; }
 
 .alu-total {
   display: inline-block; min-width: 30px; padding: 3px 10px; border-radius: 20px;
-  font-weight: 700; font-size: .9rem; background: var(--s3); color: var(--t2);
-  font-variant-numeric: tabular-nums;
+  font-weight: 700; font-size: .9rem; background: var(--c-columna); color: var(--c-tenue);
+  font-variant-numeric: tabular-nums; transition: background .2s ease, color .2s ease;
 }
-.alu-total--ok { background: rgba(48,209,88,.16); color: var(--green); }
+.alu-total--ok { background: var(--c-verde-luz); color: var(--c-verde); }
 
 .alu-nota {
   width: 100%; min-width: 150px; background: transparent; border: 1px solid transparent;
-  border-radius: 7px; padding: 6px 9px; color: var(--t1); font-size: .85rem;
+  border-radius: 7px; padding: 6px 9px; color: var(--c-tinta); font-size: .85rem;
   font-family: inherit;
 }
-.alu-nota:hover { border-color: var(--border); }
-.alu-nota:focus { outline: none; border-color: var(--blue); background: var(--s1); }
+.alu-nota::placeholder { color: #A8B4C0; }
+.alu-nota:hover { border-color: var(--c-linea); }
+.alu-nota:focus { outline: none; border-color: var(--c-azul); background: #FBFCFE; }
 
 /* Destello al guardar: sin señal de que el clic llegó, se pulsa dos veces */
-@keyframes alu-ok { from { background: rgba(48,209,88,.10); } to { background: transparent; } }
+@keyframes alu-ok { from { background: var(--c-verde-luz); } to { background: transparent; } }
 .alu-guardado td { animation: alu-ok .6s ease-out; }
-.alu-fallo { outline: 2px solid var(--red) !important; }
+.alu-fallo { outline: 2px solid var(--c-rojo) !important; }
 
 .alu-semana { display: flex; align-items: center; gap: 8px; }
-.alu-semana-txt { font-size: .9rem; font-weight: 600; min-width: 130px; text-align: center; }
+.alu-semana-txt {
+  font-size: .9rem; font-weight: 600; min-width: 130px; text-align: center;
+  color: var(--c-tinta);
+}
 .alu-nav {
   width: 30px; height: 30px; display: grid; place-items: center; border-radius: 7px;
-  border: 1px solid var(--border); color: var(--t2); text-decoration: none; font-size: 1.1rem;
+  border: 1px solid var(--c-linea); color: var(--c-suave); text-decoration: none;
+  font-size: 1.1rem; background: var(--c-tarjeta);
 }
-.alu-nav:hover { border-color: var(--border-hover); color: var(--t1); }
-.alu-nav--off { opacity: .3; pointer-events: none; }
+.alu-nav:hover { border-color: #B9C4CE; color: var(--c-tinta); }
+.alu-nav--off { opacity: .35; pointer-events: none; }
 
-.alu-pie { font-size: .8rem; color: var(--t3); margin: 14px 0 0; }
+.alu-pie { font-size: .8rem; color: var(--c-tenue); margin: 14px 0 0; }
 .alu-otras { margin-top: 16px; }
-.alu-otras b { font-size: .95rem; }
-.alu-otras p { font-size: .85rem; color: var(--t2); margin: 5px 0 12px; }
+.alu-otras b { font-size: .95rem; color: var(--c-tinta); }
+.alu-otras p { font-size: .85rem; color: var(--c-suave); margin: 5px 0 12px; }
 .alu-otras-lista { display: flex; flex-wrap: wrap; gap: 8px; }
 .alu-otras-lista form { margin: 0; }
 .alu-anadir {
-  border: 1px solid var(--border); background: var(--s2); color: var(--t2);
+  border: 1px solid var(--c-linea); background: var(--c-tarjeta); color: var(--c-suave);
   border-radius: 8px; padding: 6px 13px; font-size: .85rem; cursor: pointer;
   font-family: inherit;
 }
-.alu-anadir:hover { border-color: var(--border-hover); color: var(--t1); background: var(--s3); }
+.alu-anadir:hover { border-color: #B9C4CE; color: var(--c-tinta); background: #F6F8FB; }
+.alu-zona .alta-vacio { color: var(--c-suave); }
+.alu-zona .alta-vacio b { color: var(--c-tinta); }

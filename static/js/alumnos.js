@@ -21,6 +21,11 @@
     return res.json();
   }
 
+  /* Misma fórmula que la plantilla: 3px de base y 2px por vídeo, con tope en 8.
+     Si se toca una hay que tocar la otra, o la barra daría un salto al
+     recargar la página. */
+  const altoBarra = pub => 3 + Math.min(pub, 8) * 2;
+
   function pintar(fila, datos) {
     fila.querySelectorAll(".alu-num").forEach(i => {
       i.value = datos[i.dataset.campo];
@@ -28,6 +33,19 @@
     const total = fila.querySelector("[data-total]");
     total.textContent = datos.publicados;
     total.classList.toggle("alu-total--ok", datos.cumple);
+
+    /* La última barra es SIEMPRE la semana que estás mirando (el historial se
+       pinta de la más antigua a la actual), así que vale igual en semanas
+       pasadas. Crece a la vez que el número, que es lo que hace que se entienda
+       de un vistazo lo que acabas de cambiar. */
+    const barras = fila.querySelectorAll(".alu-barra");
+    const ultima = barras[barras.length - 1];
+    if (ultima) {
+      ultima.style.height = altoBarra(datos.publicados) + "px";
+      ultima.classList.toggle("alu-barra--ok", datos.cumple);
+      const cuando = (ultima.title || "").split(":")[0];
+      ultima.title = `${cuando}: ${datos.publicados}`;
+    }
   }
 
   function avisarFallo(el) {
