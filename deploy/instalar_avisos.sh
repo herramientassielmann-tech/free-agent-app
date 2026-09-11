@@ -38,10 +38,12 @@ chmod 600 .env
 echo "── 2/4 · Temporizadores ──"
 cp deploy/freeagent-avisos.service deploy/freeagent-avisos.timer /etc/systemd/system/
 cp deploy/freeagent-salud.service  deploy/freeagent-salud.timer  /etc/systemd/system/
+cp deploy/freeagent-altas.service  deploy/freeagent-altas.timer  /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable --now freeagent-avisos.timer
 systemctl enable --now freeagent-salud.timer
-echo "   Avisos de tareas y vigilante de guiones instalados y activados."
+systemctl enable --now freeagent-altas.timer
+echo "   Avisos de tareas, vigilante de guiones y correos de alta activados."
 
 echo "── 3/4 · Comprobación en seco (no envía nada) ──"
 .venv/bin/python3 scripts/avisar_tareas.py --ensayo

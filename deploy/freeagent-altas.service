@@ -1,0 +1,10 @@
+[Unit]
+Description=Correos del alta de alumnos (bienvenida y recordatorios)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/var/www/freeagent
+ExecStart=/var/www/freeagent/.venv/bin/python3 scripts/enviar_bienvenidas.py

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/css/style.css?v=26" />
+  <link rel="stylesheet" href="/static/css/style.css?v=28" />
 </head>
 <body>
 
@@ -58,6 +58,10 @@
       <a href="/admin" class="nav-item {% if '/admin' in request.url.path and 'optimizar-ig' not in request.url.path %}active{% endif %}">
         <span class="nav-icon">🛠</span>
         Admin
+      </a>
+      <a href="/admin/altas" class="nav-item {% if '/admin/altas' in request.url.path %}active{% endif %}">
+        <span class="nav-icon">🎟️</span>
+        <span class="nav-text">Altas</span>
       </a>
       <a href="/crm" class="nav-item {% if '/crm' in request.url.path %}active{% endif %}">
         <span class="nav-icon">🗂</span>

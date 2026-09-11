@@ -1,3 +1,7 @@
+# Anotaciones diferidas: permite escribir `dict | None` y que el fichero
+# siga siendo importable en Python 3.9, que es lo que hay en local para
+# levantar los arneses de prueba. models.py ya lo hace.
+from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Form, HTTPException, Cookie
@@ -395,3 +399,159 @@ async def asesor_list_redirect():
 @router.get("/chatbot/{cid}")
 async def asesor_thread_redirect(cid: int):
     return RedirectResponse(url=f"/chatbot/{cid}", status_code=301)
+
+
+# ── Altas de alumnos (onboarding) ────────────────────────────────────────────
+
+PASOS_ALTA = [
+    ("agendado", "Agendado", "programada_para"),
+    ("email", "Email", "email_enviado_en"),
+    ("pago", "Pago", "pagado_en"),
+    ("firma", "Firma", "contrato_firmado_en"),
+    ("cuenta", "Cuenta", "cuenta_creada_en"),
+    ("skool", "Skool", "skool_abierto_en"),
+    ("onboarding", "Onboarding", "onboarding_agendado_en"),
+]
+
+
+def _fila_alta(a: "Alta") -> dict:
+    """Una fila del panel. Todo se deduce de la base de datos y nada se marca a
+    mano: un checklist que se marca a mano se pudre en dos semanas."""
+    pasos = []
+    for clave, titulo, campo in PASOS_ALTA:
+        valor = getattr(a, campo, None)
+        pasos.append({"clave": clave, "titulo": titulo, "hecho": bool(valor),
+                      "fecha": valor.strftime("%d/%m") if valor else None})
+
+    # Cuánto lleva parado en el primer paso que le falta: se cuenta desde el
+    # último que sí completó, que es cuando dejó de avanzar.
+    dias = None
+    if not a.completada:
+        hechas = [getattr(a, c) for _, _, c in PASOS_ALTA if getattr(a, c, None)]
+        desde = max(hechas) if hechas else a.created_at
+        dias = (datetime.utcnow() - desde).days
+
+    return {
+        "alta": a, "pasos": pasos,
+        "dias_atascado": dias,
+        "completada": a.completada,
+        "abiertos": a.accesos_abiertos,
+    }
+
+
+@router.get("/altas", response_class=HTMLResponse)
+async def altas(
+    request: Request,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    from app.models import Alta
+    filas = [_fila_alta(a) for a in
+             db.query(Alta).order_by(Alta.created_at.desc()).all()]
+    return templates.TemplateResponse("admin/altas.html", {
+        "request": request, "user": current_user,
+        "filas": filas, "columnas": [t for _, t, _ in PASOS_ALTA],
+        "pendientes": sum(1 for f in filas if not f["completada"]),
+    })
+
+
+@router.post("/altas/nueva")
+async def alta_nueva(
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    nombre: str = Form(...),
+    email: str = Form(...),
+    cuando: str = Form(""),
+):
+    """Alta a mano. Es el camino cuando Calendly no manda avisos (plan gratuito)
+    o cuando alguien cierra por fuera del embudo."""
+    from app.models import Alta
+    from app.routers.bienvenida import caducidad, nuevo_token
+    programada = None
+    if cuando:
+        for formato in ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+            try:
+                programada = datetime.strptime(cuando.strip(), formato)
+                break
+            except ValueError:
+                continue
+    a = Alta(
+        nombre=nombre.strip()[:150], email=email.strip().lower()[:255],
+        programada_para=programada or datetime.utcnow(),
+        token=nuevo_token(), token_expira=caducidad(),
+    )
+    db.add(a)
+    db.commit()
+    return RedirectResponse(url="/admin/altas", status_code=303)
+
+
+@router.post("/altas/{aid}/desbloquear")
+async def alta_desbloquear(
+    aid: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    from app.models import Alta
+    a = db.get(Alta, aid)
+    if a is None:
+        raise HTTPException(status_code=404, detail="Alta no encontrada")
+    a.desbloqueado_a_mano = not a.desbloqueado_a_mano
+    db.commit()
+    return RedirectResponse(url="/admin/altas", status_code=303)
+
+
+@router.post("/altas/{aid}/pago-manual")
+async def alta_pago_manual(
+    aid: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Para el 50/50 y las transferencias que no pasan por Stripe."""
+    from app.models import Alta
+    a = db.get(Alta, aid)
+    if a is None:
+        raise HTTPException(status_code=404, detail="Alta no encontrada")
+    if a.pagado_en:
+        a.pagado_en = None
+        a.metodo_pago = None
+    else:
+        a.pagado_en = datetime.utcnow()
+        a.metodo_pago = "manual"
+    db.commit()
+    return RedirectResponse(url="/admin/altas", status_code=303)
+
+
+@router.post("/altas/{aid}/reenviar")
+async def alta_reenviar(
+    aid: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Vuelve a mandar el correo de bienvenida y renueva el enlace si caducó."""
+    from app.models import Alta
+    from app.routers.bienvenida import caducidad
+    from app.services.bienvenida_email import mandar_bienvenida
+    a = db.get(Alta, aid)
+    if a is None:
+        raise HTTPException(status_code=404, detail="Alta no encontrada")
+    if a.token_expira < datetime.utcnow():
+        a.token_expira = caducidad()
+        db.commit()
+    if mandar_bienvenida(a):
+        a.email_enviado_en = datetime.utcnow()
+        db.commit()
+    return RedirectResponse(url="/admin/altas", status_code=303)
+
+
+@router.get("/altas/{aid}/contrato", response_class=HTMLResponse)
+async def alta_contrato(
+    aid: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """El contrato firmado, tal cual se congeló. No se vuelve a pintar."""
+    from app.models import Alta
+    a = db.get(Alta, aid)
+    if a is None or a.firma is None:
+        raise HTTPException(status_code=404, detail="No hay contrato firmado")
+    return HTMLResponse(a.firma.html_firmado)

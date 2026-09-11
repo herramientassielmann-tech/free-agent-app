@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Altas — Admin — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Altas</h1>
+    <p class="page-subtitle">
+      {% if pendientes %}{{ pendientes }} sin terminar de {{ filas|length }}.
+      Todo se calcula solo: aquí no hay nada que marcar a mano.
+      {% else %}Las {{ filas|length }} altas están completas.{% endif %}
+    </p>
+  </div>
+  <button type="button" class="btn btn-primary" id="alta-nueva-btn">+ Alta a mano</button>
+</div>
+
+<form class="card alta-form hidden" id="alta-form" method="post" action="/admin/altas/nueva">
+  <p class="alta-form-ayuda">Para cuando alguien cierra fuera del embudo, o si
+  Calendly no manda avisos. Se le manda el correo a la hora que pongas.</p>
+  <div class="alta-form-fila">
+    <div class="form-group">
+      <label class="form-label" for="a-nombre">Nombre</label>
+      <input class="form-input" id="a-nombre" name="nombre" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="a-email">Email</label>
+      <input class="form-input" id="a-email" name="email" type="email" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="a-cuando">Hora de la llamada</label>
+      <input class="form-input" id="a-cuando" name="cuando" type="datetime-local">
+    </div>
+  </div>
+  <div class="alta-form-botones">
+    <button type="button" class="btn btn-secondary" id="alta-cancelar">Cancelar</button>
+    <button type="submit" class="btn btn-primary">Crear alta</button>
+  </div>
+</form>
+
+<div class="card">
+  {% if filas %}
+  <div class="alta-tabla-envoltura">
+  <table class="admin-table alta-tabla">
+    <thead>
+      <tr>
+        <th>Persona</th>
+        {% for c in columnas %}<th class="alta-col">{{ c }}</th>{% endfor %}
+        <th>Atascado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in filas %}
+      <tr class="{% if f.completada %}alta-fila--ok{% endif %}">
+        <td>
+          <b>{{ f.alta.nombre }}</b>
+          <span class="alta-email">{{ f.alta.email }}</span>
+          {% if f.alta.metodo_pago %}<span class="alta-metodo">{{ f.alta.metodo_pago }}</span>{% endif %}
+        </td>
+        {% for p in f.pasos %}
+        <td class="alta-col">
+          {% if p.hecho %}<span class="alta-si" title="{{ p.fecha }}">✓</span>
+          {% else %}<span class="alta-no">·</span>{% endif %}
+        </td>
+        {% endfor %}
+        <td>
+          {% if f.completada %}<span class="alta-si">completa</span>
+          {% elif f.dias_atascado is not none and f.dias_atascado >= 3 %}
+            <span class="alta-alerta">{{ f.dias_atascado }} días</span>
+          {% elif f.dias_atascado is not none %}
+            <span class="alta-tenue">{{ f.dias_atascado }} d</span>
+          {% endif %}
+        </td>
+        <td class="alta-acciones">
+          <form method="post" action="/admin/altas/{{ f.alta.id }}/reenviar">
+            <button class="alta-btn" title="Reenviar el correo de bienvenida">✉</button>
+          </form>
+          <form method="post" action="/admin/altas/{{ f.alta.id }}/pago-manual">
+            <button class="alta-btn {% if f.alta.pagado_en %}alta-btn--on{% endif %}"
+                    title="Marcar el pago a mano (50/50 o transferencia)">€</button>
+          </form>
+          <form method="post" action="/admin/altas/{{ f.alta.id }}/desbloquear">
+            <button class="alta-btn {% if f.alta.desbloqueado_a_mano %}alta-btn--on{% endif %}"
+                    title="Abrirle los accesos sin esperar al pago">🔓</button>
+          </form>
+          {% if f.alta.contrato_firmado_en %}
+          <a class="alta-btn" href="/admin/altas/{{ f.alta.id }}/contrato"
+             target="_blank" rel="noopener" title="Ver el contrato firmado">📄</a>
+          {% endif %}
+          <a class="alta-btn" href="/bienvenida/{{ f.alta.token }}"
+             target="_blank" rel="noopener" title="Abrir su página de bienvenida">↗</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="alta-vacio">
+    <b>Todavía no hay ninguna alta.</b>
+    <p>Se crean solas cuando alguien agenda en Calendly. También puedes crear una
+    a mano con el botón de arriba.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const form = document.getElementById("alta-form");
+  document.getElementById("alta-nueva-btn").addEventListener("click", () => {
+    form.classList.remove("hidden");
+    document.getElementById("a-nombre").focus();
+  });
+  document.getElementById("alta-cancelar").addEventListener("click", () =>
+    form.classList.add("hidden"));
+</script>
+{% endblock %}

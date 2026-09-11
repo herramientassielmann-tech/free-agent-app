@@ -1,0 +1,14 @@
+[Unit]
+Description=Revisa cada pocos minutos si hay que mandar correos de alta
+
+[Timer]
+# Cada cinco minutos, y no una vez al día como los demás avisos: el correo de
+# bienvenida tiene que salir a la HORA EXACTA de la llamada de venta, que es lo
+# que permite cerrar en vivo mientras la persona está al teléfono.
+OnCalendar=*:0/5
+Persistent=true
+# Sin desfase aleatorio aquí: en los otros temporizadores evita picos, pero en
+# este restaría precisión justo donde la precisión es el punto.
+
+[Install]
+WantedBy=timers.target
