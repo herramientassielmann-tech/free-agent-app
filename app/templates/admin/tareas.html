@@ -23,17 +23,16 @@
   <button type="button" class="btn btn-primary" id="eq-anadir">Añadir</button>
 </div>
 <p class="eq-pista">
-  {% for p in equipo %}<code>@{{ p.name.split()[0]|lower }}</code>{% if not loop.last %} {% endif %}{% endfor %}
+  {% for p in equipo %}<code>@{{ p|lower }}</code>{% if not loop.last %} {% endif %}{% endfor %}
   · <code>hoy</code> <code>mañana</code> <code>viernes</code> <code>25/09</code>
   <code>en 3 días</code> · <code>!!</code> para urgente
 </p>
 
 <div class="eq-filtros">
   <a class="eq-chip {% if quien == 'todas' %}eq-chip--on{% endif %}" href="/admin/tareas">Todas</a>
-  <a class="eq-chip {% if quien == 'mias' %}eq-chip--on{% endif %}" href="/admin/tareas?quien=mias">Mías</a>
   {% for p in equipo %}
-  <a class="eq-chip {% if quien == p.id|string %}eq-chip--on{% endif %}"
-     href="/admin/tareas?quien={{ p.id }}">{{ p.name.split()[0] }}</a>
+  <a class="eq-chip eq-chip--{{ p|lower }} {% if quien == p %}eq-chip--on{% endif %}"
+     href="/admin/tareas?quien={{ p }}">{{ p }}</a>
   {% endfor %}
 </div>
 
@@ -79,5 +78,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/tareas_equipo.js?v=1"></script>
+<script src="/static/js/tareas_equipo.js?v=2"></script>
 {% endblock %}

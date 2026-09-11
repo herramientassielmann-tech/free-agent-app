@@ -550,10 +550,9 @@ class TareaEquipo(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     texto: Mapped[str] = mapped_column(String(300), nullable=False)
 
-    asignado_a: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("users.id"), nullable=True, index=True)
-    creado_por: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("users.id"), nullable=True)
+    # Un nombre, no un usuario: los tres entran con la misma cuenta de
+    # administrador, así que el responsable es una etiqueta.
+    asignado_a: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, index=True)
 
     # Date y no DateTime: una tarea vence un día, no a una hora. Comparar días
     # con días evita el lío de la zona horaria que arrastran los avisos.
@@ -567,8 +566,6 @@ class TareaEquipo(Base):
     # Se marca al avisar por correo, para no repetir el mismo aviso cada mañana
     avisada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-
-    responsable: Mapped[Optional["User"]] = relationship("User", foreign_keys=[asignado_a])
 
     @property
     def abierta(self) -> bool:

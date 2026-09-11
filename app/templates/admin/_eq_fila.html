@@ -15,15 +15,21 @@
   <span class="eq-texto {% if hecha %}eq-texto--hecha{% endif %}">{{ t.texto }}</span>
 
   {% if hecha %}
-    <span class="eq-quien-fijo">{{ t.quien }}</span>
+    {% if t.asignado_a %}
+    <span class="eq-persona eq-persona--on" data-quien="{{ t.asignado_a }}">{{ t.asignado_a }}</span>
+    {% endif %}
     <span class="eq-fecha">{{ t.completada_en }}</span>
   {% else %}
-    <select class="eq-quien" data-campo="asignado_a" aria-label="Responsable">
-      <option value="" {% if not t.asignado_a %}selected{% endif %}>Sin asignar</option>
+    {# Tres botones de color, uno por persona. Un clic asigna; otro clic en el
+       mismo lo quita. El nombre va escrito además del color: el color nunca es
+       el único indicador. #}
+    <span class="eq-personas">
       {% for p in equipo %}
-      <option value="{{ p.id }}" {% if t.asignado_a == p.id %}selected{% endif %}>{{ p.name.split()[0] }}</option>
+      <button type="button" class="eq-persona {% if t.asignado_a == p %}eq-persona--on{% endif %}"
+              data-quien="{{ p }}"
+              title="{{ 'Quitar a ' ~ p if t.asignado_a == p else 'Asignar a ' ~ p }}">{{ p }}</button>
       {% endfor %}
-    </select>
+    </span>
     <input class="eq-dia" type="date" data-campo="fecha_limite"
            value="{{ t.fecha_limite or '' }}" aria-label="Fecha límite">
     <button type="button" class="eq-borrar" title="Borrar">×</button>

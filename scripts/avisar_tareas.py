@@ -27,6 +27,7 @@ Uso:
     .venv/bin/python3 scripts/avisar_tareas.py --prueba tu@correo.com
 """
 import sys
+from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
 
@@ -231,9 +232,21 @@ def _fila_equipo(t, hoy) -> str:
     )
 
 
-def _html_equipo(nombre: str, tareas, hoy) -> str:
-    filas = "".join(_fila_equipo(t, hoy) for t in tareas)
-    plural = "s" if len(tareas) != 1 else ""
+COLORES = {"Robert": "#0A6FD4", "David": "#7A3DB8", "Kevin": "#B5610A",
+           "Sin asignar": "#5A6874"}
+
+
+def _html_equipo(por_persona, hoy, total: int) -> str:
+    bloques = ""
+    for quien, tareas in por_persona.items():
+        filas = "".join(_fila_equipo(t, hoy) for t in tareas)
+        color = COLORES.get(quien, "#5A6874")
+        bloques += (
+            f'<p style="margin:18px 0 4px;font-size:13px;font-weight:700;'
+            f'color:{color};text-transform:uppercase;letter-spacing:.5px">{quien}</p>'
+            f'<table role="presentation" width="100%">{filas}</table>'
+        )
+    plural = "s" if total != 1 else ""
     return f"""<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
       background:#F1F4F8;padding:32px 16px">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
@@ -242,14 +255,14 @@ def _html_equipo(nombre: str, tareas, hoy) -> str:
           <tr><td>
             <p style="margin:0 0 4px;font-size:13px;color:#5A6874;text-transform:uppercase;
                       letter-spacing:.5px">Free Agent Academy</p>
-            <h1 style="margin:0 0 16px;font-size:20px;color:#16202C;font-weight:600">
-              {_escapar(nombre)}, tienes {len(tareas)} tarea{plural} para hoy
+            <h1 style="margin:0 0 6px;font-size:20px;color:#16202C;font-weight:600">
+              {total} tarea{plural} del equipo para hoy
             </h1>
-            <table role="presentation" width="100%">{filas}</table>
-            <p style="margin:22px 0 0">
+            {bloques}
+            <p style="margin:24px 0 0">
               <a href="{APP_URL}/admin/tareas" style="display:inline-block;background:#16202C;
                  color:#FFF;text-decoration:none;padding:11px 20px;border-radius:8px;
-                 font-size:15px;font-weight:500">Ver mis tareas</a>
+                 font-size:15px;font-weight:500">Ver las tareas</a>
             </p>
           </td></tr>
         </table>
@@ -257,64 +270,69 @@ def _html_equipo(nombre: str, tareas, hoy) -> str:
 
 
 def avisar_equipo(ensayo: bool = False) -> int:
-    """Un correo a cada uno con sus tareas internas vencidas o de hoy.
+    """UN correo con todo lo que vence hoy, agrupado por persona.
 
-    Va en el mismo trabajo de las 8:00 que los avisos del CRM: es otro público
-    —el equipo, no los realtors— pero el mismo momento del día y el mismo
-    temporizador, así que no hace falta montar nada nuevo en el servidor.
+    Robert, David y Kevin comparten la misma cuenta y la misma bandeja, así que
+    mandar tres correos al mismo sitio sería ruido: llega uno solo, con lo de
+    cada uno bajo su nombre.
+
+    Va en el mismo trabajo de las 8:00 que los avisos del CRM: otro público,
+    el mismo momento del día y el mismo temporizador, así que no hace falta
+    montar nada nuevo en el servidor.
     """
+    from app.config import ADMIN_EMAIL
+    from app.services.tareas_texto import EQUIPO
+
     hoy = datetime.utcnow().date()
     db = SessionLocal()
-    fallos = 0
     try:
         pendientes = (
             db.query(TareaEquipo)
             .filter(TareaEquipo.estado == "pendiente",
                     TareaEquipo.avisada_en.is_(None),
-                    TareaEquipo.asignado_a.isnot(None),
                     TareaEquipo.fecha_limite.isnot(None),
                     TareaEquipo.fecha_limite <= hoy)
             .order_by(TareaEquipo.prioridad != "urgente", TareaEquipo.fecha_limite)
             .all()
         )
-        por_persona = {}
-        for t in pendientes:
-            u = db.get(User, t.asignado_a)
-            if not u or not u.is_active or not u.email:
-                continue
-            por_persona.setdefault(u, []).append(t)
-
-        if not por_persona:
+        if not pendientes:
             if not ensayo:
                 print(f"[{hoy}] Equipo: nada que avisar.")
             return 0
 
-        enviados = 0
-        for u, tareas in por_persona.items():
-            nombre = (u.name or "").split()[0] or "Hola"
-            if ensayo:
-                print(f"\n── equipo · {u.email} ── {len(tareas)} tarea(s)")
+        # Por persona, en el orden del equipo, y los sin asignar al final
+        por_persona = OrderedDict((n, []) for n in EQUIPO)
+        por_persona["Sin asignar"] = []
+        for t in pendientes:
+            por_persona[t.asignado_a if t.asignado_a in EQUIPO else "Sin asignar"].append(t)
+        por_persona = OrderedDict((k, v) for k, v in por_persona.items() if v)
+
+        if ensayo:
+            print(f"\n── equipo · {ADMIN_EMAIL} ── {len(pendientes)} tarea(s)")
+            for quien, tareas in por_persona.items():
+                print(f"   {quien}:")
                 for t in tareas:
                     marca = "URGENTE " if t.prioridad == "urgente" else ""
-                    print(f"   · {marca}{t.texto}  [{t.fecha_limite:%d/%m}]")
-                continue
-            texto = f"{nombre}, tienes {len(tareas)} tarea(s) para hoy:\n\n" + \
-                    "\n".join(f"- {t.texto} ({t.fecha_limite:%d/%m})" for t in tareas) + \
-                    f"\n\n{APP_URL}/admin/tareas\n"
-            asunto = (f"Tienes {len(tareas)} tareas para hoy" if len(tareas) > 1
-                      else f"Para hoy: {tareas[0].texto[:60]}")
-            if enviar(u.email, asunto, _html_equipo(nombre, tareas, hoy), texto):
-                # Sólo ahora: si falló el envío, mañana se reintenta
-                for t in tareas:
-                    t.avisada_en = datetime.utcnow()
-                db.commit()
-                enviados += 1
-                print(f"[{hoy}] Equipo: avisado {u.email} · {len(tareas)} tarea(s)")
-            else:
-                db.rollback()
-                fallos += 1
-                print(f"[{hoy}] Equipo: FALLO al avisar a {u.email}")
-        return 1 if fallos else 0
+                    print(f"      · {marca}{t.texto}  [{t.fecha_limite:%d/%m}]")
+            return 0
+
+        asunto = (f"{len(pendientes)} tareas del equipo para hoy" if len(pendientes) > 1
+                  else f"Para hoy: {pendientes[0].texto[:60]}")
+        texto = "\n".join(
+            f"{quien}:\n" + "\n".join(f"  - {t.texto} ({t.fecha_limite:%d/%m})" for t in ts)
+            for quien, ts in por_persona.items()
+        ) + f"\n\n{APP_URL}/admin/tareas\n"
+
+        if enviar(ADMIN_EMAIL, asunto, _html_equipo(por_persona, hoy, len(pendientes)), texto):
+            # Sólo ahora: si falló el envío, mañana se reintenta
+            for t in pendientes:
+                t.avisada_en = datetime.utcnow()
+            db.commit()
+            print(f"[{hoy}] Equipo: avisado · {len(pendientes)} tarea(s)")
+            return 0
+        db.rollback()
+        print(f"[{hoy}] Equipo: FALLO al avisar")
+        return 1
     finally:
         db.close()
 

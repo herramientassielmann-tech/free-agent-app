@@ -12,23 +12,20 @@ Uso:
     .venv/bin/python3 scripts/probar_tareas_texto.py
 """
 import sys
-from collections import namedtuple
 from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.services.tareas_texto import analizar
+from app.services.tareas_texto import EQUIPO, analizar
 
-P = namedtuple("P", "id name")
-EQUIPO = [P(1, "Robert Sielmann"), P(2, "David Marín"), P(3, "Kevin Ortega")]
 VIERNES = date(2026, 9, 11)
 
 # (frase, texto, responsable, fecha, prioridad)
 CASOS = [
-    ("Pedir testimonio a Ada @david mañana !!", "Pedir testimonio a Ada", 2, date(2026, 9, 12), "urgente"),
+    ("Pedir testimonio a Ada @david mañana !!", "Pedir testimonio a Ada", "David", date(2026, 9, 12), "urgente"),
     ("Llamar a Lilliana", "Llamar a Lilliana", None, None, "normal"),
-    ("@kevin revisar el panel hoy", "revisar el panel", 3, VIERNES, "normal"),
+    ("@kevin revisar el panel hoy", "revisar el panel", "Kevin", VIERNES, "normal"),
     # Hoy ES viernes: quien lo apunta se refiere a hoy, no a dentro de una semana
     ("Preparar la grupal viernes", "Preparar la grupal", None, VIERNES, "normal"),
     ("Llamar al gestor lunes", "Llamar al gestor", None, date(2026, 9, 14), "normal"),
@@ -41,15 +38,15 @@ CASOS = [
     ("Llamar a Ada la semana que viene", "Llamar a Ada", None, date(2026, 9, 18), "normal"),
     ("Subir reel pasado mañana", "Subir reel", None, date(2026, 9, 13), "normal"),
     ("Cosa sin prisa !baja", "Cosa sin prisa", None, None, "baja"),
-    ("@Kevin con mayúscula", "con mayúscula", 3, None, "normal"),
+    ("@Kevin con mayúscula", "con mayúscula", "Kevin", None, "normal"),
     # Una cuenta de Instagram no es un compañero: se queda en el texto
     ("Responder a @adarealty en Instagram", "Responder a @adarealty en Instagram", None, None, "normal"),
     ("miercoles sin tilde", "sin tilde", None, date(2026, 9, 16), "normal"),
     ("Llamar el sábado", "Llamar", None, date(2026, 9, 12), "normal"),
     ("Fecha imposible 45/13", "Fecha imposible 45/13", None, None, "normal"),
     # Si al quitarlo todo no queda nada, se guarda la frase original
-    ("@david", "@david", 2, None, "normal"),
-    ("  Espacios   raros   @robert  ", "Espacios raros", 1, None, "normal"),
+    ("@david", "@david", "David", None, "normal"),
+    ("  Espacios   raros   @robert  ", "Espacios raros", "Robert", None, "normal"),
 ]
 
 

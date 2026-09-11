@@ -136,7 +136,6 @@ async def create_user(
     email: str = Form(...),
     password: str = Form(...),
     monthly_limit: str = Form(""),
-    es_equipo: Optional[str] = Form(None),
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
@@ -149,16 +148,12 @@ async def create_user(
             status_code=400,
         )
 
-    # Un compañero de equipo entra como administrador: es quien puede tener
-    # tareas asignadas. Hasta ahora no había forma de crear un segundo admin
-    # sin tocar la base de datos a mano.
-    equipo = bool(es_equipo)
-    limit = None if equipo else (int(monthly_limit) if monthly_limit.strip() else None)
+    limit = int(monthly_limit) if monthly_limit.strip() else None
     new_user = User(
         email=email,
         password_hash=hash_password(password),
         name=name.strip(),
-        is_admin=equipo,
+        is_admin=False,
         is_active=True,
         monthly_limit=limit,
         must_change_password=True,
@@ -167,8 +162,6 @@ async def create_user(
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    if equipo:
-        return RedirectResponse(url="/admin/tareas", status_code=303)
     # Tras crear, vamos a su ficha para configurar el perfil (onboarding)
     return RedirectResponse(url=f"/admin/users/{new_user.id}", status_code=303)
 
@@ -718,20 +711,12 @@ async def alumno_seguimiento(
 
 # ── Tareas del equipo ────────────────────────────────────────────────────────
 
-def _equipo(db: Session) -> list:
-    """Los que pueden tener tareas asignadas: los administradores activos."""
-    return (db.query(User)
-              .filter(User.is_admin.is_(True), User.is_active.is_(True))
-              .order_by(User.name).all())
-
-
-def _tarea_json(t: "TareaEquipo", nombres: dict) -> dict:
+def _tarea_json(t: "TareaEquipo") -> dict:
     """La fila ya resuelta: la plantilla y el JS no hacen cuentas de fechas."""
     return {
         "id": t.id,
         "texto": t.texto,
         "asignado_a": t.asignado_a,
-        "quien": nombres.get(t.asignado_a, "Sin asignar"),
         "fecha_limite": t.fecha_limite.isoformat() if t.fecha_limite else None,
         "fecha_corta": t.fecha_limite.strftime("%d/%m") if t.fecha_limite else None,
         "prioridad": t.prioridad,
@@ -752,18 +737,15 @@ async def tareas_equipo(
     from collections import OrderedDict
     from app.models import TareaEquipo
 
-    equipo = _equipo(db)
-    nombres = {u.id: u.name.split()[0] for u in equipo}
+    from app.services.tareas_texto import EQUIPO
     hoy = datetime.utcnow().date()
 
     consulta = db.query(TareaEquipo)
-    filtro = None
-    if quien == "mias":
-        filtro = current_user.id
-    elif quien and quien.isdigit():
-        filtro = int(quien)
-    if filtro is not None:
-        consulta = consulta.filter(TareaEquipo.asignado_a == filtro)
+    # El filtro va por nombre: los tres entran con la misma cuenta, así que no
+    # existe un "mías" que el servidor pueda deducir.
+    elegido = next((n for n in EQUIPO if n.lower() == (quien or "").lower()), None)
+    if elegido:
+        consulta = consulta.filter(TareaEquipo.asignado_a == elegido)
 
     todas = consulta.order_by(
         # Sin fecha al final; dentro de cada día, lo urgente primero
@@ -785,7 +767,7 @@ async def tareas_equipo(
 
     grupos = {k: [] for k in ("vencidas", "de_hoy", "semana", "adelante", "sin_fecha")}
     for t in abiertas:
-        grupos[bucket(t)].append(_tarea_json(t, nombres))
+        grupos[bucket(t)].append(_tarea_json(t))
 
     # Lo hecho, por semanas y de lo más reciente a lo más antiguo. Mismo criterio
     # que el registro de tareas del CRM para que las dos pantallas hablen de la
@@ -801,11 +783,11 @@ async def tareas_equipo(
             etiqueta = "La semana pasada"
         else:
             etiqueta = f"Semana del {lunes.strftime('%d/%m')}"
-        semanas.setdefault(etiqueta, []).append(_tarea_json(t, nombres))
+        semanas.setdefault(etiqueta, []).append(_tarea_json(t))
 
     return templates.TemplateResponse("admin/tareas.html", {
         "request": request, "user": current_user,
-        "equipo": equipo, "quien": quien or "todas",
+        "equipo": EQUIPO, "quien": elegido or "todas",
         "grupos": grupos, "semanas": semanas,
         "abiertas": len(abiertas),
         "vencidas": len(grupos["vencidas"]),
@@ -832,12 +814,11 @@ async def crear_tarea_equipo(
     if not frase:
         raise HTTPException(status_code=422, detail="La tarea está vacía.")
 
-    equipo = _equipo(db)
-    campos = analizar(frase, equipo)
+    from app.services.tareas_texto import EQUIPO
+    campos = analizar(frase)
     t = TareaEquipo(
         texto=campos["texto"],
         asignado_a=campos["asignado_a"],
-        creado_por=current_user.id,
         fecha_limite=campos["fecha_limite"],
         prioridad=campos["prioridad"],
     )
@@ -845,7 +826,7 @@ async def crear_tarea_equipo(
     db.commit()
     db.refresh(t)
 
-    datos = _tarea_json(t, {u.id: u.name.split()[0] for u in equipo})
+    datos = _tarea_json(t)
     # El HTML de la fila lo monta el servidor con la misma plantilla que usa la
     # página. Si lo montara el JS habría dos versiones del mismo trozo y
     # acabarían separándose sin que nadie se diera cuenta.
@@ -862,7 +843,7 @@ async def crear_tarea_equipo(
     else:
         bloque = "adelante"
     return JSONResponse({"tarea": datos, "bloque": bloque,
-                         "html": str(macro.fila(datos, equipo))})
+                         "html": str(macro.fila(datos, EQUIPO))})
 
 
 @router.post("/tareas/{tid}/estado")
@@ -882,7 +863,7 @@ async def tarea_equipo_estado(
         t.estado, t.completada_en = "hecha", datetime.utcnow()
     db.commit()
     db.refresh(t)
-    return JSONResponse(_tarea_json(t, {u.id: u.name.split()[0] for u in _equipo(db)}))
+    return JSONResponse(_tarea_json(t))
 
 
 @router.post("/tareas/{tid}")
@@ -900,13 +881,14 @@ async def tarea_equipo_editar(
         raise HTTPException(status_code=404, detail="Tarea no encontrada")
 
     if campo == "asignado_a":
+        from app.services.tareas_texto import EQUIPO
         if not valor:
             t.asignado_a = None
         else:
-            elegido = db.get(User, int(valor)) if valor.isdigit() else None
-            if elegido is None or not elegido.is_admin:
+            quien = next((n for n in EQUIPO if n.lower() == valor.lower()), None)
+            if quien is None:
                 raise HTTPException(status_code=400, detail="Esa persona no es del equipo")
-            t.asignado_a = elegido.id
+            t.asignado_a = quien
     elif campo == "fecha_limite":
         t.fecha_limite = _fecha_dia(valor)
     elif campo == "prioridad":
@@ -923,7 +905,7 @@ async def tarea_equipo_editar(
 
     db.commit()
     db.refresh(t)
-    return JSONResponse(_tarea_json(t, {u.id: u.name.split()[0] for u in _equipo(db)}))
+    return JSONResponse(_tarea_json(t))
 
 
 @router.delete("/tareas/{tid}")

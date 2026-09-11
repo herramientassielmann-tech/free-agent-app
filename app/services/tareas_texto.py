@@ -21,6 +21,11 @@ from typing import List, Optional
 PRIORIDADES = ("urgente", "normal", "baja")
 ESTADOS = ("pendiente", "hecha", "cancelada")
 
+# El equipo son tres nombres, no tres cuentas: los tres entran con el mismo
+# usuario de administrador. El responsable es una etiqueta, y por eso se guarda
+# el nombre y no un identificador de usuario.
+EQUIPO = ("Robert", "David", "Kevin")
+
 # Los acentos se aceptan escritos o no: nadie va a poner «miércoles» con tilde
 # mientras apunta algo deprisa.
 DIAS = {
@@ -115,8 +120,8 @@ def _fecha(texto: str, hoy: date) -> tuple:
     return _fecha_suelta(texto, hoy)
 
 
-def _responsable(texto: str, equipo: List) -> tuple:
-    """Busca @alguien y lo empareja con el equipo.
+def _responsable(texto: str, equipo) -> tuple:
+    """Busca @alguien y lo empareja con un nombre del equipo.
 
     Si no coincide con nadie se deja tal cual en el texto: «responder a
     @adarealty» es una cuenta de Instagram, no un compañero, y borrarla se
@@ -124,20 +129,19 @@ def _responsable(texto: str, equipo: List) -> tuple:
     """
     for m in re.finditer(r"@([\wáéíóúñ]+)", texto, re.IGNORECASE):
         buscado = _sin_acentos(m.group(1))
-        exactos = [p for p in equipo if _sin_acentos(p.name).split()[0] == buscado]
+        exactos = [n for n in equipo if _sin_acentos(n) == buscado]
         if not exactos:
-            exactos = [p for p in equipo
-                       if _sin_acentos(p.name).split()[0].startswith(buscado)]
+            exactos = [n for n in equipo if _sin_acentos(n).startswith(buscado)]
         if len(exactos) == 1:
-            return (texto[:m.start()] + " " + texto[m.end():]), exactos[0].id
+            return (texto[:m.start()] + " " + texto[m.end():]), exactos[0]
     return texto, None
 
 
-def analizar(texto: str, equipo: List, hoy: Optional[date] = None) -> dict:
+def analizar(texto: str, equipo=EQUIPO, hoy: Optional[date] = None) -> dict:
     """Convierte una frase en los campos de una tarea.
 
-    `equipo` es una lista de objetos con `.id` y `.name`. `hoy` se puede pasar
-    para poder probar esto sin depender del día en que se ejecute.
+    `equipo` es una lista de nombres. `hoy` se puede pasar para probar esto sin
+    depender del día en que se ejecute.
     """
     hoy = hoy or date.today()
     original = (texto or "").strip()

@@ -95,6 +95,32 @@
       return;
     }
 
+    const persona = e.target.closest(".eq-persona");
+    if (persona && persona.tagName === "BUTTON") {
+      // Pulsar el que ya está puesto lo quita: no hace falta un botón aparte
+      // para desasignar.
+      const ya = persona.classList.contains("eq-persona--on");
+      const valor = ya ? "" : persona.dataset.quien;
+      const previos = [...fila.querySelectorAll(".eq-persona--on")];
+      fila.querySelectorAll(".eq-persona").forEach(b => b.classList.remove("eq-persona--on"));
+      if (!ya) persona.classList.add("eq-persona--on");
+      try {
+        await pedir(`/admin/tareas/${id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ campo: "asignado_a", valor }),
+        });
+        fila.classList.add("eq-guardado");
+        setTimeout(() => fila.classList.remove("eq-guardado"), 600);
+      } catch (err) {
+        // Se deshace lo pintado: si no, la pantalla diría algo que no está guardado
+        fila.querySelectorAll(".eq-persona").forEach(b => b.classList.remove("eq-persona--on"));
+        previos.forEach(b => b.classList.add("eq-persona--on"));
+        fallo(persona, err.message);
+      }
+      return;
+    }
+
     if (e.target.closest(".eq-borrar")) {
       if (!confirm("¿Borrar esta tarea?")) return;
       try {
@@ -105,7 +131,7 @@
     }
   });
 
-  /* Responsable y fecha se guardan al cambiarlos, sin botón de guardar. */
+  /* La fecha se guarda al cambiarla, sin botón de guardar. */
   document.addEventListener("change", async e => {
     const control = e.target.closest("[data-campo]");
     if (!control) return;
