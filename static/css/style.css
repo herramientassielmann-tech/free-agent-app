@@ -2534,3 +2534,88 @@ a:hover { color: #3d9eff; }
   .eq-fila { gap: 8px; padding: 10px; flex-wrap: wrap; }
   .eq-texto { flex-basis: 100%; order: -1; }
 }
+
+/* ── El panel de la tarea: la nota rápida ──────────────────────────────────
+   Se abre al pulsar el texto. Sin barra de formato ni campos obligatorios: si
+   hay que rellenar un formulario para apuntar algo, no se apunta. */
+.eq-texto {
+  flex: 1; min-width: 0; text-align: left; border: 0; background: transparent;
+  font: inherit; font-size: .93rem; color: var(--c-tinta); cursor: pointer;
+  padding: 3px 6px; margin: -3px -6px; border-radius: 6px;
+}
+.eq-texto:hover { background: var(--c-columna); }
+.eq-texto:focus-visible { outline: 2px solid var(--c-azul); outline-offset: 1px; }
+.eq-tiene-nota { color: var(--c-tenue); font-size: .8rem; margin-left: 7px; }
+
+.eq-fondo {
+  position: fixed; inset: 0; background: rgba(11,17,24,.34); z-index: 90;
+}
+.eq-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 92vw);
+  background: var(--c-tarjeta); border-left: 1px solid var(--c-linea);
+  z-index: 91; display: flex; flex-direction: column; padding: 22px 24px;
+  overflow-y: auto; transform: translateX(100%);
+  transition: transform .22s cubic-bezier(.32,.72,0,1);
+  box-shadow: -18px 0 42px rgba(11,17,24,.10);
+}
+.eq-panel--abierto { transform: translateX(0); }
+.eq-panel[hidden], .eq-fondo[hidden] { display: none !important; }
+
+.eq-panel-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 20px; }
+.eq-panel-titulo {
+  flex: 1; border: 1px solid transparent; border-radius: 9px; padding: 7px 9px;
+  margin: -7px -9px; font-family: inherit; font-size: 1.14rem; font-weight: 600;
+  line-height: 1.35; color: var(--c-tinta); background: transparent; resize: none;
+}
+.eq-panel-titulo:hover { border-color: var(--c-linea); }
+.eq-panel-titulo:focus { outline: none; border-color: var(--c-azul); background: #FBFCFE; }
+.eq-cerrar {
+  flex: none; width: 30px; height: 30px; border: 0; background: var(--c-columna);
+  color: var(--c-suave); border-radius: 50%; cursor: pointer; font-size: 1.15rem;
+  line-height: 1; padding: 0; font-family: inherit;
+}
+.eq-cerrar:hover { background: #D8E0E9; color: var(--c-tinta); }
+
+.eq-panel-campos {
+  display: flex; flex-direction: column; gap: 13px; padding-bottom: 20px;
+  border-bottom: 1px solid var(--c-linea); margin-bottom: 18px;
+}
+.eq-campo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.eq-etiqueta {
+  flex: none; width: 96px; font-size: .74rem; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--c-tenue);
+}
+.eq-campo .eq-dia { border: 1px solid var(--c-linea); background: #FBFCFE; }
+
+.eq-prioridades { display: inline-flex; gap: 5px; }
+.eq-prio {
+  border: 1px solid var(--c-linea); background: var(--c-tarjeta); color: var(--c-tenue);
+  border-radius: var(--r-pill); padding: 4px 13px; font-size: .78rem; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.eq-prio:hover { border-color: #B9C4CE; color: var(--c-tinta); }
+.eq-prio--on { background: var(--c-tinta); border-color: var(--c-tinta); color: #fff; }
+.eq-prio--on[data-prio="urgente"] { background: var(--c-rojo); border-color: var(--c-rojo); }
+
+/* La nota tiene dos caras del mismo texto: al escribir es un área normal, al
+   salir se pinta con los enlaces pulsables. */
+.eq-nota { flex: 1; display: flex; min-height: 220px; }
+.eq-nota-vista, .eq-nota-editar {
+  flex: 1; width: 100%; font-family: inherit; font-size: .93rem; line-height: 1.65;
+  color: var(--c-tinta); border: 1px solid transparent; border-radius: 10px;
+  padding: 11px 12px; white-space: pre-wrap; word-break: break-word;
+}
+.eq-nota-vista { cursor: text; }
+.eq-nota-vista:hover { border-color: var(--c-linea); }
+.eq-nota-vista:focus-visible { outline: 2px solid var(--c-azul); outline-offset: 1px; }
+.eq-nota-vista a { color: var(--c-azul); }
+.eq-nota-vacia { color: #A8B4C0; }
+.eq-nota-editar { background: #FBFCFE; border-color: var(--c-azul); resize: none; }
+.eq-nota-editar:focus { outline: none; }
+
+.eq-borrar-todo {
+  margin-top: 18px; border: 0; background: transparent; color: var(--c-rojo);
+  font-size: .84rem; cursor: pointer; padding: 9px; border-radius: 8px;
+  font-family: inherit; align-self: flex-start;
+}
+.eq-borrar-todo:hover { background: var(--c-rojo-luz); }

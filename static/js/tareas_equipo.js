@@ -83,6 +83,11 @@
     if (!fila) return;
     const id = fila.dataset.id;
 
+    if (e.target.closest(".eq-texto")) {
+      abrirPanel(fila);
+      return;
+    }
+
     if (e.target.closest(".eq-check")) {
       try {
         await pedir(`/admin/tareas/${id}/estado`, { method: "POST" });
@@ -129,6 +134,152 @@
         setTimeout(() => { fila.remove(); recontar(); }, 260);
       } catch (err) { fallo(fila, err.message); }
     }
+  });
+
+  /* ── El panel de la tarea ──────────────────
+   *
+   * Se abre al pulsar el texto. Todo lo de dentro se guarda al salir del campo,
+   * sin botón: es una nota rápida, no un formulario.
+   */
+  const panel = $("eq-panel"), fondo = $("eq-fondo");
+  const pTexto = $("eq-panel-texto"), pFecha = $("eq-panel-fecha");
+  const pVista = $("eq-nota-vista"), pEditar = $("eq-nota-editar");
+  let abierta = null;          // la fila abierta ahora mismo
+
+  const escapar = t => t.replace(/[&<>"]/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  /* Los enlaces se vuelven pulsables al dejar de escribir, como en las notas
+     del móvil. Se escapa ANTES de enlazar: el texto lo escribe una persona y
+     nunca debe llegar al HTML tal cual. */
+  function conEnlaces(texto) {
+    if (!texto.trim()) return '<span class="eq-nota-vacia">Escribe lo que haga falta recordar…</span>';
+    return escapar(texto).replace(
+      /(https?:\/\/[^\s<]+)/g,
+      '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  }
+
+  function pintarPanel(datos) {
+    pTexto.value = datos.texto;
+    pFecha.value = datos.fecha_limite || "";
+    pEditar.value = datos.notas || "";
+    pVista.innerHTML = conEnlaces(datos.notas || "");
+    panel.querySelectorAll("#eq-panel-personas .eq-persona").forEach(b =>
+      b.classList.toggle("eq-persona--on", b.dataset.quien === datos.asignado_a));
+    panel.querySelectorAll(".eq-prio").forEach(b =>
+      b.classList.toggle("eq-prio--on", b.dataset.prio === datos.prioridad));
+  }
+
+  function abrirPanel(fila) {
+    abierta = fila;
+    pintarPanel({
+      texto: fila.querySelector(".eq-texto").childNodes[0].textContent.trim(),
+      fecha_limite: fila.querySelector(".eq-dia")?.value || "",
+      notas: fila.dataset.notas || "",
+      asignado_a: fila.querySelector(".eq-persona--on")?.dataset.quien || null,
+      prioridad: fila.querySelector(".eq-urgente") ? "urgente" : (fila.dataset.prioridad || "normal"),
+    });
+    panel.hidden = fondo.hidden = false;
+    requestAnimationFrame(() => panel.classList.add("eq-panel--abierto"));
+  }
+
+  function cerrarPanel() {
+    panel.classList.remove("eq-panel--abierto");
+    setTimeout(() => { panel.hidden = fondo.hidden = true; }, 220);
+    abierta = null;
+  }
+
+  async function guardarCampo(campo, valor) {
+    if (!abierta) return null;
+    return pedir(`/admin/tareas/${abierta.dataset.id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ campo, valor }),
+    });
+  }
+
+  $("eq-cerrar").addEventListener("click", cerrarPanel);
+  fondo.addEventListener("click", cerrarPanel);
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !panel.hidden) cerrarPanel();
+  });
+
+  // La nota: mirar -> escribir -> guardar al salir
+  pVista.addEventListener("click", () => {
+    pVista.hidden = true; pEditar.hidden = false; pEditar.focus();
+    pEditar.setSelectionRange(pEditar.value.length, pEditar.value.length);
+  });
+  pEditar.addEventListener("blur", async () => {
+    const texto = pEditar.value;
+    pEditar.hidden = true; pVista.hidden = false;
+    pVista.innerHTML = conEnlaces(texto);
+    try {
+      await guardarCampo("notas", texto);
+      if (abierta) {
+        abierta.dataset.notas = texto;
+        const marca = abierta.querySelector(".eq-tiene-nota");
+        if (texto.trim() && !marca) {
+          abierta.querySelector(".eq-texto").insertAdjacentHTML("beforeend",
+            '<span class="eq-tiene-nota" title="Tiene notas">≡</span>');
+        } else if (!texto.trim() && marca) { marca.remove(); }
+      }
+    } catch (err) { fallo(pVista, err.message); }
+  });
+
+  pTexto.addEventListener("blur", async () => {
+    const nuevo = pTexto.value.trim();
+    if (!nuevo || !abierta) return;
+    try {
+      await guardarCampo("texto", nuevo);
+      abierta.querySelector(".eq-texto").childNodes[0].textContent = nuevo;
+    } catch (err) { fallo(pTexto, err.message); }
+  });
+
+  pFecha.addEventListener("change", async () => {
+    try {
+      await guardarCampo("fecha_limite", pFecha.value);
+      const enFila = abierta?.querySelector(".eq-dia");
+      if (enFila) enFila.value = pFecha.value;
+    } catch (err) { fallo(pFecha, err.message); }
+  });
+
+  panel.addEventListener("click", async e => {
+    const persona = e.target.closest("#eq-panel-personas .eq-persona");
+    if (persona) {
+      const ya = persona.classList.contains("eq-persona--on");
+      const valor = ya ? "" : persona.dataset.quien;
+      panel.querySelectorAll("#eq-panel-personas .eq-persona")
+           .forEach(b => b.classList.remove("eq-persona--on"));
+      if (!ya) persona.classList.add("eq-persona--on");
+      try {
+        await guardarCampo("asignado_a", valor);
+        if (abierta) {
+          abierta.querySelectorAll(".eq-fila .eq-persona, .eq-personas .eq-persona")
+                 .forEach(b => b.classList.toggle("eq-persona--on", !ya && b.dataset.quien === valor));
+        }
+      } catch (err) { fallo(persona, err.message); }
+      return;
+    }
+    const prio = e.target.closest(".eq-prio");
+    if (prio) {
+      panel.querySelectorAll(".eq-prio").forEach(b => b.classList.remove("eq-prio--on"));
+      prio.classList.add("eq-prio--on");
+      try {
+        await guardarCampo("prioridad", prio.dataset.prio);
+        if (abierta) abierta.dataset.prioridad = prio.dataset.prio;
+      } catch (err) { fallo(prio, err.message); }
+    }
+  });
+
+  $("eq-panel-borrar").addEventListener("click", async () => {
+    if (!abierta || !confirm("¿Borrar esta tarea?")) return;
+    const fila = abierta;
+    try {
+      await pedir(`/admin/tareas/${fila.dataset.id}`, { method: "DELETE" });
+      cerrarPanel();
+      fila.classList.add("eq-saliendo");
+      setTimeout(() => { fila.remove(); recontar(); }, 260);
+    } catch (err) { fallo(panel, err.message); }
   });
 
   /* La fecha se guarda al cambiarla, sin botón de guardar. */

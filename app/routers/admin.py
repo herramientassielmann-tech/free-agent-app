@@ -723,6 +723,8 @@ def _tarea_json(t: "TareaEquipo") -> dict:
         "estado": t.estado,
         "vencida": t.vencida,
         "hoy": t.es_hoy,
+        "notas": t.notas or "",
+        "tiene_notas": bool((t.notas or "").strip()),
         "completada_en": t.completada_en.strftime("%d/%m") if t.completada_en else None,
     }
 
@@ -900,6 +902,9 @@ async def tarea_equipo_editar(
         if not nuevo:
             raise HTTPException(status_code=422, detail="La tarea está vacía.")
         t.texto = nuevo[:300]
+    elif campo == "notas":
+        # Sin tope corto: aquí va lo que haga falta, incluidos enlaces largos
+        t.notas = (valor or "").strip()[:5000] or None
     else:
         raise HTTPException(status_code=400, detail="Campo no válido")
 

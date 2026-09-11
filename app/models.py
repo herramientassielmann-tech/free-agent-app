@@ -562,6 +562,11 @@ class TareaEquipo(Base):
     estado: Mapped[str] = mapped_column(String(12), default="pendiente",
                                         nullable=False, index=True)
 
+    # Lo que haga falta recordar sobre la tarea: el contexto, un enlace, lo que
+    # se habló. Texto suelto a propósito, sin campos ni formato: si hay que
+    # rellenar un formulario para apuntar una nota, no se apunta.
+    notas: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
     completada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     # Se marca al avisar por correo, para no repetir el mismo aviso cada mañana
     avisada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

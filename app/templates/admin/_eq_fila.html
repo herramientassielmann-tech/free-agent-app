@@ -6,13 +6,15 @@
 #}
 {% macro fila(t, equipo, hecha=False) %}
 <div class="eq-fila {% if t.vencida %}eq-fila--vencida{% elif t.hoy %}eq-fila--hoy{% endif %}"
-     data-id="{{ t.id }}">
+     data-id="{{ t.id }}" data-prioridad="{{ t.prioridad }}"
+     data-notas="{{ t.notas }}">
   <button type="button" class="eq-check {% if hecha %}eq-check--on{% endif %}"
           title="{{ 'Devolver a pendiente' if hecha else 'Marcar como hecha' }}">{% if hecha %}✓{% endif %}</button>
 
   {% if t.prioridad == 'urgente' and not hecha %}<span class="eq-urgente" title="Urgente">!</span>{% endif %}
 
-  <span class="eq-texto {% if hecha %}eq-texto--hecha{% endif %}">{{ t.texto }}</span>
+  <button type="button" class="eq-texto {% if hecha %}eq-texto--hecha{% endif %}"
+          title="Abrir para escribir notas">{{ t.texto }}{% if t.tiene_notas %}<span class="eq-tiene-nota" title="Tiene notas">≡</span>{% endif %}</button>
 
   {% if hecha %}
     {% if t.asignado_a %}
