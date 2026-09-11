@@ -31,7 +31,12 @@ from app.models import Alta, FirmaContrato, User
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
-VERSION_CONTRATO = "v1.0"
+# Sube cada vez que cambie el TEXTO del contrato. Se guarda con cada firma:
+# sin esto no se podría saber qué versión aceptó cada persona, y dos alumnos
+# podrían haber firmado documentos distintos sin que quede rastro.
+#   v1.0 — 20 cláusulas, con arbitraje y compromiso de vídeos semanales
+#   v1.1 — fuera las cláusulas 6 y 20; la 18 pasa a cubrir la jurisdicción
+VERSION_CONTRATO = "v1.1"
 
 # Los datos de la empresa y las dos decisiones legales pendientes. Van aquí y no
 # en .env porque forman parte del texto del contrato, no de la configuración del
@@ -43,29 +48,21 @@ EMPRESA = {
     "empresa_firmante": "Robert Sielmann",
     "contacto": "herramientassielmann@gmail.com",
     "ley": "[pendiente: estado aplicable]",
-    "arbitraje": "[pendiente: institución arbitral]",
 }
 
-# Las cuatro cosas que firma aparte. Son las que sostienen el resto del contrato:
-# una cláusula de no devolución enterrada en la letra pequeña se anula; firmada
-# expresamente, aguanta.
+# Lo que firma aparte. Son los dos puntos que de verdad se discuten cuando
+# alguien reclama: que no se le prometió ningún resultado y que no hay
+# devolución. Una cláusula de no devolución enterrada en la letra pequeña se
+# anula; firmada expresamente, aguanta.
 RECONOCIMIENTOS = [
     ("resultados",
      "He leído y comprendo la cláusula 5. Entiendo que <b>FA Academy no me "
      "garantiza ningún resultado</b> y que no he contratado el Programa sobre la "
      "base de promesa alguna de ingresos o de captación de clientes."),
     ("devoluciones",
-     "He leído y comprendo la cláusula 7. Entiendo que <b>las cantidades abonadas "
+     "He leído y comprendo la cláusula 6. Entiendo que <b>las cantidades abonadas "
      "no son reembolsables</b>, sin perjuicio de los derechos que la ley imperativa "
      "me reconozca, y que renunciar a continuar no me exime de los plazos pendientes."),
-    ("compromiso",
-     "He leído y comprendo la cláusula 6. Entiendo que el Programa <b>exige de mí "
-     "un mínimo de dos vídeos semanales</b> y la aplicación de las indicaciones del "
-     "equipo, y que su incumplimiento afecta al aprovechamiento de la formación."),
-    ("arbitraje",
-     "He leído y comprendo la cláusula 20. Entiendo que las controversias se "
-     "resolverán mediante <b>arbitraje individual</b> y que renuncio a participar "
-     "en acciones colectivas y al juicio con jurado."),
 ]
 
 
@@ -246,15 +243,13 @@ async def firmar(
     imagen: Optional[str] = Form(None),
     r_resultados: Optional[str] = Form(None),
     r_devoluciones: Optional[str] = Form(None),
-    r_compromiso: Optional[str] = Form(None),
-    r_arbitraje: Optional[str] = Form(None),
 ):
     alta = _alta(token, db)
     if alta.firma is not None:
         return RedirectResponse(url=f"/bienvenida/{token}/contrato", status_code=303)
 
-    marcados = [c for c, v in (("resultados", r_resultados), ("devoluciones", r_devoluciones),
-                               ("compromiso", r_compromiso), ("arbitraje", r_arbitraje)) if v]
+    marcados = [c for c, v in (("resultados", r_resultados),
+                               ("devoluciones", r_devoluciones)) if v]
 
     def volver(error: str):
         return templates.TemplateResponse("contrato_firma.html", {
@@ -276,7 +271,7 @@ async def firmar(
     if not consentimiento:
         return volver("Para firmar en electrónico tienes que dar tu consentimiento.")
     if len(marcados) < len(RECONOCIMIENTOS):
-        return volver("Tienes que marcar los cuatro reconocimientos para poder firmar.")
+        return volver("Tienes que marcar los dos reconocimientos para poder firmar.")
     if len(nombre_firmante.strip()) < 5:
         return volver("Escribe tu nombre y apellidos completos para firmar.")
 
