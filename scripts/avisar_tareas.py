@@ -34,7 +34,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.config import APP_URL, EMAIL_FROM
 from app.database import SessionLocal
-from app.models import Lead, LeadTarea, User
+from app.models import Lead, LeadTarea, TareaEquipo, User
 from app.services.email import enviar, esta_configurado
 
 
@@ -209,6 +209,116 @@ def prueba(destino: str) -> int:
     return 0 if ok else 1
 
 
+
+
+# ── Tareas internas del equipo ───────────────────────────────────────────────
+
+def _fila_equipo(t, hoy) -> str:
+    """Una fila del correo. Se arma fuera del f-string grande porque Python 3.9
+    no admite barras invertidas dentro de una expresión de f-string."""
+    urgente = ('<b style="color:#B3261E">Urgente · </b>'
+               if t.prioridad == "urgente" else "")
+    if t.fecha_limite == hoy:
+        cuando = "vence hoy"
+    else:
+        dias = (hoy - t.fecha_limite).days
+        cuando = "vencía ayer" if dias == 1 else f"vencía hace {dias} días"
+    return (
+        '<tr><td style="padding:10px 0;border-bottom:1px solid #E4E9EF">'
+        f'<div style="font-size:15px;color:#16202C">{urgente}{_escapar(t.texto)}</div>'
+        f'<div style="font-size:13px;color:#5A6874;margin-top:2px">{cuando}</div>'
+        "</td></tr>"
+    )
+
+
+def _html_equipo(nombre: str, tareas, hoy) -> str:
+    filas = "".join(_fila_equipo(t, hoy) for t in tareas)
+    plural = "s" if len(tareas) != 1 else ""
+    return f"""<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+      background:#F1F4F8;padding:32px 16px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+               style="max-width:520px;background:#FFF;border-radius:12px;border:1px solid #E4E9EF;padding:28px">
+          <tr><td>
+            <p style="margin:0 0 4px;font-size:13px;color:#5A6874;text-transform:uppercase;
+                      letter-spacing:.5px">Free Agent Academy</p>
+            <h1 style="margin:0 0 16px;font-size:20px;color:#16202C;font-weight:600">
+              {_escapar(nombre)}, tienes {len(tareas)} tarea{plural} para hoy
+            </h1>
+            <table role="presentation" width="100%">{filas}</table>
+            <p style="margin:22px 0 0">
+              <a href="{APP_URL}/admin/tareas" style="display:inline-block;background:#16202C;
+                 color:#FFF;text-decoration:none;padding:11px 20px;border-radius:8px;
+                 font-size:15px;font-weight:500">Ver mis tareas</a>
+            </p>
+          </td></tr>
+        </table>
+      </td></tr></table></div>"""
+
+
+def avisar_equipo(ensayo: bool = False) -> int:
+    """Un correo a cada uno con sus tareas internas vencidas o de hoy.
+
+    Va en el mismo trabajo de las 8:00 que los avisos del CRM: es otro público
+    —el equipo, no los realtors— pero el mismo momento del día y el mismo
+    temporizador, así que no hace falta montar nada nuevo en el servidor.
+    """
+    hoy = datetime.utcnow().date()
+    db = SessionLocal()
+    fallos = 0
+    try:
+        pendientes = (
+            db.query(TareaEquipo)
+            .filter(TareaEquipo.estado == "pendiente",
+                    TareaEquipo.avisada_en.is_(None),
+                    TareaEquipo.asignado_a.isnot(None),
+                    TareaEquipo.fecha_limite.isnot(None),
+                    TareaEquipo.fecha_limite <= hoy)
+            .order_by(TareaEquipo.prioridad != "urgente", TareaEquipo.fecha_limite)
+            .all()
+        )
+        por_persona = {}
+        for t in pendientes:
+            u = db.get(User, t.asignado_a)
+            if not u or not u.is_active or not u.email:
+                continue
+            por_persona.setdefault(u, []).append(t)
+
+        if not por_persona:
+            if not ensayo:
+                print(f"[{hoy}] Equipo: nada que avisar.")
+            return 0
+
+        enviados = 0
+        for u, tareas in por_persona.items():
+            nombre = (u.name or "").split()[0] or "Hola"
+            if ensayo:
+                print(f"\n── equipo · {u.email} ── {len(tareas)} tarea(s)")
+                for t in tareas:
+                    marca = "URGENTE " if t.prioridad == "urgente" else ""
+                    print(f"   · {marca}{t.texto}  [{t.fecha_limite:%d/%m}]")
+                continue
+            texto = f"{nombre}, tienes {len(tareas)} tarea(s) para hoy:\n\n" + \
+                    "\n".join(f"- {t.texto} ({t.fecha_limite:%d/%m})" for t in tareas) + \
+                    f"\n\n{APP_URL}/admin/tareas\n"
+            asunto = (f"Tienes {len(tareas)} tareas para hoy" if len(tareas) > 1
+                      else f"Para hoy: {tareas[0].texto[:60]}")
+            if enviar(u.email, asunto, _html_equipo(nombre, tareas, hoy), texto):
+                # Sólo ahora: si falló el envío, mañana se reintenta
+                for t in tareas:
+                    t.avisada_en = datetime.utcnow()
+                db.commit()
+                enviados += 1
+                print(f"[{hoy}] Equipo: avisado {u.email} · {len(tareas)} tarea(s)")
+            else:
+                db.rollback()
+                fallos += 1
+                print(f"[{hoy}] Equipo: FALLO al avisar a {u.email}")
+        return 1 if fallos else 0
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if "--prueba" in args:
@@ -222,4 +332,8 @@ if __name__ == "__main__":
     if not ensayo and not esta_configurado():
         print("RESEND_API_KEY no configurada. Nada que hacer.")
         sys.exit(0)
-    sys.exit(avisar(ensayo=ensayo))
+    # Dos públicos distintos, el mismo momento del día: los realtors con sus
+    # leads, y el equipo con lo suyo. Si falla uno, el otro sale igual.
+    codigo = avisar(ensayo=ensayo)
+    codigo_equipo = avisar_equipo(ensayo=ensayo)
+    sys.exit(codigo or codigo_equipo)

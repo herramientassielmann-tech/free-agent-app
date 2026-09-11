@@ -1,0 +1,32 @@
+{#
+  Una fila de tarea. Vive aparte porque la pintan DOS sitios: la página al
+  cargar y el servidor al crear una tarea nueva, que devuelve el HTML ya hecho.
+  Si el JS montara la fila a mano habría dos versiones del mismo trozo y
+  acabarían separándose.
+#}
+{% macro fila(t, equipo, hecha=False) %}
+<div class="eq-fila {% if t.vencida %}eq-fila--vencida{% elif t.hoy %}eq-fila--hoy{% endif %}"
+     data-id="{{ t.id }}">
+  <button type="button" class="eq-check {% if hecha %}eq-check--on{% endif %}"
+          title="{{ 'Devolver a pendiente' if hecha else 'Marcar como hecha' }}">{% if hecha %}✓{% endif %}</button>
+
+  {% if t.prioridad == 'urgente' and not hecha %}<span class="eq-urgente" title="Urgente">!</span>{% endif %}
+
+  <span class="eq-texto {% if hecha %}eq-texto--hecha{% endif %}">{{ t.texto }}</span>
+
+  {% if hecha %}
+    <span class="eq-quien-fijo">{{ t.quien }}</span>
+    <span class="eq-fecha">{{ t.completada_en }}</span>
+  {% else %}
+    <select class="eq-quien" data-campo="asignado_a" aria-label="Responsable">
+      <option value="" {% if not t.asignado_a %}selected{% endif %}>Sin asignar</option>
+      {% for p in equipo %}
+      <option value="{{ p.id }}" {% if t.asignado_a == p.id %}selected{% endif %}>{{ p.name.split()[0] }}</option>
+      {% endfor %}
+    </select>
+    <input class="eq-dia" type="date" data-campo="fecha_limite"
+           value="{{ t.fecha_limite or '' }}" aria-label="Fecha límite">
+    <button type="button" class="eq-borrar" title="Borrar">×</button>
+  {% endif %}
+</div>
+{% endmacro %}

@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Request, Form, HTTPException, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 from app.database import get_db
 from app.models import User, Script, RealtorProfile, ClipReunion
 from app.auth import require_admin, hash_password, create_access_token, get_real_user, decode_token
@@ -135,6 +136,7 @@ async def create_user(
     email: str = Form(...),
     password: str = Form(...),
     monthly_limit: str = Form(""),
+    es_equipo: Optional[str] = Form(None),
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
@@ -147,12 +149,16 @@ async def create_user(
             status_code=400,
         )
 
-    limit = int(monthly_limit) if monthly_limit.strip() else None
+    # Un compañero de equipo entra como administrador: es quien puede tener
+    # tareas asignadas. Hasta ahora no había forma de crear un segundo admin
+    # sin tocar la base de datos a mano.
+    equipo = bool(es_equipo)
+    limit = None if equipo else (int(monthly_limit) if monthly_limit.strip() else None)
     new_user = User(
         email=email,
         password_hash=hash_password(password),
         name=name.strip(),
-        is_admin=False,
+        is_admin=equipo,
         is_active=True,
         monthly_limit=limit,
         must_change_password=True,
@@ -161,6 +167,8 @@ async def create_user(
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    if equipo:
+        return RedirectResponse(url="/admin/tareas", status_code=303)
     # Tras crear, vamos a su ficha para configurar el perfil (onboarding)
     return RedirectResponse(url=f"/admin/users/{new_user.id}", status_code=303)
 
@@ -706,3 +714,238 @@ async def alumno_seguimiento(
     u.es_alumno = not u.es_alumno
     db.commit()
     return RedirectResponse(url="/admin/alumnos", status_code=303)
+
+
+# ── Tareas del equipo ────────────────────────────────────────────────────────
+
+def _equipo(db: Session) -> list:
+    """Los que pueden tener tareas asignadas: los administradores activos."""
+    return (db.query(User)
+              .filter(User.is_admin.is_(True), User.is_active.is_(True))
+              .order_by(User.name).all())
+
+
+def _tarea_json(t: "TareaEquipo", nombres: dict) -> dict:
+    """La fila ya resuelta: la plantilla y el JS no hacen cuentas de fechas."""
+    return {
+        "id": t.id,
+        "texto": t.texto,
+        "asignado_a": t.asignado_a,
+        "quien": nombres.get(t.asignado_a, "Sin asignar"),
+        "fecha_limite": t.fecha_limite.isoformat() if t.fecha_limite else None,
+        "fecha_corta": t.fecha_limite.strftime("%d/%m") if t.fecha_limite else None,
+        "prioridad": t.prioridad,
+        "estado": t.estado,
+        "vencida": t.vencida,
+        "hoy": t.es_hoy,
+        "completada_en": t.completada_en.strftime("%d/%m") if t.completada_en else None,
+    }
+
+
+@router.get("/tareas", response_class=HTMLResponse)
+async def tareas_equipo(
+    request: Request,
+    quien: Optional[str] = None,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    from collections import OrderedDict
+    from app.models import TareaEquipo
+
+    equipo = _equipo(db)
+    nombres = {u.id: u.name.split()[0] for u in equipo}
+    hoy = datetime.utcnow().date()
+
+    consulta = db.query(TareaEquipo)
+    filtro = None
+    if quien == "mias":
+        filtro = current_user.id
+    elif quien and quien.isdigit():
+        filtro = int(quien)
+    if filtro is not None:
+        consulta = consulta.filter(TareaEquipo.asignado_a == filtro)
+
+    todas = consulta.order_by(
+        # Sin fecha al final; dentro de cada día, lo urgente primero
+        TareaEquipo.fecha_limite.is_(None), TareaEquipo.fecha_limite,
+        TareaEquipo.prioridad != "urgente", TareaEquipo.created_at,
+    ).all()
+
+    abiertas = [t for t in todas if t.estado == "pendiente"]
+    fin_semana = hoy + timedelta(days=6 - hoy.weekday())
+
+    def bucket(t):
+        if not t.fecha_limite:
+            return "sin_fecha"
+        if t.fecha_limite < hoy:
+            return "vencidas"
+        if t.fecha_limite == hoy:
+            return "de_hoy"
+        return "semana" if t.fecha_limite <= fin_semana else "adelante"
+
+    grupos = {k: [] for k in ("vencidas", "de_hoy", "semana", "adelante", "sin_fecha")}
+    for t in abiertas:
+        grupos[bucket(t)].append(_tarea_json(t, nombres))
+
+    # Lo hecho, por semanas y de lo más reciente a lo más antiguo. Mismo criterio
+    # que el registro de tareas del CRM para que las dos pantallas hablen de la
+    # misma semana.
+    hechas = sorted((t for t in todas if t.estado == "hecha" and t.completada_en),
+                    key=lambda t: t.completada_en, reverse=True)
+    semanas = OrderedDict()
+    for t in hechas:
+        lunes = _lunes_de(t.completada_en.date())
+        if lunes == _lunes_de(hoy):
+            etiqueta = "Esta semana"
+        elif lunes == _lunes_de(hoy) - timedelta(days=7):
+            etiqueta = "La semana pasada"
+        else:
+            etiqueta = f"Semana del {lunes.strftime('%d/%m')}"
+        semanas.setdefault(etiqueta, []).append(_tarea_json(t, nombres))
+
+    return templates.TemplateResponse("admin/tareas.html", {
+        "request": request, "user": current_user,
+        "equipo": equipo, "quien": quien or "todas",
+        "grupos": grupos, "semanas": semanas,
+        "abiertas": len(abiertas),
+        "vencidas": len(grupos["vencidas"]),
+        "hechas_semana": sum(1 for t in hechas
+                             if _lunes_de(t.completada_en.date()) == _lunes_de(hoy)),
+    })
+
+
+class FraseIn(BaseModel):
+    texto: str
+
+
+@router.post("/tareas")
+async def crear_tarea_equipo(
+    payload: FraseIn,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Captura rápida: entra una frase, sale una tarea con dueño y fecha."""
+    from app.models import TareaEquipo
+    from app.services.tareas_texto import analizar
+
+    frase = (payload.texto or "").strip()
+    if not frase:
+        raise HTTPException(status_code=422, detail="La tarea está vacía.")
+
+    equipo = _equipo(db)
+    campos = analizar(frase, equipo)
+    t = TareaEquipo(
+        texto=campos["texto"],
+        asignado_a=campos["asignado_a"],
+        creado_por=current_user.id,
+        fecha_limite=campos["fecha_limite"],
+        prioridad=campos["prioridad"],
+    )
+    db.add(t)
+    db.commit()
+    db.refresh(t)
+
+    datos = _tarea_json(t, {u.id: u.name.split()[0] for u in equipo})
+    # El HTML de la fila lo monta el servidor con la misma plantilla que usa la
+    # página. Si lo montara el JS habría dos versiones del mismo trozo y
+    # acabarían separándose sin que nadie se diera cuenta.
+    macro = templates.get_template("admin/_eq_fila.html").module
+    hoy = datetime.utcnow().date()
+    if not t.fecha_limite:
+        bloque = "sin_fecha"
+    elif t.fecha_limite < hoy:
+        bloque = "vencidas"
+    elif t.fecha_limite == hoy:
+        bloque = "de_hoy"
+    elif t.fecha_limite <= hoy + timedelta(days=6 - hoy.weekday()):
+        bloque = "semana"
+    else:
+        bloque = "adelante"
+    return JSONResponse({"tarea": datos, "bloque": bloque,
+                         "html": str(macro.fila(datos, equipo))})
+
+
+@router.post("/tareas/{tid}/estado")
+async def tarea_equipo_estado(
+    tid: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Hecha ↔ pendiente. Un solo clic, que es el gesto más frecuente."""
+    from app.models import TareaEquipo
+    t = db.get(TareaEquipo, tid)
+    if t is None:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    if t.estado == "hecha":
+        t.estado, t.completada_en = "pendiente", None
+    else:
+        t.estado, t.completada_en = "hecha", datetime.utcnow()
+    db.commit()
+    db.refresh(t)
+    return JSONResponse(_tarea_json(t, {u.id: u.name.split()[0] for u in _equipo(db)}))
+
+
+@router.post("/tareas/{tid}")
+async def tarea_equipo_editar(
+    tid: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    campo: str = Form(...),
+    valor: str = Form(""),
+):
+    """Cambia el dueño, la fecha o la prioridad desde la propia fila."""
+    from app.models import TareaEquipo
+    t = db.get(TareaEquipo, tid)
+    if t is None:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+
+    if campo == "asignado_a":
+        if not valor:
+            t.asignado_a = None
+        else:
+            elegido = db.get(User, int(valor)) if valor.isdigit() else None
+            if elegido is None or not elegido.is_admin:
+                raise HTTPException(status_code=400, detail="Esa persona no es del equipo")
+            t.asignado_a = elegido.id
+    elif campo == "fecha_limite":
+        t.fecha_limite = _fecha_dia(valor)
+    elif campo == "prioridad":
+        if valor not in TareaEquipo.PRIORIDADES:
+            raise HTTPException(status_code=400, detail="Prioridad no válida")
+        t.prioridad = valor
+    elif campo == "texto":
+        nuevo = (valor or "").strip()
+        if not nuevo:
+            raise HTTPException(status_code=422, detail="La tarea está vacía.")
+        t.texto = nuevo[:300]
+    else:
+        raise HTTPException(status_code=400, detail="Campo no válido")
+
+    db.commit()
+    db.refresh(t)
+    return JSONResponse(_tarea_json(t, {u.id: u.name.split()[0] for u in _equipo(db)}))
+
+
+@router.delete("/tareas/{tid}")
+async def tarea_equipo_borrar(
+    tid: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    from app.models import TareaEquipo
+    t = db.get(TareaEquipo, tid)
+    if t is None:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+    db.delete(t)
+    db.commit()
+    return JSONResponse({"borrado": True})
+
+
+def _fecha_dia(valor: str):
+    """"YYYY-MM-DD" a date, o None. Tolerante: lo que no se entiende es None."""
+    if not valor:
+        return None
+    try:
+        return datetime.strptime(valor.strip()[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None

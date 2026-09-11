@@ -524,3 +524,62 @@ class SemanaAlumno(Base):
     @property
     def cumple(self) -> bool:
         return self.publicados >= self.MINIMO_SEMANAL
+
+
+class TareaEquipo(Base):
+    """Algo que tiene que hacer el equipo: pedir un testimonio, llamar a alguien.
+
+    Nada que ver con `LeadTarea`, que cuelga de un lead y es de un realtor. Esta
+    es interna, tiene un responsable explícito y la ven los tres.
+
+    Tres decisiones prestadas de los gestores que mejor funcionan:
+
+      · UN SOLO responsable, nunca varios. Con dos no hay duda de quién lo hace:
+        hay dos personas esperando a que lo haga la otra.
+      · Tres estados y tres prioridades, y no se pueden configurar. En Linear eso
+        es deliberado: evita que el equipo se pase el día discutiendo cómo
+        organizarse en vez de trabajar. Con tres personas vale doble.
+      · `completada_en` además del estado, porque el valor no está sólo en saber
+        qué queda, sino en poder mirar atrás y ver lo que lleváis hecho.
+    """
+    __tablename__ = "tareas_equipo"
+
+    PRIORIDADES = ("urgente", "normal", "baja")
+    ESTADOS = ("pendiente", "hecha", "cancelada")
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    texto: Mapped[str] = mapped_column(String(300), nullable=False)
+
+    asignado_a: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True, index=True)
+    creado_por: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True)
+
+    # Date y no DateTime: una tarea vence un día, no a una hora. Comparar días
+    # con días evita el lío de la zona horaria que arrastran los avisos.
+    fecha_limite: Mapped[Optional[date]] = mapped_column(Date, nullable=True, index=True)
+
+    prioridad: Mapped[str] = mapped_column(String(10), default="normal", nullable=False)
+    estado: Mapped[str] = mapped_column(String(12), default="pendiente",
+                                        nullable=False, index=True)
+
+    completada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    # Se marca al avisar por correo, para no repetir el mismo aviso cada mañana
+    avisada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    responsable: Mapped[Optional["User"]] = relationship("User", foreign_keys=[asignado_a])
+
+    @property
+    def abierta(self) -> bool:
+        return self.estado == "pendiente"
+
+    @property
+    def vencida(self) -> bool:
+        return bool(self.abierta and self.fecha_limite
+                    and self.fecha_limite < datetime.utcnow().date())
+
+    @property
+    def es_hoy(self) -> bool:
+        return bool(self.abierta and self.fecha_limite
+                    and self.fecha_limite == datetime.utcnow().date())
