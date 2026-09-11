@@ -2450,13 +2450,26 @@ a:hover { color: #3d9eff; }
   background: var(--c-tarjeta); border: 1px solid var(--c-linea);
   border-radius: var(--r-md); overflow: hidden;
 }
+/* Tres señales, tres sitios, para que no compitan:
+     cabecera del bloque = cuándo vence · fondo = importancia · línea izquierda = quién */
 .eq-fila {
-  display: flex; align-items: center; gap: 11px; padding: 11px 14px;
-  transition: opacity .25s ease, transform .25s ease, background .3s ease;
+  display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+  border-left: 3px solid transparent;
+  transition: opacity .25s ease, transform .25s ease, background .3s ease,
+              border-left-color .3s ease;
 }
 .eq-fila + .eq-fila { border-top: 1px solid var(--c-linea); }
-.eq-fila--vencida { background: var(--c-rojo-luz); }
-.eq-fila--hoy     { background: var(--c-ambar-luz); }
+
+/* La importancia, en el fondo. Tintes muy suaves: si gritan, se deja de mirar
+   la pantalla entera. */
+.eq-fila[data-prioridad="urgente"] { background: #FEF5F4; }
+.eq-fila[data-prioridad="baja"]    { background: #FAFBFC; }
+.eq-fila[data-prioridad="baja"] .eq-texto { color: var(--c-suave); }
+
+/* Quién, en la línea de la izquierda */
+.eq-fila[data-quien="Robert"] { border-left-color: #0A6FD4; }
+.eq-fila[data-quien="David"]  { border-left-color: #7A3DB8; }
+.eq-fila[data-quien="Kevin"]  { border-left-color: #B5610A; }
 /* Se va con una transición corta en vez de desaparecer de golpe: sin eso no se
    sabe si el clic llegó o si la fila estaba ya marcada. */
 .eq-saliendo { opacity: 0; transform: translateX(14px); }
@@ -2473,11 +2486,23 @@ a:hover { color: #3d9eff; }
 .eq-check:hover { border-color: var(--c-verde); }
 .eq-check--on { background: var(--c-verde); border-color: var(--c-verde); }
 
-.eq-urgente {
-  flex: none; width: 18px; height: 18px; border-radius: 50%; display: grid;
-  place-items: center; background: var(--c-rojo); color: #fff;
-  font-size: .7rem; font-weight: 800;
+/* Los desplegables: invisibles hasta que los rozas, para que la lista se lea
+   como una lista y no como un formulario. */
+.eq-sel {
+  flex: none; border: 1px solid transparent; border-radius: 7px;
+  padding: 4px 6px; font-family: inherit; font-size: .8rem; font-weight: 600;
+  background: transparent; color: var(--c-suave); cursor: pointer;
+  appearance: none; -webkit-appearance: none; text-align: right;
 }
+.eq-sel:hover { border-color: var(--c-linea); background: var(--c-tarjeta); }
+.eq-sel:focus { outline: none; border-color: var(--c-azul); background: #FBFCFE; }
+.eq-sel--quien { min-width: 92px; }
+.eq-sel--prio  { min-width: 74px; }
+/* El desplegable de la persona toma su color, para que cuadre con la línea */
+.eq-fila[data-quien="Robert"] .eq-sel--quien { color: #0A6FD4; }
+.eq-fila[data-quien="David"]  .eq-sel--quien { color: #7A3DB8; }
+.eq-fila[data-quien="Kevin"]  .eq-sel--quien { color: #B5610A; }
+.eq-fila[data-prioridad="urgente"] .eq-sel--prio { color: var(--c-rojo); }
 .eq-texto { flex: 1; font-size: .93rem; color: var(--c-tinta); min-width: 0; }
 .eq-texto--hecha { text-decoration: line-through; color: var(--c-tenue); }
 

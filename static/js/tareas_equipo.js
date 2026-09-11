@@ -176,8 +176,8 @@
       texto: fila.querySelector(".eq-texto").childNodes[0].textContent.trim(),
       fecha_limite: fila.querySelector(".eq-dia")?.value || "",
       notas: fila.dataset.notas || "",
-      asignado_a: fila.querySelector(".eq-persona--on")?.dataset.quien || null,
-      prioridad: fila.querySelector(".eq-urgente") ? "urgente" : (fila.dataset.prioridad || "normal"),
+      asignado_a: fila.dataset.quien || null,
+      prioridad: fila.dataset.prioridad || "normal",
     });
     panel.hidden = fondo.hidden = false;
     requestAnimationFrame(() => panel.classList.add("eq-panel--abierto"));
@@ -254,8 +254,9 @@
       try {
         await guardarCampo("asignado_a", valor);
         if (abierta) {
-          abierta.querySelectorAll(".eq-fila .eq-persona, .eq-personas .eq-persona")
-                 .forEach(b => b.classList.toggle("eq-persona--on", !ya && b.dataset.quien === valor));
+          abierta.dataset.quien = valor;
+          const sel = abierta.querySelector(".eq-sel--quien");
+          if (sel) sel.value = valor;
         }
       } catch (err) { fallo(persona, err.message); }
       return;
@@ -266,7 +267,11 @@
       prio.classList.add("eq-prio--on");
       try {
         await guardarCampo("prioridad", prio.dataset.prio);
-        if (abierta) abierta.dataset.prioridad = prio.dataset.prio;
+        if (abierta) {
+          abierta.dataset.prioridad = prio.dataset.prio;
+          const sel = abierta.querySelector(".eq-sel--prio");
+          if (sel) sel.value = prio.dataset.prio;
+        }
       } catch (err) { fallo(prio, err.message); }
     }
   });
@@ -294,6 +299,10 @@
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ campo: control.dataset.campo, valor: control.value }),
       });
+      // El color de la fila cuelga de estos dos atributos, así que el cambio se
+      // ve en el momento sin recargar nada.
+      if (control.dataset.campo === "asignado_a") fila.dataset.quien = control.value;
+      if (control.dataset.campo === "prioridad") fila.dataset.prioridad = control.value;
       fila.classList.add("eq-guardado");
       setTimeout(() => fila.classList.remove("eq-guardado"), 600);
     } catch (err) { fallo(control, err.message); }

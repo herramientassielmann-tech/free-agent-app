@@ -3,35 +3,38 @@
   cargar y el servidor al crear una tarea nueva, que devuelve el HTML ya hecho.
   Si el JS montara la fila a mano habría dos versiones del mismo trozo y
   acabarían separándose.
+
+  Tres señales, tres sitios distintos, para que no compitan entre ellas:
+    · CUÁNDO vence  -> la cabecera del bloque (Vencidas, Hoy, Esta semana…)
+    · CUÁNTO importa -> el fondo de la fila
+    · DE QUIÉN es    -> la línea de color del borde izquierdo
 #}
 {% macro fila(t, equipo, hecha=False) %}
-<div class="eq-fila {% if t.vencida %}eq-fila--vencida{% elif t.hoy %}eq-fila--hoy{% endif %}"
-     data-id="{{ t.id }}" data-prioridad="{{ t.prioridad }}"
+<div class="eq-fila" data-id="{{ t.id }}"
+     data-prioridad="{{ t.prioridad }}"
+     data-quien="{{ t.asignado_a or '' }}"
      data-notas="{{ t.notas }}">
   <button type="button" class="eq-check {% if hecha %}eq-check--on{% endif %}"
           title="{{ 'Devolver a pendiente' if hecha else 'Marcar como hecha' }}">{% if hecha %}✓{% endif %}</button>
-
-  {% if t.prioridad == 'urgente' and not hecha %}<span class="eq-urgente" title="Urgente">!</span>{% endif %}
 
   <button type="button" class="eq-texto {% if hecha %}eq-texto--hecha{% endif %}"
           title="Abrir para escribir notas">{{ t.texto }}{% if t.tiene_notas %}<span class="eq-tiene-nota" title="Tiene notas">≡</span>{% endif %}</button>
 
   {% if hecha %}
-    {% if t.asignado_a %}
-    <span class="eq-persona eq-persona--on" data-quien="{{ t.asignado_a }}">{{ t.asignado_a }}</span>
-    {% endif %}
+    {% if t.asignado_a %}<span class="eq-quien-fijo">{{ t.asignado_a }}</span>{% endif %}
     <span class="eq-fecha">{{ t.completada_en }}</span>
   {% else %}
-    {# Tres botones de color, uno por persona. Un clic asigna; otro clic en el
-       mismo lo quita. El nombre va escrito además del color: el color nunca es
-       el único indicador. #}
-    <span class="eq-personas">
+    <select class="eq-sel eq-sel--quien" data-campo="asignado_a" aria-label="Responsable">
+      <option value="" {% if not t.asignado_a %}selected{% endif %}>Sin asignar</option>
       {% for p in equipo %}
-      <button type="button" class="eq-persona {% if t.asignado_a == p %}eq-persona--on{% endif %}"
-              data-quien="{{ p }}"
-              title="{{ 'Quitar a ' ~ p if t.asignado_a == p else 'Asignar a ' ~ p }}">{{ p }}</button>
+      <option value="{{ p }}" {% if t.asignado_a == p %}selected{% endif %}>{{ p }}</option>
       {% endfor %}
-    </span>
+    </select>
+    <select class="eq-sel eq-sel--prio" data-campo="prioridad" aria-label="Importancia">
+      <option value="urgente" {% if t.prioridad == 'urgente' %}selected{% endif %}>Urgente</option>
+      <option value="normal"  {% if t.prioridad == 'normal'  %}selected{% endif %}>Normal</option>
+      <option value="baja"    {% if t.prioridad == 'baja'    %}selected{% endif %}>Baja</option>
+    </select>
     <input class="eq-dia" type="date" data-campo="fecha_limite"
            value="{{ t.fecha_limite or '' }}" aria-label="Fecha límite">
     <button type="button" class="eq-borrar" title="Borrar">×</button>
