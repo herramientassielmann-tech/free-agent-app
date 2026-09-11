@@ -86,6 +86,46 @@ def _migrate_db(db: Session):
         db.execute(text("ALTER TABLE realtor_profiles_new RENAME TO realtor_profiles"))
         db.commit()
 
+    # Tareas del equipo: `asignado_a` era una clave ajena a users.id y pasa a ser
+    # el nombre de la persona. Robert, David y Kevin entran los tres con la misma
+    # cuenta, así que el responsable es una etiqueta y no un usuario.
+    # En SQLite cambiar el tipo de una columna obliga a rehacer la tabla.
+    try:
+        tipos = {c["name"]: str(c["type"]).upper()
+                 for c in sa_inspect(engine).get_columns("tareas_equipo")}
+    except Exception:
+        tipos = {}
+    if "INTEGER" in tipos.get("asignado_a", ""):
+        db.execute(text("""
+            CREATE TABLE tareas_equipo_new (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                texto         VARCHAR(300) NOT NULL,
+                asignado_a    VARCHAR(20),
+                fecha_limite  DATE,
+                prioridad     VARCHAR(10) NOT NULL DEFAULT 'normal',
+                estado        VARCHAR(12) NOT NULL DEFAULT 'pendiente',
+                completada_en DATETIME,
+                avisada_en    DATETIME,
+                created_at    DATETIME
+            )
+        """))
+        # El responsable viejo era un id de usuario y no se corresponde con
+        # ningún nombre del equipo, así que las tareas existentes se quedan sin
+        # asignar. Son dos clics volver a repartirlas, y es más honesto que
+        # inventarse a quién iban.
+        db.execute(text("""
+            INSERT INTO tareas_equipo_new
+                (id, texto, asignado_a, fecha_limite, prioridad, estado,
+                 completada_en, avisada_en, created_at)
+            SELECT id, texto, NULL, fecha_limite, prioridad, estado,
+                   completada_en, avisada_en, created_at
+            FROM tareas_equipo
+        """))
+        db.execute(text("DROP TABLE tareas_equipo"))
+        db.execute(text("ALTER TABLE tareas_equipo_new RENAME TO tareas_equipo"))
+        db.commit()
+        logger.info("tareas_equipo migrada: el responsable pasa a ser un nombre")
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):

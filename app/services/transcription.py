@@ -1,3 +1,7 @@
+# Anotaciones diferidas: permite escribir `str | None` y que el fichero siga
+# siendo importable en Python 3.9, que es lo que hay en local. Sin esto no se
+# puede levantar la app entera fuera del servidor para probar nada.
+from __future__ import annotations
 import shutil
 import subprocess
 import tempfile
