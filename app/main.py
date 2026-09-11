@@ -14,7 +14,7 @@ from app.database import engine, SessionLocal
 from app.models import Base, User
 from app.auth import hash_password
 from app.config import ADMIN_EMAIL, ADMIN_PASSWORD
-from app.routers import auth, scripts, profile, admin, chatbot, robert, ideas, editor, biblioteca, crm
+from app.routers import auth, scripts, profile, admin, chatbot, robert, ideas, editor, biblioteca, crm, bienvenida, webhooks
 
 
 def _create_admin_if_missing(db: Session):
@@ -107,6 +107,10 @@ app = FastAPI(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Rutas públicas: las únicas de la app que no exigen sesión. Van primero
+# para que se vea de un vistazo que existen.
+app.include_router(bienvenida.router)
+app.include_router(webhooks.router)
 app.include_router(auth.router)
 app.include_router(scripts.router)
 app.include_router(profile.router)

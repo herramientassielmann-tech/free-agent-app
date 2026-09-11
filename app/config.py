@@ -42,5 +42,15 @@ EMAIL_FROM = get_env("EMAIL_FROM",
 EMAIL_REPLY_TO = get_env("EMAIL_REPLY_TO", default=None, required=False)
 APP_URL = get_env("APP_URL", default="https://tool.robertsielmann.com", required=False)
 
+# ── Alta de alumnos (onboarding) ───────────────────────────────────────────
+# Todo opcional: sin estas claves el circuito se puede recorrer igual, sólo que
+# los botones correspondientes salen desactivados con un aviso. Así se puede
+# desplegar y probar antes de tener las cuentas de Stripe y Skool listas.
+STRIPE_PAYMENT_LINK = get_env("STRIPE_PAYMENT_LINK", default=None, required=False)
+STRIPE_WEBHOOK_SECRET = get_env("STRIPE_WEBHOOK_SECRET", default=None, required=False)
+SKOOL_INVITE_URL = get_env("SKOOL_INVITE_URL", default=None, required=False)
+CALENDLY_ONBOARDING_URL = get_env("CALENDLY_ONBOARDING_URL", default=None, required=False)
+CALENDLY_WEBHOOK_SECRET = get_env("CALENDLY_WEBHOOK_SECRET", default=None, required=False)
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 8

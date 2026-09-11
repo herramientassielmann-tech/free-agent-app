@@ -349,3 +349,127 @@ class LeadMessage(Base):
     conversation: Mapped["LeadConversation"] = relationship(
         "LeadConversation", back_populates="messages"
     )
+
+
+# ── Alta de alumnos (onboarding) ─────────────────────────────────────────────
+
+class Alta(Base):
+    """El expediente de entrada de un alumno: de agendar la llamada a estar dentro.
+
+    Antes esto no existía en ningún sitio. Se daba de alta a mano, la contraseña
+    se mandaba por WhatsApp y no quedaba constancia de que nadie hubiera firmado
+    ni pagado. Con seis alumnos eso se lleva en la cabeza; con quince, no.
+
+    Cada paso guarda su FECHA, no un booleano. Un "sí" no dice cuándo pasó, y sin
+    el cuándo no se puede ver quién lleva tres días atascado, que es justo lo que
+    hay que mirar.
+    """
+    __tablename__ = "altas"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    nombre: Mapped[str] = mapped_column(String(150), nullable=False)
+    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    telefono: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+
+    # La hora exacta de la llamada de venta: el correo de bienvenida sale
+    # justo entonces, para que el cierre se haga en vivo durante la llamada.
+    programada_para: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
+    # Identificador de Calendly. Si reagenda llega el mismo y se actualiza la
+    # fila en vez de crear un alta duplicada.
+    calendly_uri: Mapped[Optional[str]] = mapped_column(String(300), nullable=True, unique=True)
+
+    token: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    token_expira: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    email_enviado_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    pagado_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    contrato_firmado_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    cuenta_creada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    skool_abierto_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    onboarding_agendado_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    # Para abrirle los accesos a mano cuando estás con él en la llamada y el
+    # cobro va por transferencia o por el 50/50.
+    desbloqueado_a_mano: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    metodo_pago: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # tarjeta|ach|manual
+    stripe_session: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+
+    user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    recordatorios_enviados: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    firma: Mapped[Optional["FirmaContrato"]] = relationship(
+        "FirmaContrato", back_populates="alta", uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+    @property
+    def accesos_abiertos(self) -> bool:
+        """Si puede crear cuenta, entrar a Skool y agendar el onboarding.
+
+        No se entrega el producto antes de cobrar. El desbloqueo a mano existe
+        porque a veces el cobro va por fuera y el alumno está delante.
+        """
+        return bool(self.pagado_en or self.desbloqueado_a_mano)
+
+    @property
+    def completada(self) -> bool:
+        return bool(self.pagado_en and self.contrato_firmado_en and self.cuenta_creada_en)
+
+
+class FirmaContrato(Base):
+    """La firma del contrato y su rastro de auditoría.
+
+    Va en su propia tabla y no como campos del Alta a propósito: esto es un
+    registro legal y no debe mezclarse con el estado operativo, que cambia.
+
+    La E-SIGN Act pide cinco cosas para que una firma electrónica se sostenga:
+    consentimiento, intención, atribución, conservación y exactitud. Por eso se
+    guarda el consentimiento aparte y con su fecha (tiene que ser ANTERIOR a la
+    firma), y por eso se congela el HTML exacto que la persona vio junto con su
+    huella: sin eso no se puede demostrar QUÉ firmó, sólo que firmó algo.
+    """
+    __tablename__ = "firmas_contrato"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    alta_id: Mapped[int] = mapped_column(Integer, ForeignKey("altas.id"),
+                                         nullable=False, unique=True, index=True)
+
+    nombre_firmante: Mapped[str] = mapped_column(String(150), nullable=False)
+    documento_id: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
+    domicilio: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+
+    # E-SIGN: aceptó expresamente firmar en electrónico, tras leer que tiene
+    # derecho a una copia en papel y a retirar el consentimiento.
+    consentimiento_electronico: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    consentimiento_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    reconocimientos: Mapped[str] = mapped_column(Text, nullable=False)  # JSON de las 4 casillas
+    ip: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
+    user_agent: Mapped[Optional[str]] = mapped_column(String(400), nullable=True)
+
+    huella_documento: Mapped[str] = mapped_column(String(64), nullable=False)  # SHA-256
+    version_contrato: Mapped[str] = mapped_column(String(20), nullable=False, default="v1.0")
+    html_firmado: Mapped[str] = mapped_column(Text, nullable=False)
+
+    firmado_en: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    alta: Mapped["Alta"] = relationship("Alta", back_populates="firma")
+
+
+class AccesoRegistrado(Base):
+    """Cada entrada de un alumno a la herramienta.
+
+    No se enseña en ninguna pantalla y no sirve para vigilar a nadie: para ganar
+    una reclamación de cargo hacen falta tres cosas —contrato firmado, registro
+    de IP y prueba de que la persona accedió al producto—, y esta tabla es la
+    tercera. Con pagos de 3.000 dólares y sin devoluciones, no es un extra.
+    """
+    __tablename__ = "accesos_registrados"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
+                                         nullable=False, index=True)
+    ip: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
+    user_agent: Mapped[Optional[str]] = mapped_column(String(400), nullable=True)
+    entrado_en: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)

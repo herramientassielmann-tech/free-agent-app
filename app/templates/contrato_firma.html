@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Contrato — FA Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --tinta:#16202C; --suave:#495765; --tenue:#6B7A88;
+    --lienzo:#EAEEF3; --papel:#FFFFFF; --filete:#E1E7ED;
+    --azul:#0A6FD4; --azul-osc:#0A5DB0;
+    --verde:#1E7F4B; --verde-luz:#E8F5EE;
+    --rojo:#B3261E; --rojo-luz:#FDEDEC;
+    --ui:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    color-scheme: light;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--lienzo); color:var(--tinta); font-family:var(--ui); }
+
+  .barra {
+    background:var(--papel); border-bottom:1px solid var(--filete);
+    padding:14px 20px; display:flex; justify-content:space-between;
+    align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .barra a { color:var(--azul); text-decoration:none; font-size:.9rem; font-weight:500; }
+  .barra .marca { font-size:.74rem; font-weight:700; letter-spacing:.14em;
+                  text-transform:uppercase; color:var(--tenue); }
+
+  .centro { max-width:860px; margin:0 auto; padding:24px 20px 64px; }
+  @media (max-width:640px){ .centro{ padding:16px 12px 40px; } }
+
+  .hecho {
+    background:var(--verde-luz); border:1px solid #BFE3CE; border-radius:12px;
+    padding:16px 20px; margin-bottom:20px; font-size:.95rem; color:var(--verde);
+  }
+  .hecho b { display:block; font-size:1.02rem; margin-bottom:3px; }
+
+  .hoja-papel { background:var(--papel); border:1px solid var(--filete);
+                border-radius:12px; overflow:hidden; }
+
+  .firmar { background:var(--papel); border:1px solid var(--filete);
+            border-radius:12px; padding:26px 28px; margin-top:20px; }
+  @media (max-width:640px){ .firmar{ padding:20px 16px; } }
+  .firmar h2 { font-size:1.15rem; margin:0 0 .3rem; }
+  .firmar .sub { color:var(--suave); font-size:.93rem; margin:0 0 1.4rem; }
+
+  fieldset { border:0; padding:0; margin:0 0 1.6rem; }
+  legend { font-size:.72rem; font-weight:700; letter-spacing:.12em;
+           text-transform:uppercase; color:var(--tenue); padding:0 0 .7rem; }
+
+  .campo { margin-bottom:12px; }
+  .campo label { display:block; font-size:.85rem; font-weight:600; margin-bottom:5px; }
+  .campo input[type=text] {
+    width:100%; padding:10px 12px; border:1px solid var(--filete); border-radius:9px;
+    font-size:.98rem; font-family:inherit; background:#FBFCFD; color:var(--tinta);
+  }
+  .campo input:focus { outline:2px solid var(--azul); outline-offset:1px; }
+  .dos { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:520px){ .dos{ grid-template-columns:1fr; } }
+
+  .marca-op, .reconoce-op {
+    display:flex; gap:11px; align-items:flex-start; padding:11px 13px;
+    border:1px solid var(--filete); border-radius:10px; margin-bottom:8px;
+    cursor:pointer; font-size:.92rem; line-height:1.5;
+  }
+  .marca-op:hover, .reconoce-op:hover { background:#F7FAFC; border-color:#CBD6E0; }
+  .marca-op input, .reconoce-op input { margin:3px 0 0; flex:none; width:17px; height:17px;
+                                        accent-color:var(--azul); }
+  .reconoce-op:has(input:checked) { background:var(--verde-luz); border-color:#BFE3CE; }
+
+  .esign { background:#F7FAFC; border:1px solid #CBD6E0; border-radius:10px;
+           padding:15px 17px; font-size:.9rem; color:var(--suave); line-height:1.6; }
+  .esign p { margin:0 0 .8rem; }
+
+  .firma-nombre {
+    width:100%; padding:14px 16px; border:1px solid var(--filete); border-radius:10px;
+    font-size:1.35rem; font-family:"Spectral",Georgia,serif; font-style:italic;
+    background:#FBFCFD; color:var(--tinta);
+  }
+  .firma-pista { font-size:.82rem; color:var(--tenue); margin-top:.45rem; }
+
+  .btn { background:var(--azul); color:#fff; border:0; padding:13px 26px;
+         border-radius:10px; font-weight:600; font-size:1rem; font-family:inherit;
+         cursor:pointer; }
+  .btn:hover { background:var(--azul-osc); }
+  .btn--fantasma { background:transparent; color:var(--azul);
+                   border:1px solid var(--filete); text-decoration:none;
+                   display:inline-block; padding:11px 20px; font-size:.94rem; }
+  .aviso { background:var(--rojo-luz); color:var(--rojo); border-radius:9px;
+           padding:11px 15px; font-size:.92rem; margin-bottom:18px; }
+
+  @media print {
+    .barra, .firmar, .hecho, .no-imprimir { display:none !important; }
+    body { background:#fff; }
+    .centro { padding:0; max-width:none; }
+    .hoja-papel { border:0; border-radius:0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="barra no-imprimir">
+  <span class="marca">FA Academy</span>
+  <span>
+    <a href="/bienvenida/{{ alta.token }}">← Volver</a>
+    {% if firma %}<a href="#" onclick="window.print();return false" style="margin-left:16px">Imprimir o guardar en PDF</a>{% endif %}
+  </span>
+</div>
+
+<div class="centro">
+
+  {% if firma %}
+  <div class="hecho no-imprimir">
+    <b>✓ Contrato firmado</b>
+    El {{ firma.firmado_en.strftime('%d/%m/%Y a las %H:%M UTC') }}. Te hemos mandado
+    una copia a {{ alta.email }}. Puedes pedirnos una copia en papel cuando quieras,
+    sin coste.
+  </div>
+  {# El documento congelado, tal cual se firmó. No se vuelve a pintar: se sirve
+     el HTML que se guardó, que es el que responde a la huella. #}
+  <div class="hoja-papel">{{ firma.html_firmado | safe }}</div>
+
+  {% else %}
+
+  {% if error %}<div class="aviso">{{ error }}</div>{% endif %}
+
+  <div class="hoja-papel">{% include "_contrato_cuerpo.html" %}</div>
+
+  <form class="firmar" method="post" action="/bienvenida/{{ alta.token }}/firmar">
+    <h2>Firmar el contrato</h2>
+    <p class="sub">Completa tus datos, marca los reconocimientos y escribe tu nombre.</p>
+
+    <fieldset>
+      <legend>Tus datos</legend>
+      <div class="dos">
+        <div class="campo">
+          <label for="documento">Documento de identidad</label>
+          <input id="documento" name="documento" type="text"
+                 value="{{ previo.documento if previo else '' }}" placeholder="DNI, NIE o ID">
+        </div>
+        <div class="campo">
+          <label for="domicilio">Domicilio</label>
+          <input id="domicilio" name="domicilio" type="text"
+                 value="{{ previo.domicilio if previo else '' }}" placeholder="Calle, ciudad, país">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Forma de pago acordada</legend>
+      {% set m = previo.modalidad if previo else 'unico' %}
+      <label class="marca-op"><input type="radio" name="modalidad" value="unico"
+        {% if m == 'unico' %}checked{% endif %}><span>Pago único de 3.000 $ a la firma</span></label>
+      <label class="marca-op"><input type="radio" name="modalidad" value="dos_plazos"
+        {% if m == 'dos_plazos' %}checked{% endif %}><span>Dos plazos: 1.500 $ ahora y 1.500 $ a los 30 días</span></label>
+      <label class="marca-op"><input type="radio" name="modalidad" value="financiacion"
+        {% if m == 'financiacion' %}checked{% endif %}><span>Financiación mensual (sólo EE. UU.)</span></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Reconocimientos · los cuatro son obligatorios</legend>
+      {% set marcados = previo.marcados if previo else [] %}
+      {% for clave, texto in reconocimientos %}
+      <label class="reconoce-op">
+        <input type="checkbox" name="r_{{ clave }}" value="1"
+               {% if clave in marcados %}checked{% endif %} required>
+        <span>{{ texto | safe }}</span>
+      </label>
+      {% endfor %}
+    </fieldset>
+
+    <fieldset>
+      <legend>Firma electrónica</legend>
+      <div class="esign">
+        <p>Este contrato se firma por medios electrónicos. <b>Tienes derecho a
+        solicitar y recibir una copia en papel sin coste</b>, y <b>puedes retirar
+        en cualquier momento tu consentimiento</b> a contratar por medios
+        electrónicos escribiéndonos, sin que ello afecte a lo ya firmado.</p>
+        <label class="marca-op" style="margin:0; background:var(--papel)">
+          <input type="checkbox" name="consentimiento" value="1" required
+                 {% if previo and previo.consentimiento %}checked{% endif %}>
+          <span><b>Consiento firmar este contrato por medios electrónicos.</b></span>
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Opcional</legend>
+      <label class="marca-op">
+        <input type="checkbox" name="imagen" value="1"
+               {% if previo and previo.imagen %}checked{% endif %}>
+        <span>Autorizo a FA Academy a usar mi imagen, voz, nombre y testimonio con
+        fines promocionales. Puedo revocarlo por escrito cuando quiera.</span>
+      </label>
+    </fieldset>
+
+    <fieldset style="margin-bottom:1.8rem">
+      <legend>Tu firma</legend>
+      <input class="firma-nombre" name="nombre_firmante" type="text" required
+             minlength="5" autocomplete="name"
+             value="{{ previo.nombre_firmante if previo else alta.nombre }}"
+             placeholder="Escribe tu nombre y apellidos">
+      <p class="firma-pista">Escribir tu nombre aquí tiene el mismo valor que
+      firmarlo a mano. Guardaremos la fecha, tu IP y una huella del documento.</p>
+    </fieldset>
+
+    <button class="btn" type="submit">Firmar el contrato</button>
+  </form>
+
+  {% endif %}
+</div>
+</body>
+</html>

@@ -1,0 +1,690 @@
+{#
+  El contrato como documento. Se renderiza dos veces con la misma plantilla:
+  una para que lo lea antes de firmar (sin firmante) y otra ya ejecutado, que es
+  la que se congela en la base de datos junto con su huella SHA-256.
+
+  Los estilos van AQUÍ dentro y no en style.css a propósito: el documento que se
+  guarda tiene que poder abrirse dentro de diez años y verse igual, sin depender
+  de una hoja externa que para entonces habrá cambiado veinte veces.
+#}
+<style>
+  :root {
+    --tinta:        #16202C;
+    --tinta-media:  #4A5A6B;
+    --tinta-tenue:  #6B7A88;
+    --papel:        #FFFFFF;
+    --fondo:        #EAEEF3;
+    --filete:       #D5DDE5;
+    --filete-fuerte:#B9C4CE;
+    --sello:        #7A2E33;
+    --campo:        #F4F7FA;
+
+    --serif: "Spectral", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --mono:  "IBM Plex Mono", "SF Mono", Menlo, Consolas, monospace;
+  }
+
+
+  
+  .doc {
+    background: transparent;
+    color: var(--tinta);
+    font-family: var(--serif);
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .hoja {
+    max-width: 46rem;
+    margin: 0 auto;
+    background: var(--papel);
+    padding: 2.5rem 2.75rem 2rem;
+  }
+
+  @media (max-width: 640px) {
+    .hoja { padding: 2.5rem 1.4rem 2.5rem; border-left: 0; border-right: 0; }
+  }
+
+  /* ── Encabezado ───────────────────────────────────────── */
+
+  .membrete {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--tinta);
+    flex-wrap: wrap;
+  }
+  .marca {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+  .referencia {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--tinta-tenue);
+    letter-spacing: .04em;
+  }
+
+  .titulo-doc {
+    font-size: 1.75rem;
+    font-weight: 500;
+    line-height: 1.25;
+    text-wrap: balance;
+    margin: 2.25rem 0 .4rem;
+  }
+  .subtitulo-doc {
+    font-size: .82rem;
+    font-family: var(--mono);
+    color: var(--tinta-tenue);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 2.5rem;
+  }
+
+  /* ── Partes ───────────────────────────────────────────── */
+
+  .rotulo {
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--tinta-tenue);
+    margin-bottom: .55rem;
+  }
+
+  .partes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    padding: 1.6rem 0 1.8rem;
+    border-bottom: 1px solid var(--filete);
+  }
+  @media (max-width: 640px) { .partes { grid-template-columns: 1fr; gap: 1.5rem; } }
+
+  .parte p { margin: 0 0 .3rem; font-size: .95rem; }
+  .parte .nombre { font-weight: 600; font-size: 1rem; }
+  .parte .dato { color: var(--tinta-media); }
+
+  .campo {
+    display: inline-block;
+    min-width: 8.5rem;
+    border-bottom: 1px solid var(--filete-fuerte);
+    background: var(--campo);
+    padding: 0 .35rem;
+  }
+
+  .exponen {
+    padding: 1.8rem 0;
+    border-bottom: 1px solid var(--filete);
+    font-size: .95rem;
+    color: var(--tinta-media);
+  }
+  .exponen p { margin: 0 0 .8rem; }
+  .exponen p:last-child { margin-bottom: 0; }
+
+  /* ── Cláusulas: numeral en la calle izquierda ─────────── */
+
+  .clausula {
+    display: grid;
+    grid-template-columns: 3.25rem 1fr;
+    gap: 0 1.25rem;
+    padding-top: 2.4rem;
+  }
+  @media (max-width: 640px) {
+    .clausula { grid-template-columns: 1fr; gap: 0; padding-top: 2rem; }
+  }
+
+  .numeral {
+    font-family: var(--mono);
+    font-size: .8rem;
+    font-weight: 500;
+    color: var(--sello);
+    padding-top: .32rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .clausula h2 {
+    font-size: 1.02rem;
+    font-weight: 600;
+    letter-spacing: .01em;
+    margin: 0 0 .7rem;
+    text-wrap: balance;
+  }
+  @media (max-width: 640px) {
+    .clausula h2::before {
+      content: attr(data-n) " · ";
+      font-family: var(--mono);
+      font-size: .8rem;
+      color: var(--sello);
+    }
+  }
+
+  .cuerpo { grid-column: 2; }
+  @media (max-width: 640px) { .cuerpo { grid-column: 1; } }
+
+  .cuerpo p { margin: 0 0 .75rem; font-size: .95rem; }
+  .cuerpo p:last-child { margin-bottom: 0; }
+
+  .sub {
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--tinta-tenue);
+    margin-right: .45rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .lista { margin: 0 0 .75rem; padding-left: 1.1rem; }
+  .lista li { margin-bottom: .38rem; font-size: .95rem; }
+
+  /* ── Tabla de prestaciones ────────────────────────────── */
+
+  .tabla-envoltura { overflow-x: auto; margin: .3rem 0 .9rem; }
+  table.prestaciones {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .9rem;
+  }
+  table.prestaciones th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: .66rem;
+    font-weight: 500;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--tinta-tenue);
+    padding: 0 .8rem .5rem 0;
+    border-bottom: 1px solid var(--filete-fuerte);
+  }
+  table.prestaciones td {
+    padding: .62rem .8rem .62rem 0;
+    border-bottom: 1px solid var(--filete);
+    vertical-align: top;
+  }
+  table.prestaciones td:last-child {
+    white-space: nowrap;
+    font-family: var(--mono);
+    font-size: .82rem;
+    color: var(--tinta-media);
+    padding-right: 0;
+  }
+
+  /* ── Cuadro de pagos ──────────────────────────────────── */
+
+  .pagos {
+    border-top: 1px solid var(--filete-fuerte);
+    border-bottom: 1px solid var(--filete-fuerte);
+    margin: .3rem 0 .9rem;
+  }
+  .pago {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: .6rem 0;
+  }
+  .pago + .pago { border-top: 1px solid var(--filete); }
+  .pago .concepto { font-size: .93rem; }
+  .pago .importe {
+    font-family: var(--mono);
+    font-size: .93rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* ── Reconocimientos ──────────────────────────────────── */
+
+  .reconocimientos { padding-top: 3rem; }
+  .reconocimientos > .rotulo { margin-bottom: 1.1rem; }
+
+  .reconoce {
+    display: grid;
+    grid-template-columns: 1fr 4.5rem;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1rem 0;
+    border-top: 1px solid var(--filete);
+  }
+  .reconoce:last-of-type { border-bottom: 1px solid var(--filete); }
+  .reconoce p { margin: 0; font-size: .92rem; }
+  .casilla {
+    border-bottom: 1px solid var(--tinta);
+    height: 2rem;
+  }
+  .casilla-rotulo {
+    font-family: var(--mono);
+    font-size: .6rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--tinta-tenue);
+    text-align: center;
+    padding-top: .3rem;
+  }
+
+  /* ── Firmas ───────────────────────────────────────────── */
+
+  .firmas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    padding-top: 3.5rem;
+  }
+  @media (max-width: 640px) { .firmas { grid-template-columns: 1fr; gap: 2.5rem; } }
+
+  .firma .linea {
+    border-bottom: 1px solid var(--tinta);
+    height: 3.2rem;
+  }
+  .firma .pie {
+    font-size: .82rem;
+    color: var(--tinta-media);
+    padding-top: .5rem;
+    line-height: 1.5;
+  }
+  .firma .pie b { color: var(--tinta); font-weight: 600; }
+
+  .cierre {
+    margin-top: 3rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--filete);
+    font-size: .78rem;
+    color: var(--tinta-tenue);
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .cierre span { font-family: var(--mono); font-size: .7rem; letter-spacing: .04em; }
+
+  /* ── Impresión ────────────────────────────────────────── */
+
+  @page { size: A4; margin: 18mm 16mm 16mm; }
+
+  @media print {
+    :root {
+      --tinta: #16202C; --tinta-media: #4A5A6B; --tinta-tenue: #6B7A88;
+      --papel: #FFFFFF; --fondo: #FFFFFF; --filete: #D5DDE5;
+      --filete-fuerte: #B9C4CE; --sello: #7A2E33; --campo: #F7F9FB;
+    }
+    body { background: #FFFFFF; font-size: 10.2pt; line-height: 1.5; }
+    .hoja { max-width: none; margin: 0; padding: 0; border: 0; }
+    .clausula { break-inside: avoid; padding-top: 1.5rem; }
+    .reconoce, .firma, .pagos, table.prestaciones { break-inside: avoid; }
+    .reconocimientos, .firmas { break-inside: avoid; }
+    .titulo-doc { font-size: 17pt; margin-top: 1.2rem; }
+    .clausula h2 { font-size: 10.8pt; }
+  }
+  .marca-si { color: var(--sello); font-size: 1.05em; }
+  .marca-no { color: var(--filete-fuerte); font-size: 1.05em; }
+  .valor { border-bottom: 1px solid var(--filete-fuerte); padding: 0 .3rem; }
+  .valor--vacio { display: inline-block; min-width: 8.5rem; background: var(--campo); }
+  .firma-hecha {
+    font-family: var(--serif); font-size: 1.3rem; font-style: italic;
+    color: var(--tinta); padding-bottom: .25rem;
+  }
+  .sello-firma {
+    font-family: var(--mono); font-size: .66rem; color: var(--tinta-tenue);
+    line-height: 1.6; margin-top: .5rem; word-break: break-all;
+  }
+</style>
+
+<div class="doc">
+<div class="hoja">
+
+  <header class="membrete">
+    <div class="marca">FA Academy</div>
+    <div class="referencia">Ref. {{ d.ref }} · {{ d.version }}</div>
+  </header>
+
+  <h1 class="titulo-doc">Contrato de prestación de servicios de formación y acompañamiento</h1>
+  <p class="subtitulo-doc">Programa Free Agent Academy</p>
+
+  <div class="rotulo">Partes</div>
+  <div class="partes">
+    <div class="parte">
+      <p class="nombre">FA Academy</p>
+      <p class="dato">Titular: <span class="valor">{{ d.empresa_titular }}</span></p>
+      <p class="dato">Domicilio: <span class="valor">{{ d.empresa_domicilio }}</span></p>
+      <p class="dato">Identificación fiscal: <span class="valor">{{ d.empresa_nif }}</span></p>
+      <p class="dato" style="margin-top:.5rem">En adelante, <b>«FA Academy»</b>.</p>
+    </div>
+    <div class="parte">
+      <p class="nombre">El Alumno</p>
+      <p class="dato">Nombre y apellidos: <span class="valor">{{ d.alumno_nombre }}</span></p>
+      <p class="dato">Documento de identidad:
+        <span class="valor {% if not d.alumno_documento %}valor--vacio{% endif %}">{{ d.alumno_documento }}</span></p>
+      <p class="dato">Domicilio:
+        <span class="valor {% if not d.alumno_domicilio %}valor--vacio{% endif %}">{{ d.alumno_domicilio }}</span></p>
+      <p class="dato">Correo electrónico: <span class="valor">{{ d.alumno_email }}</span></p>
+      <p class="dato" style="margin-top:.5rem">En adelante, <b>«el Alumno»</b>.</p>
+    </div>
+  </div>
+
+  <div class="exponen">
+    <p>Que FA Academy desarrolla un programa de formación y acompañamiento dirigido a agentes inmobiliarios, orientado a la creación de marca personal y contenido en redes sociales como vía de captación de clientes.</p>
+    <p>Que el Alumno manifiesta ejercer como agente inmobiliario o encontrarse en disposición de hacerlo, y desea acceder a dicho programa con pleno conocimiento de su contenido, su precio y sus condiciones.</p>
+    <p>Que ambas Partes se reconocen capacidad suficiente y suscriben el presente contrato en la fecha indicada al pie, con arreglo a las siguientes cláusulas.</p>
+  </div>
+
+<!-- 1 -->
+  <section class="clausula">
+    <div class="numeral">01</div>
+    <h2 data-n="01">Objeto</h2>
+    <div class="cuerpo">
+      <p>El presente contrato regula la prestación por FA Academy, y la contratación por el Alumno, del programa de formación y acompañamiento denominado <i>Free Agent Academy</i> (en adelante, «el Programa»), con el contenido y la duración descritos en la cláusula 2.</p>
+      <p>El Programa consiste en formación, materiales y acompañamiento metodológico. No comprende la prestación de servicios de intermediación inmobiliaria, de marketing por cuenta del Alumno, ni la producción o publicación de contenido en su nombre.</p>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="clausula">
+    <div class="numeral">02</div>
+    <h2 data-n="02">Contenido y duración</h2>
+    <div class="cuerpo">
+      <p><span class="sub">2.1</span> El Programa comprende exclusivamente las siguientes prestaciones:</p>
+      <div class="tabla-envoltura">
+        <table class="prestaciones">
+          <thead>
+            <tr><th>Prestación</th><th>Duración</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Acceso a la herramienta digital de FA Academy, sin límite de guiones generados</td><td>3 meses</td></tr>
+            <tr><td>Llamadas grupales semanales de acompañamiento con Robert Sielmann</td><td>3 meses</td></tr>
+            <tr><td>Canal de mensajería directa con Robert Sielmann y el equipo</td><td>3 meses</td></tr>
+            <tr><td>Llamada individual de incorporación al Programa</td><td>Una sesión</td></tr>
+            <tr><td>Acceso a la formación en vídeo alojada en la plataforma Skool</td><td>12 meses</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><span class="sub">2.2</span> Los plazos se computan desde la fecha de firma del presente contrato, con independencia de la fecha en que el Alumno haga uso efectivo de cada prestación.</p>
+      <p><span class="sub">2.3</span> FA Academy podrá modificar el calendario, el formato o los contenidos concretos del Programa, así como sustituir herramientas o plataformas de terceros, siempre que ello no suponga una reducción sustancial de las prestaciones contratadas.</p>
+      <p><span class="sub">2.4</span> Las prestaciones que dependen de plataformas de terceros quedan sujetas a la disponibilidad y a las condiciones de servicio de dichos terceros. Las interrupciones o cambios ajenos al control de FA Academy no constituyen incumplimiento del presente contrato.</p>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="clausula">
+    <div class="numeral">03</div>
+    <h2 data-n="03">Precio y forma de pago</h2>
+    <div class="cuerpo">
+      <p><span class="sub">3.1</span> El precio total del Programa asciende a <b>tres mil dólares estadounidenses (USD 3.000)</b>, impuestos no incluidos cuando resulten aplicables.</p>
+      <p><span class="sub">3.2</span> El Alumno abonará el precio conforme a la modalidad marcada:</p>
+      <div class="pagos">
+        <div class="pago"><span class="concepto">{% if d.modalidad == "unico" %}<b class="marca-si">☒</b>{% else %}<span class="marca-no">☐</span>{% endif %} &nbsp;Pago único a la firma</span><span class="importe">USD 3.000</span></div>
+        <div class="pago"><span class="concepto">{% if d.modalidad == "dos_plazos" %}<b class="marca-si">☒</b>{% else %}<span class="marca-no">☐</span>{% endif %} &nbsp;Dos plazos: a la firma y a los treinta (30) días</span><span class="importe">2 × USD 1.500</span></div>
+        <div class="pago"><span class="concepto">{% if d.modalidad == "financiacion" %}<b class="marca-si">☒</b>{% else %}<span class="marca-no">☐</span>{% endif %} &nbsp;Financiación mensual a través de la entidad designada</span><span class="importe">Según condiciones</span></div>
+      </div>
+      <p><span class="sub">3.3</span> La modalidad de financiación mensual se encuentra disponible únicamente para Alumnos residentes en los Estados Unidos de América y queda sujeta a la aprobación de la entidad financiera correspondiente. La relación de financiación se entabla entre el Alumno y dicha entidad; FA Academy no es parte de la misma y no responde de sus condiciones ni de su concesión o denegación.</p>
+      <p><span class="sub">3.4</span> El precio se entiende por la puesta a disposición de las prestaciones descritas en la cláusula 2, y no por el uso efectivo que el Alumno haga de ellas.</p>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="clausula">
+    <div class="numeral">04</div>
+    <h2 data-n="04">Naturaleza del servicio</h2>
+    <div class="cuerpo">
+      <p><span class="sub">4.1</span> El Programa tiene naturaleza exclusivamente formativa y de acompañamiento profesional.</p>
+      <p><span class="sub">4.2</span> FA Academy no presta asesoramiento jurídico, fiscal, contable, financiero, de inversión ni psicológico, y nada de lo contenido en el Programa debe interpretarse como tal. El Alumno recabará de profesionales debidamente habilitados cualquier asesoramiento de esa naturaleza que precise.</p>
+      <p><span class="sub">4.3</span> El Alumno es el único responsable del cumplimiento de la normativa que rige su actividad profesional, incluidas las obligaciones derivadas de su licencia, las normas de publicidad inmobiliaria, las políticas de su agencia o <i>broker</i>, las condiciones de uso de las plataformas en que publique y la normativa fiscal que le resulte aplicable.</p>
+      <p><span class="sub">4.4</span> Las decisiones comerciales, contractuales y de comunicación que el Alumno adopte son de su exclusiva responsabilidad, aun cuando se hayan tratado durante el Programa.</p>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="clausula">
+    <div class="numeral">05</div>
+    <h2 data-n="05">Ausencia de garantía de resultados</h2>
+    <div class="cuerpo">
+      <p><span class="sub">5.1</span> FA Academy <b>no garantiza, ni expresa ni tácitamente, la obtención de resultado alguno</b>, ya sea en términos de captación de clientes, cierre de operaciones, ingresos, crecimiento en redes sociales, alcance, seguidores o cualquier otra métrica.</p>
+      <p><span class="sub">5.2</span> Los resultados dependen de factores que exceden del control de FA Academy, entre otros el esfuerzo, la constancia, la aptitud, la experiencia previa, la dedicación horaria, el mercado local y las circunstancias personales y profesionales del Alumno.</p>
+      <p><span class="sub">5.3</span> Los ejemplos, cifras, capturas de pantalla, testimonios o casos que hayan podido mostrarse al Alumno con anterioridad a la firma corresponden a experiencias individuales, no han sido presentados como resultados típicos ni promedio, y no constituyen promesa, previsión ni garantía de resultado alguno.</p>
+      <p><span class="sub">5.4</span> El Alumno declara que no ha contratado el Programa sobre la base de ninguna promesa de resultados, y que ningún miembro del equipo de FA Academy le ha formulado promesa semejante.</p>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="clausula">
+    <div class="numeral">06</div>
+    <h2 data-n="06">Compromisos del Alumno</h2>
+    <div class="cuerpo">
+      <p><span class="sub">6.1</span> El aprovechamiento del Programa exige la participación activa del Alumno, que se compromete durante su vigencia a:</p>
+      <ul class="lista">
+        <li>Publicar un mínimo de <b>dos (2) vídeos por semana</b>, siendo la frecuencia recomendada de uno (1) diario.</li>
+        <li>Asistir a las llamadas semanales de acompañamiento o, en su defecto, revisar su grabación cuando esté disponible.</li>
+        <li>Realizar los ejercicios propuestos y aplicar las indicaciones metodológicas del equipo.</li>
+        <li>Facilitar información veraz sobre su actividad cuando le sea requerida para orientar el acompañamiento.</li>
+      </ul>
+      <p><span class="sub">6.2</span> El Alumno reconoce que estos compromisos constituyen un elemento esencial del Programa y que su cumplimiento condiciona directamente el aprovechamiento de la formación recibida.</p>
+      <p><span class="sub">6.3</span> En consecuencia, <b>FA Academy no responderá de la ausencia, insuficiencia o retraso de resultados que traiga causa, total o parcialmente, del incumplimiento por el Alumno de los compromisos anteriores</b>, de la no aplicación de las indicaciones recibidas o de su aplicación parcial, tardía o modificada.</p>
+      <p><span class="sub">6.4</span> La falta de uso de las prestaciones contratadas, la inasistencia a las llamadas, la ausencia de publicación de contenido o la falta de disponibilidad horaria del Alumno no alteran las obligaciones económicas asumidas en la cláusula 3.</p>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="clausula">
+    <div class="numeral">07</div>
+    <h2 data-n="07">Cancelación y devoluciones</h2>
+    <div class="cuerpo">
+      <p><span class="sub">7.1</span> Habida cuenta de que el Programa comprende el acceso inmediato a contenidos digitales y a herramientas de uso personal, <b>las cantidades abonadas no son reembolsables</b> una vez producido dicho acceso.</p>
+      <p><span class="sub">7.2</span> Lo dispuesto en el apartado anterior se entiende <b>sin perjuicio de los derechos de desistimiento o cancelación que la normativa imperativa aplicable reconozca al Alumno</b>, los cuales podrán ejercitarse en el plazo y la forma legalmente previstos mediante comunicación escrita dirigida a FA Academy.</p>
+      <p><span class="sub">7.3</span> No dan derecho a devolución, entre otros supuestos: la falta de uso de la herramienta o de los materiales; la inasistencia a las llamadas; la falta de tiempo o de disponibilidad; el cambio de circunstancias personales, laborales o de mercado; el cese o la suspensión de la actividad profesional del Alumno; ni la disconformidad con los resultados obtenidos.</p>
+      <p><span class="sub">7.4</span> El Alumno se compromete a dirigir cualquier reclamación de naturaleza económica a FA Academy, por escrito y de buena fe, con carácter previo a instar un procedimiento de retrocesión de cargo ante su entidad emisora, a fin de permitir su resolución directa.</p>
+      <p><span class="sub">7.5</span> La renuncia del Alumno a continuar en el Programa no le exime del pago de los plazos pendientes.</p>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="clausula">
+    <div class="numeral">08</div>
+    <h2 data-n="08">Impago</h2>
+    <div class="cuerpo">
+      <p><span class="sub">8.1</span> El impago de cualquier plazo en la fecha convenida facultará a FA Academy para suspender de inmediato el acceso del Alumno a la totalidad de las prestaciones, previa comunicación al correo electrónico designado.</p>
+      <p><span class="sub">8.2</span> La suspensión no interrumpe el cómputo de los plazos de duración establecidos en la cláusula 2, ni genera derecho a prórroga o compensación.</p>
+      <p><span class="sub">8.3</span> Transcurridos treinta (30) días desde el vencimiento sin que se haya regularizado la situación, FA Academy podrá resolver el contrato y reclamar las cantidades pendientes, así como los gastos de gestión y reclamación en que haya incurrido.</p>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="clausula">
+    <div class="numeral">09</div>
+    <h2 data-n="09">Carácter personal del acceso</h2>
+    <div class="cuerpo">
+      <p><span class="sub">9.1</span> El acceso al Programa es personal e intransferible. El Alumno no podrá compartir sus credenciales, ceder su plaza ni permitir el uso de las prestaciones por terceros.</p>
+      <p><span class="sub">9.2</span> El incumplimiento de esta cláusula facultará a FA Academy para resolver el contrato con efectos inmediatos, sin derecho a devolución alguna, y sin perjuicio de las acciones que le correspondan.</p>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="clausula">
+    <div class="numeral">10</div>
+    <h2 data-n="10">Propiedad intelectual</h2>
+    <div class="cuerpo">
+      <p><span class="sub">10.1</span> Todos los contenidos del Programa —vídeos, documentos, plantillas, metodología, denominaciones y la propia herramienta digital— son titularidad de FA Academy o de sus licenciantes y se encuentran protegidos por la normativa de propiedad intelectual e industrial.</p>
+      <p><span class="sub">10.2</span> Se concede al Alumno una licencia de uso personal, limitada, revocable y no exclusiva, circunscrita a la duración establecida en la cláusula 2 y a sus propios fines profesionales.</p>
+      <p><span class="sub">10.3</span> Queda expresamente prohibida la reproducción, distribución, comunicación pública, transformación, cesión, reventa o utilización de los contenidos para impartir formación propia o de terceros, así como su grabación total o parcial sin autorización escrita.</p>
+      <p><span class="sub">10.4</span> Los guiones y materiales que el Alumno genere mediante la herramienta son de su titularidad y de su exclusiva responsabilidad en cuanto a su contenido y publicación.</p>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="clausula">
+    <div class="numeral">11</div>
+    <h2 data-n="11">Confidencialidad</h2>
+    <div class="cuerpo">
+      <p><span class="sub">11.1</span> El Alumno mantendrá la confidencialidad de la metodología, los materiales y cuanta información conozca a través del Programa, así como de la información personal o comercial que compartan otros alumnos en las llamadas y canales grupales.</p>
+      <p><span class="sub">11.2</span> Esta obligación subsistirá una vez extinguido el presente contrato.</p>
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section class="clausula">
+    <div class="numeral">12</div>
+    <h2 data-n="12">Grabación de sesiones, imagen y testimonios</h2>
+    <div class="cuerpo">
+      <p><span class="sub">12.1</span> Las llamadas grupales podrán ser grabadas con fines formativos y de consulta por los propios alumnos. El Alumno consiente dicha grabación por el mero hecho de participar en ellas.</p>
+      <p><span class="sub">12.2</span> El uso por FA Academy de la imagen, la voz, el nombre o los testimonios del Alumno con fines promocionales requerirá su autorización expresa, que podrá otorgarse marcando la casilla siguiente y revocarse en cualquier momento por escrito, sin efectos retroactivos sobre materiales ya difundidos:</p>
+      <p style="margin-top:.8rem">{% if d.imagen %}<b class="marca-si">☒</b>{% else %}<span class="marca-no">☐</span>{% endif %} &nbsp;Autorizo el uso promocional de mi imagen, voz, nombre y testimonio.</p>
+    </div>
+  </section>
+
+  <!-- 13 -->
+  <section class="clausula">
+    <div class="numeral">13</div>
+    <h2 data-n="13">Protección de datos</h2>
+    <div class="cuerpo">
+      <p><span class="sub">13.1</span> Los datos personales facilitados por el Alumno serán tratados por FA Academy con la finalidad de gestionar la relación contractual, prestar el Programa y atender las obligaciones legales derivadas del mismo.</p>
+      <p><span class="sub">13.2</span> Los datos se conservarán durante la vigencia del contrato y, posteriormente, durante los plazos de prescripción legalmente exigibles. No se cederán a terceros salvo obligación legal o cuando resulte necesario para la prestación del servicio a través de los proveedores tecnológicos empleados.</p>
+      <p><span class="sub">13.3</span> El Alumno podrá ejercer sus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad mediante comunicación escrita a la dirección de correo electrónico de FA Academy indicada en la cláusula 16.</p>
+    </div>
+  </section>
+
+  <!-- 14 -->
+  <section class="clausula">
+    <div class="numeral">14</div>
+    <h2 data-n="14">Limitación de responsabilidad</h2>
+    <div class="cuerpo">
+      <p><span class="sub">14.1</span> En la máxima medida permitida por la normativa aplicable, <b>la responsabilidad total de FA Academy frente al Alumno, por cualquier concepto y con independencia de su fundamento, quedará limitada al importe efectivamente abonado por el Alumno en virtud del presente contrato</b>.</p>
+      <p><span class="sub">14.2</span> FA Academy no responderá en ningún caso de daños indirectos, consecuenciales, lucro cesante, pérdida de oportunidades de negocio, pérdida de clientes, daño reputacional ni pérdida de datos.</p>
+      <p><span class="sub">14.3</span> FA Academy no responderá de las consecuencias derivadas de las decisiones adoptadas por el Alumno, del contenido que este publique, de las sanciones, restricciones o cierres que las plataformas de terceros puedan imponer a sus cuentas, ni de las reclamaciones de terceros vinculadas a su actividad profesional.</p>
+      <p><span class="sub">14.4</span> Nada de lo previsto en esta cláusula excluye o limita la responsabilidad que no pueda excluirse o limitarse conforme a la normativa imperativa aplicable.</p>
+    </div>
+  </section>
+
+  <!-- 15 -->
+  <section class="clausula">
+    <div class="numeral">15</div>
+    <h2 data-n="15">Conducta, suspensión y resolución</h2>
+    <div class="cuerpo">
+      <p><span class="sub">15.1</span> El Alumno se compromete a mantener un trato respetuoso con el equipo de FA Academy y con el resto de alumnos en todos los canales del Programa.</p>
+      <p><span class="sub">15.2</span> FA Academy podrá suspender o resolver el contrato con efectos inmediatos y <b>sin derecho a devolución</b> en caso de conducta ofensiva, acoso, divulgación de contenidos del Programa, uso fraudulento del acceso o incumplimiento grave de cualquiera de las obligaciones aquí asumidas.</p>
+      <p><span class="sub">15.3</span> La resolución del contrato no afectará a las cláusulas que por su naturaleza deban subsistir, en particular las relativas a propiedad intelectual, confidencialidad, limitación de responsabilidad y resolución de controversias.</p>
+    </div>
+  </section>
+
+  <!-- 16 -->
+  <section class="clausula">
+    <div class="numeral">16</div>
+    <h2 data-n="16">Comunicaciones</h2>
+    <div class="cuerpo">
+      <p><span class="sub">16.1</span> Las comunicaciones entre las Partes se cursarán por correo electrónico a las direcciones consignadas en el encabezamiento, que se reputan válidas a todos los efectos, incluidas las notificaciones de suspensión o resolución.</p>
+      <p><span class="sub">16.2</span> Cualquier cambio de dirección deberá comunicarse por escrito con antelación suficiente.</p>
+      <p><span class="sub">16.3</span> Dirección de contacto de FA Academy: {{ d.contacto }}</p>
+    </div>
+  </section>
+
+  <!-- 17 -->
+  <section class="clausula">
+    <div class="numeral">17</div>
+    <h2 data-n="17">Acuerdo íntegro</h2>
+    <div class="cuerpo">
+      <p><span class="sub">17.1</span> El presente contrato constituye el acuerdo íntegro entre las Partes respecto de su objeto y <b>sustituye y deja sin efecto cuantas comunicaciones, ofertas, presentaciones, promesas o manifestaciones, verbales o escritas, hayan podido mediar con anterioridad</b>, incluidas las realizadas en llamadas comerciales, mensajes, redes sociales o materiales publicitarios.</p>
+      <p><span class="sub">17.2</span> El Alumno declara que ha suscrito este contrato basándose exclusivamente en las manifestaciones contenidas en él, y no en ninguna otra.</p>
+      <p><span class="sub">17.3</span> Toda modificación del presente contrato requerirá acuerdo escrito de ambas Partes.</p>
+    </div>
+  </section>
+
+  <!-- 18 -->
+  <section class="clausula">
+    <div class="numeral">18</div>
+    <h2 data-n="18">Divisibilidad y renuncias</h2>
+    <div class="cuerpo">
+      <p><span class="sub">18.1</span> Si alguna cláusula del presente contrato fuera declarada nula, inválida o inaplicable, dicha declaración no afectará a la validez de las restantes, que continuarán en pleno vigor. La cláusula afectada se entenderá sustituida por otra válida cuyo efecto sea el más próximo posible al pretendido.</p>
+      <p><span class="sub">18.2</span> La tolerancia o el retraso de cualquiera de las Partes en el ejercicio de un derecho no supondrá renuncia al mismo.</p>
+      <p><span class="sub">18.3</span> El Alumno no podrá ceder su posición contractual sin consentimiento escrito de FA Academy.</p>
+    </div>
+  </section>
+
+  <!-- 19 -->
+  <section class="clausula">
+    <div class="numeral">19</div>
+    <h2 data-n="19">Ley aplicable</h2>
+    <div class="cuerpo">
+      <p>El presente contrato se rige por las leyes de {{ d.ley }}, con exclusión de sus normas de conflicto de leyes.</p>
+    </div>
+  </section>
+
+  <!-- 20 -->
+  <section class="clausula">
+    <div class="numeral">20</div>
+    <h2 data-n="20">Resolución de controversias</h2>
+    <div class="cuerpo">
+      <p><span class="sub">20.1</span> Las Partes procurarán resolver de buena fe cualquier discrepancia mediante negociación directa durante un plazo de treinta (30) días desde su comunicación escrita.</p>
+      <p><span class="sub">20.2</span> Transcurrido dicho plazo sin acuerdo, toda controversia derivada del presente contrato o relacionada con él se someterá con carácter definitivo a <b>arbitraje individual y vinculante</b>, administrado por la institución arbitral designada, {{ d.arbitraje }}, conforme a su reglamento vigente. El arbitraje se sustanciará en lengua española y en la sede indicada en la cláusula 19.</p>
+      <p><span class="sub">20.3</span> <b>Las Partes renuncian a promover o participar en acciones colectivas, de clase o de representación</b>, así como al juicio con jurado, en la máxima medida permitida por la normativa aplicable. Las reclamaciones se sustanciarán únicamente a título individual y no podrán acumularse con las de otros alumnos.</p>
+      <p><span class="sub">20.4</span> Lo anterior no impide a ninguna de las Partes acudir a los tribunales competentes para solicitar medidas cautelares, ni al Alumno presentar reclamación ante los organismos administrativos de protección al consumidor que resulten competentes.</p>
+      <p><span class="sub">20.5</span> Si la renuncia a la acción colectiva prevista en el apartado 20.3 fuera declarada inaplicable, la controversia afectada quedará excluida del arbitraje y se someterá a los tribunales competentes, subsistiendo el arbitraje para el resto.</p>
+    </div>
+  </section>
+
+  <!-- Reconocimientos -->
+  
+  <!-- Reconocimientos -->
+  <section class="reconocimientos">
+    <div class="rotulo">Reconocimientos expresos del Alumno</div>
+
+    {% for r in d.reconocimientos %}
+    <div class="reconoce">
+      <p>{{ r.texto | safe }}</p>
+      <div style="text-align:center">
+        {% if r.marcado %}<b class="marca-si">☒</b>{% else %}<span class="marca-no">☐</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+
+  {# El consentimiento para firmar en electrónico. La E-SIGN Act lo exige por
+     separado y ANTES de la firma: sin él, la firma es atacable. #}
+  <section class="clausula" style="padding-top:2.4rem">
+    <div class="numeral">✓</div>
+    <h2 data-n="✓">Consentimiento para el uso de firma electrónica</h2>
+    <div class="cuerpo">
+      <p>El Alumno declara haber sido informado de que este contrato se firma por
+      medios electrónicos, de que <b>tiene derecho a solicitar y recibir una copia
+      en papel</b> del mismo sin coste, y de que <b>puede retirar en cualquier
+      momento su consentimiento</b> a contratar por medios electrónicos
+      comunicándolo a la dirección indicada en la cláusula 16, sin que ello afecte
+      a la validez de lo ya firmado.</p>
+      <p style="margin-top:.8rem">
+        {% if d.consentimiento %}<b class="marca-si">☒</b>{% else %}<span class="marca-no">☐</span>{% endif %}
+        &nbsp;Consiento firmar este contrato por medios electrónicos.
+        {% if d.consentimiento_en %}<span class="sub" style="margin-left:.6rem">{{ d.consentimiento_en }}</span>{% endif %}
+      </p>
+    </div>
+  </section>
+
+  <!-- Firmas -->
+  <section class="firmas">
+    <div class="firma">
+      <div class="linea"></div>
+      <div class="pie"><b>FA Academy</b><br>{{ d.empresa_firmante }}<br>Fecha: {{ d.firmado_fecha or '' }}</div>
+    </div>
+    <div class="firma">
+      {% if d.firmante %}
+      <div class="firma-hecha">{{ d.firmante }}</div>
+      <div style="border-bottom:1px solid var(--tinta)"></div>
+      {% else %}
+      <div class="linea"></div>
+      {% endif %}
+      <div class="pie"><b>El Alumno</b><br>{{ d.alumno_nombre }}<br>Fecha: {{ d.firmado_fecha or '' }}</div>
+    </div>
+  </section>
+
+  {% if d.firmante %}
+  <div class="sello-firma">
+    Firmado electrónicamente por {{ d.firmante }} el {{ d.firmado_en }}.<br>
+    IP {{ d.ip }} · {{ d.user_agent }}<br>
+    {% if d.huella %}Huella SHA-256 del documento: {{ d.huella }}{% endif %}
+  </div>
+  {% endif %}
+
+  <div class="cierre">
+    <span>FA Academy · Contrato de formación y acompañamiento</span>
+    <span>{{ d.version }}</span>
+  </div>
+
+</div>
+</div>

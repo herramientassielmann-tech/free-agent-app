@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Bienvenido a Free Agent Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  /* Página pública: no hereda nada de la app, así que se viste sola.
+     Se compromete con el modo claro a propósito — es una página de pago y de
+     firma, y aquí la previsibilidad vale más que adaptarse al tema del sistema. */
+  :root {
+    --tinta:#16202C; --suave:#495765; --tenue:#6B7A88;
+    --lienzo:#F1F4F8; --papel:#FFFFFF; --filete:#E1E7ED;
+    --azul:#0A6FD4; --azul-osc:#0A5DB0;
+    --verde:#1E7F4B; --verde-luz:#E8F5EE;
+    --ambar:#9A5B00; --ambar-luz:#FDF3E2; --rojo:#B3261E; --rojo-luz:#FDEDEC;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--lienzo); color:var(--tinta);
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .envoltura { max-width:640px; margin:0 auto; padding:48px 20px 72px; }
+  @media (max-width:640px){ .envoltura{ padding:28px 16px 48px; } }
+
+  .marca { font-size:.78rem; font-weight:700; letter-spacing:.14em;
+           text-transform:uppercase; color:var(--tenue); }
+  h1 { font-size:1.85rem; font-weight:700; line-height:1.22; margin:.6rem 0 .5rem;
+       text-wrap:balance; }
+  .entradilla { color:var(--suave); margin:0 0 2rem; font-size:1.02rem; }
+
+  .paso {
+    background:var(--papel); border:1px solid var(--filete); border-radius:14px;
+    padding:20px 22px; margin-bottom:14px;
+    display:grid; grid-template-columns:34px 1fr; gap:0 16px; align-items:start;
+  }
+  .paso--hecho { border-color:#BFE3CE; background:#FBFEFC; }
+  .paso--bloqueado { opacity:.62; }
+
+  .num {
+    width:30px; height:30px; border-radius:50%; display:grid; place-items:center;
+    font-size:.86rem; font-weight:700; background:var(--lienzo); color:var(--suave);
+    grid-row:span 2;
+  }
+  .paso--hecho .num { background:var(--verde); color:#fff; }
+  .paso h2 { font-size:1.04rem; font-weight:600; margin:3px 0 2px; }
+  .paso p { margin:0 0 .9rem; color:var(--suave); font-size:.94rem; }
+  .paso p:last-child { margin-bottom:0; }
+
+  .estado { font-size:.78rem; font-weight:600; padding:3px 10px; border-radius:20px;
+            display:inline-block; margin-top:.5rem; }
+  .estado--ok { background:var(--verde-luz); color:var(--verde); }
+  .estado--esp { background:var(--ambar-luz); color:var(--ambar); }
+
+  .btn {
+    display:inline-block; background:var(--azul); color:#fff; text-decoration:none;
+    padding:11px 22px; border-radius:9px; font-weight:600; font-size:.95rem;
+    border:0; cursor:pointer; font-family:inherit;
+  }
+  .btn:hover { background:var(--azul-osc); }
+  .btn--fantasma { background:transparent; color:var(--azul); border:1px solid var(--filete); }
+  .btn:disabled { background:#C9D2DB; cursor:not-allowed; }
+
+  .candado { font-size:.88rem; color:var(--tenue); display:flex; gap:7px; align-items:center; }
+
+  .campo { margin-bottom:12px; }
+  .campo label { display:block; font-size:.84rem; font-weight:600; margin-bottom:5px; }
+  .campo input {
+    width:100%; padding:10px 12px; border:1px solid var(--filete); border-radius:9px;
+    font-size:.98rem; font-family:inherit; background:#FBFCFD; color:var(--tinta);
+  }
+  .campo input:focus { outline:2px solid var(--azul); outline-offset:1px; border-color:var(--azul); }
+  .dos { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:520px){ .dos{ grid-template-columns:1fr; } }
+
+  .aviso { background:var(--rojo-luz); color:var(--rojo); border-radius:9px;
+           padding:10px 14px; font-size:.9rem; margin-bottom:14px; }
+  .nota { background:var(--ambar-luz); color:var(--ambar); border-radius:9px;
+          padding:10px 14px; font-size:.88rem; }
+
+  .compromiso {
+    margin-top:30px; padding:22px; background:var(--papel);
+    border:1px solid var(--filete); border-radius:14px;
+  }
+  .compromiso h3 { font-size:.96rem; margin:0 0 .6rem; }
+  .compromiso ul { margin:0; padding-left:1.1rem; color:var(--suave); font-size:.93rem; }
+  .compromiso li { margin-bottom:.38rem; }
+  .pie { margin-top:28px; font-size:.82rem; color:var(--tenue); text-align:center; }
+</style>
+</head>
+<body>
+<div class="envoltura">
+
+  <div class="marca">Free Agent Academy</div>
+  <h1>{{ alta.nombre.split()[0] if alta.nombre else 'Hola' }}, ya casi estás dentro</h1>
+  <p class="entradilla">
+    Quedan {{ pasos | rejectattr('hecho') | list | length }} cosas por hacer. Las puedes
+    hacer ahora mismo durante la llamada, y si te quedas a medias vuelves a este
+    mismo enlace cuando quieras.
+  </p>
+
+  {% if error_cuenta %}<div class="aviso">{{ error_cuenta }}</div>{% endif %}
+
+  {% for p in pasos %}
+  <section class="paso {% if p.hecho %}paso--hecho{% elif p.bloqueado %}paso--bloqueado{% endif %}">
+    <div class="num">{% if p.hecho %}✓{% else %}{{ p.n }}{% endif %}</div>
+    <div>
+      <h2>{{ p.titulo }}</h2>
+
+      {# ── 1 · Pago ── #}
+      {% if p.clave == 'pago' %}
+        {% if p.hecho %}
+          <p>Recibido el {{ alta.pagado_en.strftime('%d/%m/%Y') }}. Gracias.</p>
+        {% elif not p.listo %}
+          <p class="nota">El enlace de pago todavía no está configurado. Avisa al equipo.</p>
+        {% else %}
+          <p>Son 3.000 $ por los tres meses de acompañamiento y el año de formación.
+          Puedes pagar con tarjeta o por transferencia bancaria.</p>
+          <a class="btn" href="/bienvenida/{{ alta.token }}/pagar">Pagar 3.000 $</a>
+        {% endif %}
+
+      {# ── 2 · Contrato ── #}
+      {% elif p.clave == 'contrato' %}
+        {% if p.hecho %}
+          <p>Firmado el {{ alta.contrato_firmado_en.strftime('%d/%m/%Y') }}.
+          Te hemos mandado tu copia por correo.</p>
+          <a class="btn btn--fantasma" href="/bienvenida/{{ alta.token }}/contrato">Ver mi contrato</a>
+        {% else %}
+          <p>Léelo con calma. Tarda dos minutos y se firma desde aquí mismo.</p>
+          <a class="btn" href="/bienvenida/{{ alta.token }}/contrato">Leer y firmar</a>
+        {% endif %}
+
+      {# ── 3 · Cuenta ── #}
+      {% elif p.clave == 'cuenta' %}
+        {% if p.hecho %}
+          <p>Creada. Entras desde <a href="/login">tool.robertsielmann.com</a> con tu correo.</p>
+        {% elif p.bloqueado %}
+          <p class="candado">🔒 Se abre en cuanto confirmemos el pago.</p>
+        {% else %}
+          <p>Elige el correo y la contraseña con los que quieras entrar. Sin límite
+          de guiones.</p>
+          <form method="post" action="/bienvenida/{{ alta.token }}/cuenta">
+            <div class="campo">
+              <label for="email">Tu correo</label>
+              <input id="email" name="email" type="email" required
+                     value="{{ email_previo or alta.email }}" autocomplete="email">
+            </div>
+            <div class="dos">
+              <div class="campo">
+                <label for="password">Contraseña</label>
+                <input id="password" name="password" type="password" required
+                       minlength="8" autocomplete="new-password">
+              </div>
+              <div class="campo">
+                <label for="password2">Repítela</label>
+                <input id="password2" name="password2" type="password" required
+                       minlength="8" autocomplete="new-password">
+              </div>
+            </div>
+            <button class="btn" type="submit">Crear mi cuenta y entrar</button>
+          </form>
+        {% endif %}
+
+      {# ── 4 · Skool ── #}
+      {% elif p.clave == 'skool' %}
+        {% if p.hecho %}
+          <p>Ya tienes el acceso. Si lo pierdes, vuelve a pulsar aquí.</p>
+          <a class="btn btn--fantasma" href="/bienvenida/{{ alta.token }}/skool">Abrir Skool</a>
+        {% elif p.bloqueado %}
+          <p class="candado">🔒 Se abre en cuanto confirmemos el pago.</p>
+        {% elif not p.listo %}
+          <p class="nota">El enlace de Skool todavía no está configurado. Avisa al equipo.</p>
+        {% else %}
+          <p>Ahí están las 31 lecciones del curso, ordenadas por semanas.</p>
+          <a class="btn" href="/bienvenida/{{ alta.token }}/skool">Entrar en Skool</a>
+        {% endif %}
+
+      {# ── 5 · Onboarding ── #}
+      {% elif p.clave == 'onboarding' %}
+        {% if p.hecho %}
+          <p>Agendada. Nos vemos ahí.</p>
+        {% elif p.bloqueado %}
+          <p class="candado">🔒 Se abre en cuanto confirmemos el pago.</p>
+        {% elif not p.listo %}
+          <p class="nota">El calendario todavía no está configurado. Avisa al equipo.</p>
+        {% else %}
+          <p>Una llamada de una hora, tú y Robert, para dejarte el primer vídeo
+          preparado. Cógela lo antes posible.</p>
+          <a class="btn" href="/bienvenida/{{ alta.token }}/onboarding">Elegir día y hora</a>
+        {% endif %}
+      {% endif %}
+    </div>
+  </section>
+  {% endfor %}
+
+  <div class="compromiso">
+    <h3>Lo que empieza a partir de aquí</h3>
+    <ul>
+      <li><b>Dos vídeos por semana como mínimo.</b> Lo ideal es uno al día.</li>
+      <li><b>Llamada grupal todas las semanas</b> con Robert y el resto del grupo.</li>
+      <li><b>WhatsApp directo</b> con Robert y el equipo durante los tres meses.</li>
+      <li><b>La herramienta</b> te da el guión; tú lo adaptas a tu forma de hablar.</li>
+    </ul>
+  </div>
+
+  <p class="pie">Este enlace es sólo tuyo y caduca el
+     {{ alta.token_expira.strftime('%d/%m/%Y') }}.<br>
+     ¿Algo no funciona? Escríbenos y lo arreglamos.</p>
+
+</div>
+</body>
+</html>
