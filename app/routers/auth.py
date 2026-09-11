@@ -15,6 +15,31 @@ async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request, "error": None})
 
 
+def _registrar_acceso(user: User, request: Request, db: Session) -> None:
+    """Deja constancia de que esta persona entró.
+
+    No sirve para vigilar a nadie ni se enseña en ninguna pantalla. Para ganar
+    una reclamación de cargo hacen falta tres cosas —contrato firmado, registro
+    de IP y prueba de que accedió al producto— y esto es la tercera. Con pagos
+    de 3.000 dólares y sin devoluciones, conviene tenerla.
+
+    Nunca impide entrar: si falla el registro, la sesión sigue su curso.
+    """
+    try:
+        from app.models import AccesoRegistrado
+        reenviada = request.headers.get("x-forwarded-for", "")
+        ip = (reenviada.split(",")[0].strip() if reenviada
+              else (request.client.host if request.client else ""))
+        db.add(AccesoRegistrado(
+            user_id=user.id,
+            ip=ip[:60] or None,
+            user_agent=(request.headers.get("user-agent") or "")[:400] or None,
+        ))
+        db.commit()
+    except Exception:
+        db.rollback()
+
+
 @router.post("/login")
 async def login(
     request: Request,
@@ -36,6 +61,8 @@ async def login(
             {"request": request, "error": "Tu cuenta está desactivada. Contacta con el administrador."},
             status_code=403,
         )
+
+    _registrar_acceso(user, request, db)
 
     token = create_access_token({"sub": str(user.id), "is_admin": user.is_admin})
     redirect = RedirectResponse(url="/admin" if user.is_admin else "/", status_code=303)
