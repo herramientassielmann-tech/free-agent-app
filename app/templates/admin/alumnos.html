@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Alumnos — Admin — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Alumnos</h1>
+    <p class="page-subtitle">
+      {% if filas %}{{ cumplen }} de {{ filas|length }} llegan a los {{ minimo }} vídeos
+      de esta semana.{% else %}Todavía no hay nadie en el seguimiento.{% endif %}
+    </p>
+  </div>
+  <div class="alu-semana">
+    <a class="alu-nav" href="/admin/alumnos?semana={{ anterior }}" title="Semana anterior">‹</a>
+    <span class="alu-semana-txt">
+      {% if es_semana_actual %}Esta semana{% else %}Semana del {{ lunes.strftime('%d/%m') }}{% endif %}
+    </span>
+    <a class="alu-nav {% if es_semana_actual %}alu-nav--off{% endif %}"
+       href="/admin/alumnos?semana={{ siguiente }}" title="Semana siguiente">›</a>
+    {% if not es_semana_actual %}
+    <a class="btn btn-secondary btn-sm" href="/admin/alumnos">Hoy</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  {% if filas %}
+  <div class="alu-envoltura">
+  <table class="admin-table alu-tabla" data-lunes="{{ lunes.isoformat() }}">
+    <thead>
+      <tr>
+        <th>Alumno</th>
+        <th class="alu-col">Grabados</th>
+        <th class="alu-col">Editados</th>
+        <th class="alu-col">Instagram</th>
+        <th class="alu-col">TikTok</th>
+        <th class="alu-col alu-col--suelta">Trials</th>
+        <th class="alu-col">Publicados</th>
+        <th>Nota de la semana</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in filas %}
+      <tr data-uid="{{ f.user.id }}">
+        <td class="alu-quien">
+          <b>{{ f.user.name }}</b>
+          <span class="alu-historial" title="Publicados en las últimas semanas">
+            {% for h in f.historial %}
+            <i class="alu-barra {% if h.cumple %}alu-barra--ok{% endif %}"
+               style="height:{{ 3 + (h.publicados if h.publicados < 8 else 8) * 2 }}px"
+               title="{{ h.lunes }}: {{ h.publicados }}"></i>
+            {% endfor %}
+          </span>
+        </td>
+        {% for campo in ['grabados','editados','publicados_ig','publicados_tiktok','trials'] %}
+        <td class="alu-col">
+          <span class="alu-paso {% if campo == 'trials' %}alu-paso--suelta{% endif %}">
+            <button type="button" class="alu-mas-menos" data-campo="{{ campo }}" data-paso="-1">−</button>
+            <input class="alu-num" data-campo="{{ campo }}" type="text" inputmode="numeric"
+                   value="{{ f.datos[campo] }}" aria-label="{{ campo }}">
+            <button type="button" class="alu-mas-menos" data-campo="{{ campo }}" data-paso="1">+</button>
+          </span>
+        </td>
+        {% endfor %}
+        <td class="alu-col">
+          <span class="alu-total {% if f.datos.cumple %}alu-total--ok{% endif %}"
+                data-total>{{ f.datos.publicados }}</span>
+        </td>
+        <td>
+          <input class="alu-nota" data-campo="nota" value="{{ f.datos.nota }}"
+                 placeholder="Lo que quieras recordar…">
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="alu-pie">Las barras junto al nombre son los vídeos publicados de las
+  últimas {{ filas[0].historial|length }} semanas. Los trials van aparte y no
+  cuentan para el mínimo: piden 1.000 seguidores y no todos llegan.</p>
+  {% else %}
+  <div class="alta-vacio">
+    <b>Nadie en el seguimiento todavía.</b>
+    <p>Añade abajo a quien quieras seguir semana a semana.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% if otras_cuentas %}
+<div class="card alu-otras">
+  <b>Otras cuentas</b>
+  <p>Cuentas que existen pero no están en el seguimiento. Añade sólo a los alumnos
+  de verdad: si entran las de prueba, el panel deja de servir.</p>
+  <div class="alu-otras-lista">
+    {% for o in otras_cuentas %}
+    <form method="post" action="/admin/alumnos/{{ o.id }}/alta-seguimiento">
+      <button class="alu-anadir" title="Añadir al seguimiento">+ {{ o.name }}</button>
+    </form>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/alumnos.js?v=1"></script>
+{% endblock %}

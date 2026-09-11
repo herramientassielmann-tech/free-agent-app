@@ -2,7 +2,7 @@
 # siga siendo importable en Python 3.9, que es lo que hay en local para
 # levantar los arneses de prueba. models.py ya lo hace.
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Form, HTTPException, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
@@ -555,3 +555,154 @@ async def alta_contrato(
     if a is None or a.firma is None:
         raise HTTPException(status_code=404, detail="No hay contrato firmado")
     return HTMLResponse(a.firma.html_firmado)
+
+
+# ── Seguimiento semanal de alumnos ───────────────────────────────────────────
+
+CAMPOS_SEMANA = ("grabados", "editados", "publicados_ig", "publicados_tiktok", "trials")
+SEMANAS_HISTORIAL = 8
+
+
+def _lunes_de(d: "date") -> "date":
+    """El lunes de la semana de esa fecha. Mismo criterio que el registro de
+    tareas del CRM, para que las dos pantallas hablen de la misma semana."""
+    return d - timedelta(days=d.weekday())
+
+
+def _semana(db: Session, user_id: int, lunes: "date") -> "SemanaAlumno":
+    """La fila de esa semana; se crea vacía la primera vez que se toca."""
+    from app.models import SemanaAlumno
+    fila = (db.query(SemanaAlumno)
+              .filter(SemanaAlumno.user_id == user_id, SemanaAlumno.lunes == lunes)
+              .first())
+    if fila is None:
+        fila = SemanaAlumno(user_id=user_id, lunes=lunes)
+        db.add(fila)
+        db.commit()
+        db.refresh(fila)
+    return fila
+
+
+def _semana_json(s: "SemanaAlumno") -> dict:
+    return {
+        "grabados": s.grabados, "editados": s.editados,
+        "publicados_ig": s.publicados_ig, "publicados_tiktok": s.publicados_tiktok,
+        "trials": s.trials, "publicados": s.publicados, "cumple": s.cumple,
+        "nota": s.nota or "",
+    }
+
+
+@router.get("/alumnos", response_class=HTMLResponse)
+async def alumnos(
+    request: Request,
+    semana: Optional[str] = None,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    from app.models import SemanaAlumno
+    hoy = datetime.utcnow().date()
+    try:
+        lunes = _lunes_de(datetime.strptime(semana, "%Y-%m-%d").date()) if semana else _lunes_de(hoy)
+    except ValueError:
+        lunes = _lunes_de(hoy)
+
+    estudiantes = (db.query(User)
+                     .filter(User.es_alumno.is_(True), User.is_active.is_(True))
+                     .order_by(User.name)
+                     .all())
+
+    # El historial de las últimas semanas se trae de una vez: una consulta por
+    # alumno y semana serían cincuenta viajes a la base de datos para pintar
+    # una tabla.
+    desde = lunes - timedelta(weeks=SEMANAS_HISTORIAL - 1)
+    historico = {}
+    for s in (db.query(SemanaAlumno)
+                .filter(SemanaAlumno.lunes >= desde, SemanaAlumno.lunes <= lunes)
+                .all()):
+        historico[(s.user_id, s.lunes)] = s
+
+    lunes_previos = [lunes - timedelta(weeks=i) for i in range(SEMANAS_HISTORIAL - 1, -1, -1)]
+    filas = []
+    for u in estudiantes:
+        actual = historico.get((u.id, lunes))
+        filas.append({
+            "user": u,
+            "datos": _semana_json(actual) if actual else {
+                **{c: 0 for c in CAMPOS_SEMANA}, "publicados": 0, "cumple": False, "nota": ""},
+            "historial": [
+                {"lunes": l.strftime("%d/%m"),
+                 "publicados": historico[(u.id, l)].publicados if (u.id, l) in historico else 0,
+                 "cumple": historico[(u.id, l)].cumple if (u.id, l) in historico else False}
+                for l in lunes_previos
+            ],
+        })
+
+    otras = (db.query(User)
+               .filter(User.es_alumno.is_(False), User.is_admin.is_(False),
+                       User.is_active.is_(True))
+               .order_by(User.name).all())
+
+    return templates.TemplateResponse("admin/alumnos.html", {
+        "request": request, "user": current_user,
+        "filas": filas, "lunes": lunes,
+        "es_semana_actual": lunes == _lunes_de(hoy),
+        "anterior": (lunes - timedelta(weeks=1)).isoformat(),
+        "siguiente": (lunes + timedelta(weeks=1)).isoformat(),
+        "cumplen": sum(1 for f in filas if f["datos"]["cumple"]),
+        "minimo": 2,
+        "otras_cuentas": otras,
+    })
+
+
+@router.post("/alumnos/{uid}/{lunes}")
+async def alumno_marcar(
+    uid: int,
+    lunes: str,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    campo: str = Form(...),
+    valor: str = Form(...),
+):
+    """Guarda una celda. Se llama a cada clic, sin recargar la página: si hay
+    que pulsar 'guardar' después de cada número, el repaso del viernes deja de
+    hacerse a la tercera semana."""
+    if campo not in CAMPOS_SEMANA and campo != "nota":
+        raise HTTPException(status_code=400, detail="Campo no válido")
+    try:
+        dia = datetime.strptime(lunes, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Semana no válida")
+
+    alumno = db.get(User, uid)
+    if alumno is None or alumno.is_admin:
+        raise HTTPException(status_code=404, detail="Alumno no encontrado")
+
+    fila = _semana(db, uid, _lunes_de(dia))
+    if campo == "nota":
+        fila.nota = (valor or "").strip()[:300] or None
+    else:
+        try:
+            n = max(0, min(99, int(valor)))   # nadie graba 300 vídeos en una semana
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Número no válido")
+        setattr(fila, campo, n)
+    fila.actualizado_en = datetime.utcnow()
+    db.commit()
+    db.refresh(fila)
+    return JSONResponse(_semana_json(fila))
+
+
+@router.post("/alumnos/{uid}/alta-seguimiento")
+async def alumno_seguimiento(
+    uid: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Mete o saca a alguien del seguimiento. Las cuentas de prueba no son
+    alumnos y si salieran en el panel lo volverían inservible."""
+    u = db.get(User, uid)
+    if u is None or u.is_admin:
+        raise HTTPException(status_code=404, detail="Cuenta no encontrada")
+    u.es_alumno = not u.es_alumno
+    db.commit()
+    return RedirectResponse(url="/admin/alumnos", status_code=303)

@@ -1,8 +1,8 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List
 from sqlalchemy import (
-    Integer, String, Boolean, Text, DateTime, ForeignKey, Enum as SAEnum,
+    Integer, String, Boolean, Text, DateTime, Date, ForeignKey, Enum as SAEnum,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -35,6 +35,9 @@ class User(Base):
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     monthly_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    # Quién aparece en el seguimiento semanal. Las cuentas de prueba no son
+    # alumnos, y si salieran en el panel lo volverían inservible.
+    es_alumno: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False)
     temp_password: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -473,3 +476,51 @@ class AccesoRegistrado(Base):
     ip: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
     user_agent: Mapped[Optional[str]] = mapped_column(String(400), nullable=True)
     entrado_en: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class SemanaAlumno(Base):
+    """Lo que un alumno ha hecho en una semana concreta.
+
+    Se guardan NÚMEROS y no casillas de sí/no porque el contrato exige un mínimo
+    de dos vídeos por semana: con una casilla no se puede saber si fueron dos o
+    siete, y entonces el seguimiento no sirve para lo único que tiene que servir.
+
+    Grabado, editado y publicado van separados a propósito. Si alguien graba
+    cinco y publica uno, el cuello de botella es la edición — que es un servicio
+    que ya vendéis a 15 $ el reel, no un motivo para llamarle la atención.
+
+    Los trials de Instagram van aparte y NUNCA cuentan para el semáforo: piden
+    1.000 seguidores y cuenta profesional, así que quien no llega no puede
+    hacerlos y no debe salir en rojo por ello.
+
+    Una fila por alumno y semana. `lunes` identifica la semana (ISO, de lunes a
+    domingo), igual que el registro de tareas del CRM.
+    """
+    __tablename__ = "semanas_alumno"
+    __table_args__ = (UniqueConstraint("user_id", "lunes", name="uq_semana_alumno"),)
+
+    MINIMO_SEMANAL = 2   # lo que firma en la cláusula 6
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
+                                         nullable=False, index=True)
+    lunes: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+
+    grabados: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    editados: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    publicados_ig: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    publicados_tiktok: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    trials: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    nota: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    actualizado_en: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    user: Mapped["User"] = relationship("User")
+
+    @property
+    def publicados(self) -> int:
+        return self.publicados_ig + self.publicados_tiktok
+
+    @property
+    def cumple(self) -> bool:
+        return self.publicados >= self.MINIMO_SEMANAL

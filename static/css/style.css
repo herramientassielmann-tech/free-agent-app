@@ -2288,3 +2288,81 @@ a:hover { color: #3d9eff; }
 .alta-vacio { text-align: center; padding: 34px 20px; color: var(--t2); }
 .alta-vacio b { display: block; margin-bottom: 6px; color: var(--t1); }
 .alta-vacio p { margin: 0; font-size: .9rem; }
+
+/* ── Seguimiento semanal de alumnos ────────────────────────────────────────
+   Números y no casillas: el contrato pide dos vídeos por semana, y una casilla
+   no distingue entre dos y siete. Grabado, editado y publicado van separados
+   porque enseñan dónde se atasca cada uno — y si el atasco es la edición, eso
+   es una venta del servicio de 15 $, no un tirón de orejas. */
+.alu-envoltura { overflow-x: auto; }
+.alu-tabla th.alu-col, .alu-tabla td.alu-col { text-align: center; }
+.alu-tabla th.alu-col { font-size: .66rem; }
+/* Los trials van visualmente aparte: piden 1.000 seguidores y no cuentan
+   para el mínimo, así que no deben leerse como una columna más del compromiso. */
+.alu-col--suelta { border-left: 1px dashed var(--border); }
+.alu-paso--suelta { opacity: .78; }
+
+.alu-quien b { display: block; }
+.alu-historial { display: inline-flex; align-items: flex-end; gap: 2px; height: 20px; margin-top: 5px; }
+.alu-barra { width: 5px; background: var(--s4); border-radius: 1px; display: block; }
+.alu-barra--ok { background: var(--green); }
+
+.alu-paso {
+  display: inline-flex; align-items: center; gap: 2px;
+  border: 1px solid var(--border); border-radius: 8px; padding: 2px;
+  background: var(--s1);
+}
+.alu-mas-menos {
+  width: 22px; height: 24px; border: 0; background: transparent; color: var(--t2);
+  cursor: pointer; font-size: 1rem; line-height: 1; border-radius: 5px; padding: 0;
+  font-family: inherit;
+}
+.alu-mas-menos:hover { background: var(--s3); color: var(--t1); }
+.alu-num {
+  width: 30px; text-align: center; border: 0; background: transparent;
+  color: var(--t1); font-size: .95rem; font-weight: 600; font-family: inherit;
+  font-variant-numeric: tabular-nums; padding: 0;
+}
+.alu-num:focus { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+
+.alu-total {
+  display: inline-block; min-width: 30px; padding: 3px 10px; border-radius: 20px;
+  font-weight: 700; font-size: .9rem; background: var(--s3); color: var(--t2);
+  font-variant-numeric: tabular-nums;
+}
+.alu-total--ok { background: rgba(48,209,88,.16); color: var(--green); }
+
+.alu-nota {
+  width: 100%; min-width: 150px; background: transparent; border: 1px solid transparent;
+  border-radius: 7px; padding: 6px 9px; color: var(--t1); font-size: .85rem;
+  font-family: inherit;
+}
+.alu-nota:hover { border-color: var(--border); }
+.alu-nota:focus { outline: none; border-color: var(--blue); background: var(--s1); }
+
+/* Destello al guardar: sin señal de que el clic llegó, se pulsa dos veces */
+@keyframes alu-ok { from { background: rgba(48,209,88,.10); } to { background: transparent; } }
+.alu-guardado td { animation: alu-ok .6s ease-out; }
+.alu-fallo { outline: 2px solid var(--red) !important; }
+
+.alu-semana { display: flex; align-items: center; gap: 8px; }
+.alu-semana-txt { font-size: .9rem; font-weight: 600; min-width: 130px; text-align: center; }
+.alu-nav {
+  width: 30px; height: 30px; display: grid; place-items: center; border-radius: 7px;
+  border: 1px solid var(--border); color: var(--t2); text-decoration: none; font-size: 1.1rem;
+}
+.alu-nav:hover { border-color: var(--border-hover); color: var(--t1); }
+.alu-nav--off { opacity: .3; pointer-events: none; }
+
+.alu-pie { font-size: .8rem; color: var(--t3); margin: 14px 0 0; }
+.alu-otras { margin-top: 16px; }
+.alu-otras b { font-size: .95rem; }
+.alu-otras p { font-size: .85rem; color: var(--t2); margin: 5px 0 12px; }
+.alu-otras-lista { display: flex; flex-wrap: wrap; gap: 8px; }
+.alu-otras-lista form { margin: 0; }
+.alu-anadir {
+  border: 1px solid var(--border); background: var(--s2); color: var(--t2);
+  border-radius: 8px; padding: 6px 13px; font-size: .85rem; cursor: pointer;
+  font-family: inherit;
+}
+.alu-anadir:hover { border-color: var(--border-hover); color: var(--t1); background: var(--s3); }
