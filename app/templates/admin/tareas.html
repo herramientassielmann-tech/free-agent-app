@@ -23,10 +23,11 @@
   <button type="button" class="btn btn-primary" id="eq-anadir">Añadir</button>
 </div>
 <div class="eq-filtros">
-  <a class="eq-chip {% if quien == 'todas' %}eq-chip--on{% endif %}" href="/admin/tareas">Todas</a>
+  <a class="eq-chip {% if quien == 'todas' %}eq-chip--on{% endif %}" href="/admin/tareas">
+    Todas <i>{{ cuentas['todas'] }}</i></a>
   {% for p in equipo %}
   <a class="eq-chip eq-chip--{{ p|lower }} {% if quien == p %}eq-chip--on{% endif %}"
-     href="/admin/tareas?quien={{ p }}">{{ p }}</a>
+     href="/admin/tareas?quien={{ p }}">{{ p }} <i>{{ cuentas[p] }}</i></a>
   {% endfor %}
 </div>
 

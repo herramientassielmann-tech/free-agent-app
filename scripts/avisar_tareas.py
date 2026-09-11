@@ -28,12 +28,14 @@ Uso:
 """
 import sys
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.config import APP_URL, EMAIL_FROM
+from sqlalchemy import or_
+
 from app.database import SessionLocal
 from app.models import Lead, LeadTarea, TareaEquipo, User
 from app.services.email import enviar, esta_configurado
@@ -236,7 +238,19 @@ COLORES = {"Robert": "#0A6FD4", "David": "#7A3DB8", "Kevin": "#B5610A",
            "Sin asignar": "#5A6874"}
 
 
-def _html_equipo(por_persona, hoy, total: int) -> str:
+def _aviso_sin_fecha(n: int) -> str:
+    """Las tareas sin fecha no avisan nunca. Contarlas es lo único que impide
+    que el apartado se convierta en el sitio donde van a morir las cosas."""
+    if not n:
+        return ""
+    plural = "s" if n != 1 else ""
+    return (f'<p style="margin:20px 0 0;padding:11px 14px;background:#F1F4F8;'
+            f'border-radius:8px;font-size:13px;color:#5A6874">'
+            f'Y hay <b>{n} tarea{plural} sin fecha</b> esperando. Sin fecha no '
+            f'vuelven a aparecer por aquí.</p>')
+
+
+def _html_equipo(por_persona, hoy, total: int, sin_fecha: int = 0) -> str:
     bloques = ""
     for quien, tareas in por_persona.items():
         filas = "".join(_fila_equipo(t, hoy) for t in tareas)
@@ -259,6 +273,7 @@ def _html_equipo(por_persona, hoy, total: int) -> str:
               {total} tarea{plural} del equipo para hoy
             </h1>
             {bloques}
+            {_aviso_sin_fecha(sin_fecha)}
             <p style="margin:24px 0 0">
               <a href="{APP_URL}/admin/tareas" style="display:inline-block;background:#16202C;
                  color:#FFF;text-decoration:none;padding:11px 20px;border-radius:8px;
@@ -286,14 +301,30 @@ def avisar_equipo(ensayo: bool = False) -> int:
     hoy = datetime.utcnow().date()
     db = SessionLocal()
     try:
+        # Lo vencido vuelve a avisar cada semana mientras siga sin hacerse.
+        # Antes avisaba UNA vez y nunca más: algo vencido tres semanas dejaba de
+        # aparecer para siempre, que es justo el modo de fallo que hay que
+        # evitar —la tarea que iba bien hasta que de pronto ya no—. A los
+        # realtors no se les insiste porque son clientes; al equipo, sí.
+        hace_una_semana = datetime.utcnow() - timedelta(days=7)
         pendientes = (
             db.query(TareaEquipo)
             .filter(TareaEquipo.estado == "pendiente",
-                    TareaEquipo.avisada_en.is_(None),
                     TareaEquipo.fecha_limite.isnot(None),
-                    TareaEquipo.fecha_limite <= hoy)
+                    TareaEquipo.fecha_limite <= hoy,
+                    or_(TareaEquipo.avisada_en.is_(None),
+                        TareaEquipo.avisada_en <= hace_una_semana))
             .order_by(TareaEquipo.prioridad != "urgente", TareaEquipo.fecha_limite)
             .all()
+        )
+        # Las que no tienen fecha no avisan nunca, así que es donde van a morir
+        # las cosas. No se manda un correo por ellas, pero se cuentan: basta con
+        # que se vean para que no se conviertan en un cementerio.
+        sin_fecha = (
+            db.query(TareaEquipo)
+            .filter(TareaEquipo.estado == "pendiente",
+                    TareaEquipo.fecha_limite.is_(None))
+            .count()
         )
         if not pendientes:
             if not ensayo:
@@ -313,7 +344,10 @@ def avisar_equipo(ensayo: bool = False) -> int:
                 print(f"   {quien}:")
                 for t in tareas:
                     marca = "URGENTE " if t.prioridad == "urgente" else ""
-                    print(f"      · {marca}{t.texto}  [{t.fecha_limite:%d/%m}]")
+                    repetido = " (ya avisada, vuelve a la semana)" if t.avisada_en else ""
+                    print(f"      · {marca}{t.texto}  [{t.fecha_limite:%d/%m}]{repetido}")
+            if sin_fecha:
+                print(f"   (+ {sin_fecha} sin fecha, que no avisan)")
             return 0
 
         asunto = (f"{len(pendientes)} tareas del equipo para hoy" if len(pendientes) > 1
@@ -321,9 +355,11 @@ def avisar_equipo(ensayo: bool = False) -> int:
         texto = "\n".join(
             f"{quien}:\n" + "\n".join(f"  - {t.texto} ({t.fecha_limite:%d/%m})" for t in ts)
             for quien, ts in por_persona.items()
-        ) + f"\n\n{APP_URL}/admin/tareas\n"
+        ) + (f"\n\nY hay {sin_fecha} tarea(s) sin fecha esperando." if sin_fecha else "") \
+          + f"\n\n{APP_URL}/admin/tareas\n"
 
-        if enviar(ADMIN_EMAIL, asunto, _html_equipo(por_persona, hoy, len(pendientes)), texto):
+        if enviar(ADMIN_EMAIL, asunto,
+                  _html_equipo(por_persona, hoy, len(pendientes), sin_fecha), texto):
             # Sólo ahora: si falló el envío, mañana se reintenta
             for t in pendientes:
                 t.avisada_en = datetime.utcnow()

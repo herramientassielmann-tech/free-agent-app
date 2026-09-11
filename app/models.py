@@ -545,7 +545,10 @@ class TareaEquipo(Base):
     __tablename__ = "tareas_equipo"
 
     PRIORIDADES = ("urgente", "normal", "baja")
-    ESTADOS = ("pendiente", "hecha", "cancelada")
+    # Dos estados y no tres: "cancelada" estuvo un tiempo aquí sin que
+    # hubiera forma de usarla en ninguna pantalla. Con tres personas,
+    # borrar una tarea que ya no toca es más rápido que archivarla.
+    ESTADOS = ("pendiente", "hecha")
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     texto: Mapped[str] = mapped_column(String(300), nullable=False)

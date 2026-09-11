@@ -19,7 +19,7 @@ from datetime import date, timedelta
 from typing import List, Optional
 
 PRIORIDADES = ("urgente", "normal", "baja")
-ESTADOS = ("pendiente", "hecha", "cancelada")
+ESTADOS = ("pendiente", "hecha")
 
 # El equipo son tres nombres, no tres cuentas: los tres entran con el mismo
 # usuario de administrador. El responsable es una etiqueta, y por eso se guarda

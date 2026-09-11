@@ -758,6 +758,14 @@ async def tareas_equipo(
     abiertas = [t for t in todas if t.estado == "pendiente"]
     fin_semana = hoy + timedelta(days=6 - hoy.weekday())
 
+    # El reparto por persona, SIN el filtro puesto: si el contador cambiara al
+    # filtrar no serviría para lo que sirve, que es ver de un vistazo quién está
+    # enterrado y quién libre antes de repartir nada.
+    todas_abiertas = (db.query(TareaEquipo)
+                        .filter(TareaEquipo.estado == "pendiente").all())
+    cuentas = {n: sum(1 for t in todas_abiertas if t.asignado_a == n) for n in EQUIPO}
+    cuentas["todas"] = len(todas_abiertas)
+
     def bucket(t):
         if not t.fecha_limite:
             return "sin_fecha"
@@ -789,7 +797,7 @@ async def tareas_equipo(
 
     return templates.TemplateResponse("admin/tareas.html", {
         "request": request, "user": current_user,
-        "equipo": EQUIPO, "quien": elegido or "todas",
+        "equipo": EQUIPO, "quien": elegido or "todas", "cuentas": cuentas,
         "grupos": grupos, "semanas": semanas,
         "abiertas": len(abiertas),
         "vencidas": len(grupos["vencidas"]),

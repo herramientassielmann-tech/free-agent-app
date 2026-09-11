@@ -2420,6 +2420,13 @@ a:hover { color: #3d9eff; }
   color: var(--c-suave); text-decoration: none;
 }
 .eq-chip:hover { border-color: #B9C4CE; color: var(--c-tinta); }
+/* El número va SIEMPRE, también en el activo: es lo que deja ver de un vistazo
+   quién está enterrado y quién libre antes de repartir nada. */
+.eq-chip i {
+  font-style: normal; font-weight: 700; font-size: .74rem; margin-left: 5px;
+  color: var(--c-tenue); font-variant-numeric: tabular-nums;
+}
+.eq-chip--on i { color: rgba(255,255,255,.72); }
 .eq-chip--on { background: var(--c-tinta); border-color: var(--c-tinta); color: #fff; }
 
 .eq-bloque { margin-bottom: 26px; }
