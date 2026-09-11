@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="5 5 54 54">
+  <style>
+    .cumbre { fill: #0A6FD4 }
+    .base   { fill: #7FB2EA }
+    /* Contra una pestaña oscura el azul se apaga; en blanco sigue leyéndose */
+    @media (prefers-color-scheme: dark) {
+      .cumbre { fill: #FFFFFF }
+      .base   { fill: #8CC0F5 }
+    }
+  </style>
+  <path class="cumbre" d="M32 8 L56 44 L45.5 44 L32 23 L18.5 44 L8 44 Z"/>
+  <path class="base"   d="M32 30 L46 52 L36.5 52 L32 44.5 L27.5 52 L18 52 Z"/>
+</svg>
