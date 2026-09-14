@@ -92,11 +92,11 @@
     <tbody>
       {% for r in top_realtors %}
       <tr>
-        <td class="td-name">{{ r.user.name }}</td>
-        <td class="td-muted">{{ r.user.email }}</td>
-        <td><strong>{{ r.scripts_month }}</strong></td>
-        <td class="td-muted">{{ r.scripts_total }}</td>
-        <td class="td-muted">{% if r.user.monthly_limit %}{{ r.user.monthly_limit }}{% else %}∞{% endif %}</td>
+        <td class="td-name" data-etiqueta="Realtor">{{ r.user.name }}</td>
+        <td class="td-muted" data-etiqueta="Email">{{ r.user.email }}</td>
+        <td data-etiqueta="Guiones (mes)"><strong>{{ r.scripts_month }}</strong></td>
+        <td class="td-muted" data-etiqueta="Total">{{ r.scripts_total }}</td>
+        <td class="td-muted" data-etiqueta="Límite">{% if r.user.monthly_limit %}{{ r.user.monthly_limit }}{% else %}∞{% endif %}</td>
         <td><a href="/admin/users/{{ r.user.id }}" class="table-link">Ver</a></td>
       </tr>
       {% endfor %}

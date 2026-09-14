@@ -2651,3 +2651,257 @@ a:hover { color: #3d9eff; }
   font-family: inherit; align-self: flex-start;
 }
 .eq-borrar-todo:hover { background: var(--c-rojo-luz); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MÓVIL · Navegación
+   La barra lateral desaparece por debajo de 860px, y hasta ahora no la
+   sustituía nada: se entraba desde el teléfono y no había forma de ir a
+   ninguna parte. Esto es lo que lo arregla.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.mov-barra, .mov-hoja, .mov-fondo { display: none; }
+.logo-marca { flex: none; }
+.sidebar-logo a { display: flex; align-items: center; gap: 9px; }
+
+@media (max-width: 860px) {
+  .mov-barra {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 80;
+    background: rgba(17,17,17,.92); backdrop-filter: blur(14px);
+    border-top: 1px solid var(--border);
+    /* La franja del gesto de inicio del iPhone se come los últimos píxeles:
+       sin esto, el último destino queda debajo de la barra del sistema. */
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .mov-tab {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 3px; padding: 9px 2px 8px;
+    background: transparent; border: 0; cursor: pointer; text-decoration: none;
+    color: var(--t3); font-family: inherit; min-height: 54px;
+  }
+  .mov-tab i { font-style: normal; font-size: .62rem; font-weight: 600; letter-spacing: .01em; }
+  .mov-icono { font-size: 1.12rem; line-height: 1; }
+  .mov-tab--on { color: var(--blue); }
+  .mov-tab--on .mov-icono { transform: scale(1.06); }
+
+  /* Sitio para la barra: sin esto, el último trozo de cada página queda debajo */
+  .main-area { padding-bottom: calc(66px + env(safe-area-inset-bottom, 0)); }
+  .page-wrap { padding: 18px 16px 24px; }
+
+  /* El chat de Robert, por encima de la barra */
+  .rb-fab { bottom: calc(78px + env(safe-area-inset-bottom, 0)); }
+  .rb-panel { bottom: calc(78px + env(safe-area-inset-bottom, 0)); }
+
+  /* ── La hoja de «Más» ── */
+  .mov-fondo {
+    display: block; position: fixed; inset: 0; z-index: 88;
+    background: rgba(0,0,0,.5);
+  }
+  .mov-hoja {
+    display: flex; flex-direction: column; position: fixed; z-index: 89;
+    left: 0; right: 0; bottom: 0; max-height: 82vh; overflow-y: auto;
+    background: var(--s1); border-top: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    padding: 10px 16px calc(20px + env(safe-area-inset-bottom, 0));
+    transform: translateY(100%); transition: transform .26s cubic-bezier(.32,.72,0,1);
+  }
+  .mov-hoja--abierta { transform: translateY(0); }
+  .mov-hoja[hidden], .mov-fondo[hidden] { display: none !important; }
+  .mov-asa {
+    width: 38px; height: 4px; border-radius: 99px; background: var(--s4);
+    margin: 4px auto 16px;
+  }
+  .mov-quien {
+    display: flex; align-items: center; gap: 12px; padding: 0 4px 16px;
+    border-bottom: 1px solid var(--border); margin-bottom: 12px;
+  }
+  .mov-quien b { display: block; font-size: .95rem; color: var(--t1); }
+  .mov-quien span { font-size: .78rem; color: var(--t3); }
+  .mov-lista { display: flex; flex-direction: column; }
+  .mov-enlace {
+    display: flex; align-items: center; gap: 13px; padding: 14px 6px;
+    color: var(--t2); text-decoration: none; font-size: .95rem; font-weight: 500;
+    border-radius: 10px;
+  }
+  .mov-enlace:active { background: var(--s2); }
+  .mov-enlace--on { color: var(--blue); }
+  .mov-salir {
+    margin-top: 10px; padding: 14px 6px; color: var(--red); text-decoration: none;
+    font-size: .92rem; border-top: 1px solid var(--border);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MÓVIL · Tablas
+   Una tabla de siete columnas en una pantalla de 390 px obliga a arrastrar de
+   lado para leer una sola fila. En el móvil cada fila pasa a ser una tarjeta y
+   la cabecera de la columna se pinta al lado del dato — que es lo que hacen
+   los paneles que funcionan en el teléfono.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 860px) {
+  .admin-table, .admin-table tbody, .admin-table tr, .admin-table td {
+    display: block; width: 100%;
+  }
+  .admin-table thead { display: none; }
+  .admin-table tr {
+    background: var(--s2); border: 1px solid var(--border);
+    border-radius: var(--r-md); padding: 4px 14px; margin-bottom: 10px;
+  }
+  .admin-table tr:last-child { margin-bottom: 0; }
+  .admin-table td {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; padding: 9px 0; border-bottom: 1px solid var(--border);
+    text-align: right;
+  }
+  .admin-table tr td:last-child { border-bottom: 0; }
+  /* La etiqueta de la columna, a la izquierda del dato */
+  .admin-table td[data-etiqueta]::before {
+    content: attr(data-etiqueta); flex: none; text-align: left;
+    font-size: .7rem; font-weight: 700; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--t3);
+  }
+  /* Una celda sin etiqueta es la de acciones: ocupa la fila entera */
+  .admin-table td:not([data-etiqueta]) { justify-content: stretch; text-align: left; }
+  .admin-table td:not([data-etiqueta]) > a,
+  .admin-table td:not([data-etiqueta]) > .btn {
+    flex: 1; text-align: center; padding: 10px; border: 1px solid var(--border);
+    border-radius: var(--r-sm); display: block;
+  }
+  .admin-table .td-name { font-weight: 700; color: var(--t1); }
+  .admin-table .td-muted { word-break: break-word; }
+  /* Los contenedores de scroll ya no hacen falta si no hay nada que desplazar */
+  .alta-tabla-envoltura, .alu-envoltura { overflow-x: visible; }
+}
+
+/* ── MÓVIL · Altas ────────────────────────────────────────────────────────
+   Apilar los siete pasos como siete filas daría tarjetas de pantalla y media.
+   Se pintan como pastillas que fluyen: el paso y su estado juntos, y de un
+   vistazo se ve por dónde va cada persona. */
+@media (max-width: 860px) {
+  .alta-tabla tr { padding: 14px; }
+  .alta-tabla td.alta-col {
+    display: inline-flex; width: auto; padding: 4px 9px; margin: 3px 4px 3px 0;
+    border: 1px solid var(--border); border-radius: var(--r-pill);
+    background: var(--s1); gap: 6px; font-size: .74rem; text-align: left;
+  }
+  .alta-tabla td.alta-col::before {
+    font-size: .68rem; letter-spacing: .02em; text-transform: none;
+    font-weight: 600; color: var(--t2);
+  }
+  .alta-tabla td.alta-col .alta-si,
+  .alta-tabla td.alta-col .alta-no { font-size: .8rem; }
+  .alta-tabla td.alta-col:has(.alta-si) { border-color: rgba(48,209,88,.34); }
+  .alta-acciones { justify-content: flex-start; flex-wrap: wrap; }
+  .alta-btn { width: 40px; height: 40px; font-size: 1rem; }
+  .alta-email { font-size: .82rem; }
+}
+
+/* ── MÓVIL · Alumnos ──────────────────────────────────────────────────────
+   Los cinco contadores en rejilla de dos, con su etiqueta encima. Apilados
+   uno por fila serían cinco pantallas para seis alumnos. */
+@media (max-width: 860px) {
+  .alu-zona .admin-table tr {
+    background: var(--c-tarjeta); border-color: var(--c-linea); padding: 14px;
+  }
+  .alu-zona .admin-table td { border-bottom-color: var(--c-linea); }
+  .alu-tabla td.alu-col {
+    display: inline-flex; flex-direction: column; align-items: flex-start;
+    width: calc(50% - 5px); margin-right: 4px; gap: 5px; padding: 8px 0;
+    text-align: left; border-bottom: 0;
+  }
+  .alu-tabla td.alu-col::before {
+    content: attr(data-etiqueta); font-size: .66rem; font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase; color: var(--c-tenue);
+  }
+  .alu-tabla td.alu-quien, .alu-tabla td:last-child { width: 100%; }
+  .alu-mas-menos { width: 34px; height: 34px; font-size: 1.15rem; }
+  .alu-num { width: 38px; font-size: 1.05rem; }
+  .alu-nota { min-width: 0; }
+  .alu-semana-txt { min-width: 104px; font-size: .84rem; }
+}
+
+/* ── MÓVIL · Tablero de leads ─────────────────────────────────────────────
+   Se mantiene el desplazamiento lateral, pero con anclaje: cada columna ocupa
+   la pantalla y el dedo pasa de una a otra como en las apps de tableros. La
+   alternativa —apilar las seis columnas— convierte el tablero en una lista y
+   se pierde justo lo que lo hace útil: ver en qué fase está cada uno. */
+@media (max-width: 860px) {
+  .crm-tablero {
+    scroll-snap-type: x mandatory; gap: 12px;
+    padding-bottom: 8px; -webkit-overflow-scrolling: touch;
+  }
+  .crm-col {
+    scroll-snap-align: center; flex: 0 0 calc(100vw - 52px);
+    min-width: calc(100vw - 52px); max-width: calc(100vw - 52px);
+  }
+  .crm-acciones-cabecera { width: 100%; }
+  .crm-acciones-cabecera .btn { flex: 1; }
+  /* El panel del lead, a pantalla completa: a 390px una columna lateral no cabe */
+  .crm-panel {
+    width: 100%; max-width: none; border-radius: 0;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0));
+  }
+  .crm-form-fila { grid-template-columns: 1fr; }
+}
+
+/* ── MÓVIL · Tareas del equipo ────────────────────────────────────────────
+   El texto arriba ocupando toda la línea, y debajo los controles. Poner cinco
+   cosas en una línea de 390 px deja el texto en dos palabras. */
+@media (max-width: 860px) {
+  .eq-fila { flex-wrap: wrap; gap: 8px 10px; padding: 12px 13px; }
+  .eq-texto { flex: 1 1 100%; order: -1; font-size: .95rem; padding: 2px 0; margin: 0; }
+  .eq-check { order: -2; }
+  .eq-sel { flex: 0 1 auto; padding: 7px 8px; font-size: .82rem; }
+  .eq-sel--quien, .eq-sel--prio { min-width: 0; }
+  .eq-dia { margin-left: auto; }
+  .eq-borrar { width: 34px; height: 34px; }
+  .eq-input { font-size: 1rem; padding: 13px 15px; }   /* 16px: evita el zoom de iOS */
+  .eq-captura { flex-direction: column; }
+  .eq-captura .btn { width: 100%; }
+  .eq-panel { width: 100%; padding-bottom: calc(80px + env(safe-area-inset-bottom, 0)); }
+  .eq-chip { padding: 8px 15px; }
+}
+
+/* ── MÓVIL · Lo común ─────────────────────────────────────────────────────
+   Títulos, cabeceras y objetivos táctiles. Los títulos de escritorio se comen
+   un tercio de la pantalla del teléfono. */
+@media (max-width: 860px) {
+  .page-title { font-size: 1.6rem; line-height: 1.15; }
+  .page-subtitle { font-size: .88rem; }
+  .page-header { flex-direction: column; align-items: stretch; gap: 12px; }
+  .page-header .btn { width: 100%; }
+  .card { padding: 16px; }
+  /* iOS hace zoom en cualquier campo por debajo de 16px al enfocarlo */
+  input, select, textarea { font-size: 16px; }
+  .btn, .nav-item, .alta-btn, .eq-borrar, .tar-check { touch-action: manipulation; }
+  .tar-marcador { grid-template-columns: 1fr 1fr; }
+  .modal-card { max-height: 88vh; overflow-y: auto; }
+}
+
+/* ── MÓVIL · Objetivos táctiles ───────────────────────────────────────────
+   Apple pide 44px y Google 48 para lo que se toca con el dedo. Aquí se
+   levantan los que se quedaban por debajo de 32, que son los que de verdad
+   se fallan: los botones pequeños de las tarjetas y los de copiar. */
+@media (max-width: 860px) {
+  .btn-sm, .btn-ghost, .btn-icon, .copy-btn, .section-link, .table-link {
+    min-height: 40px; display: inline-flex; align-items: center;
+    justify-content: center; padding-inline: 14px;
+  }
+  .copy-btn { min-width: 40px; }
+  .script-actions, .history-actions { gap: 8px; flex-wrap: wrap; }
+  .script-actions .btn, .history-actions .btn { flex: 1 1 auto; }
+  /* El resplandor del fondo del login se salía 105 px por la derecha. Es
+     decorativo, así que se recorta en vez de moverlo. */
+  /* El resplandor se posiciona contra el ancestro colocado más cercano; sin
+     `relative` aquí se escapaba 105 px por la derecha. */
+  .auth-shell { position: relative; overflow: hidden; }
+
+  /* Los círculos de marcar eran de 20 px: el gesto más repetido de la app y
+     el más fácil de fallar con el pulgar. La caja táctil crece sin que crezca
+     el dibujo, para no romper el diseño. */
+  .eq-check, .tar-check {
+    width: 34px; height: 34px; border-width: 2px;
+  }
+  .eq-check { font-size: .85rem; }
+  .eq-texto { min-height: 38px; }
+  .alu-nav { width: 40px; height: 40px; }
+}

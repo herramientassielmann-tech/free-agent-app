@@ -226,14 +226,14 @@
     <tbody>
       {% for script in scripts %}
       <tr>
-        <td class="td-muted">{{ script.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-        <td>
+        <td class="td-muted" data-etiqueta="Fecha">{{ script.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td data-etiqueta="URL">
           <a href="{{ script.source_url }}" target="_blank" rel="noopener" class="table-link">
             {{ script.source_url[:45] }}{% if script.source_url|length > 45 %}…{% endif %}
           </a>
         </td>
-        <td class="td-muted">{{ script.custom_instructions[:40] if script.custom_instructions else '—' }}{% if script.custom_instructions and script.custom_instructions|length > 40 %}…{% endif %}</td>
-        <td class="td-muted">{{ script.hook[:60] if script.hook else '—' }}{% if script.hook and script.hook|length > 60 %}…{% endif %}</td>
+        <td class="td-muted" data-etiqueta="Instrucciones">{{ script.custom_instructions[:40] if script.custom_instructions else '—' }}{% if script.custom_instructions and script.custom_instructions|length > 40 %}…{% endif %}</td>
+        <td class="td-muted" data-etiqueta="Hook">{{ script.hook[:60] if script.hook else '—' }}{% if script.hook and script.hook|length > 60 %}…{% endif %}</td>
       </tr>
       {% endfor %}
     </tbody>

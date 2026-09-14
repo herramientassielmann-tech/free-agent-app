@@ -28,23 +28,23 @@
     <tbody>
       {% for r in realtors %}
       <tr class="{% if not r.user.is_active %}row-inactive{% endif %}">
-        <td class="td-name">{{ r.user.name }}</td>
-        <td class="td-muted">{{ r.user.email }}</td>
-        <td><strong>{{ r.scripts_month }}</strong></td>
-        <td class="td-muted">{{ r.scripts_total }}</td>
-        <td class="td-muted">
+        <td class="td-name" data-etiqueta="Nombre">{{ r.user.name }}</td>
+        <td class="td-muted" data-etiqueta="Email">{{ r.user.email }}</td>
+        <td data-etiqueta="Guiones (mes)"><strong>{{ r.scripts_month }}</strong></td>
+        <td class="td-muted" data-etiqueta="Total">{{ r.scripts_total }}</td>
+        <td class="td-muted" data-etiqueta="Límite">
           {% if r.user.monthly_limit %}
             {{ r.scripts_month }} / {{ r.user.monthly_limit }}
           {% else %}
             Ilimitado
           {% endif %}
         </td>
-        <td>
+        <td data-etiqueta="Estado">
           <span class="status-badge {% if r.user.is_active %}status-active{% else %}status-inactive{% endif %}">
             {% if r.user.is_active %}Activo{% else %}Inactivo{% endif %}
           </span>
         </td>
-        <td>
+        <td data-etiqueta="Contraseña">
           {% if r.user.must_change_password %}
             <span class="status-badge" style="background:rgba(255,159,10,0.15);color:var(--orange)">Pendiente ⚠</span>
           {% else %}

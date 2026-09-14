@@ -58,12 +58,12 @@
           {% if f.alta.metodo_pago %}<span class="alta-metodo">{{ f.alta.metodo_pago }}</span>{% endif %}
         </td>
         {% for p in f.pasos %}
-        <td class="alta-col">
+        <td class="alta-col" data-etiqueta="{{ p.titulo }}">
           {% if p.hecho %}<span class="alta-si" title="{{ p.fecha }}">✓</span>
           {% else %}<span class="alta-no">·</span>{% endif %}
         </td>
         {% endfor %}
-        <td>
+        <td data-etiqueta="Estado">
           {% if f.completada %}<span class="alta-si">completa</span>
           {% elif f.dias_atascado is not none and f.dias_atascado >= 3 %}
             <span class="alta-alerta">{{ f.dias_atascado }} días</span>

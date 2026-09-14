@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/css/style.css?v=35" />
+  {% include "_estilos.html" %}
 </head>
 <body>
 
@@ -20,75 +20,77 @@
 {# ── Authenticated: sidebar + main ── #}
 <div class="app-shell">
 
+  {#
+    Los enlaces se definen UNA vez y se pintan en tres sitios: la barra lateral
+    del escritorio, la barra inferior del móvil y el menú «Más». Tres listas
+    separadas acabarían diciendo cosas distintas en cuanto se añada una sección.
+
+    `abajo` marca los que van en la barra inferior del móvil. Son cuatro porque
+    con cinco ya no se acierta con el pulgar; el resto vive en «Más».
+  #}
+  {% set enlaces = (
+    [
+      {'url': '/admin',           'icono': '🛠',  'texto': 'Admin',     'abajo': true,
+       'activo': '/admin' in request.url.path and 'optimizar-ig' not in request.url.path
+                 and '/admin/altas' not in request.url.path and '/admin/alumnos' not in request.url.path
+                 and '/admin/tareas' not in request.url.path},
+      {'url': '/crm',             'icono': '🗂',  'texto': 'Leads',     'abajo': true,
+       'activo': '/crm' in request.url.path},
+      {'url': '/admin/alumnos',   'icono': '📈',  'texto': 'Alumnos',   'abajo': true,
+       'activo': '/admin/alumnos' in request.url.path},
+      {'url': '/admin/tareas',    'icono': '✅',  'texto': 'Tareas',    'abajo': true,
+       'activo': '/admin/tareas' in request.url.path},
+      {'url': '/admin/altas',     'icono': '🎟️', 'texto': 'Altas',     'abajo': false,
+       'activo': '/admin/altas' in request.url.path},
+      {'url': '/biblioteca',      'icono': '🎬',  'texto': 'Biblioteca','abajo': false,
+       'activo': '/biblioteca' in request.url.path},
+      {'url': '/admin/optimizar-ig','icono': '🚀','texto': 'Optimizar IG','abajo': false,
+       'activo': 'optimizar-ig' in request.url.path},
+      {'url': '/',                'icono': '⚡',  'texto': 'Generador', 'abajo': false,
+       'activo': request.url.path == '/'},
+      {'url': '/ideas-iniciales', 'icono': '💡',  'texto': 'Ideas Iniciales', 'abajo': false,
+       'activo': request.url.path == '/ideas-iniciales'},
+      {'url': '/history',         'icono': '📋',  'texto': 'Historial', 'abajo': false,
+       'activo': request.url.path == '/history'},
+      {'url': '/cualificar-leads','icono': '🎯',  'texto': 'Cualificar Leads', 'abajo': false,
+       'activo': request.url.path == '/cualificar-leads'},
+      {'url': '/chatbot',         'icono': '💬',  'texto': 'Asesor',    'abajo': false,
+       'activo': '/chatbot' in request.url.path},
+      {'url': '/profile',         'icono': '👤',  'texto': 'Mi Perfil', 'abajo': false,
+       'activo': request.url.path == '/profile'},
+    ] if user.is_admin else [
+      {'url': '/',                'icono': '⚡',  'texto': 'Generador', 'abajo': true,
+       'activo': request.url.path == '/'},
+      {'url': '/ideas-iniciales', 'icono': '💡',  'texto': 'Ideas',     'abajo': true,
+       'activo': request.url.path == '/ideas-iniciales'},
+      {'url': '/history',         'icono': '📋',  'texto': 'Historial', 'abajo': true,
+       'activo': request.url.path == '/history'},
+      {'url': '/chatbot',         'icono': '💬',  'texto': 'Asesor',    'abajo': true,
+       'activo': '/chatbot' in request.url.path},
+      {'url': '/optimizar-ig',    'icono': '🚀',  'texto': 'Optimizar IG', 'abajo': false,
+       'activo': request.url.path == '/optimizar-ig'},
+      {'url': '/cualificar-leads','icono': '🎯',  'texto': 'Cualificar Leads', 'abajo': false,
+       'activo': request.url.path == '/cualificar-leads'},
+      {'url': '/profile',         'icono': '👤',  'texto': 'Mi Perfil', 'abajo': false,
+       'activo': request.url.path == '/profile'},
+    ]
+  ) %}
+
   <aside class="sidebar">
     <div class="sidebar-logo">
       <a href="/">
-        <span class="logo-free">Free</span><span class="logo-agent">Agent</span><span class="logo-academy"> Academy</span>
+        <img src="/static/marca/marca.svg" alt="" class="logo-marca" width="24" height="24">
+        <span><span class="logo-free">Free</span><span class="logo-agent">Agent</span><span class="logo-academy"> Academy</span></span>
       </a>
     </div>
 
     <nav class="sidebar-nav">
-      <a href="/" class="nav-item {% if request.url.path == '/' %}active{% endif %}">
-        <span class="nav-icon">⚡</span>
-        Generador
+      {% for e in enlaces %}
+      <a href="{{ e.url }}" class="nav-item {% if e.activo %}active{% endif %}">
+        <span class="nav-icon">{{ e.icono }}</span>
+        <span class="nav-text">{{ e.texto }}</span>
       </a>
-      <a href="/ideas-iniciales" class="nav-item {% if request.url.path == '/ideas-iniciales' %}active{% endif %}">
-        <span class="nav-icon">💡</span>
-        Ideas Iniciales
-      </a>
-      <a href="/history" class="nav-item {% if request.url.path == '/history' %}active{% endif %}">
-        <span class="nav-icon">📋</span>
-        Historial
-      </a>
-      <a href="/profile" class="nav-item {% if request.url.path == '/profile' %}active{% endif %}">
-        <span class="nav-icon">👤</span>
-        Mi Perfil
-      </a>
-      {% if not user.is_admin %}
-      <a href="/optimizar-ig" class="nav-item {% if request.url.path == '/optimizar-ig' %}active{% endif %}">
-        <span class="nav-icon">🚀</span>
-        Optimizar IG
-      </a>
-      {% endif %}
-      <a href="/cualificar-leads" class="nav-item {% if request.url.path == '/cualificar-leads' %}active{% endif %}">
-        <span class="nav-icon">🎯</span>
-        Cualificar Leads
-      </a>
-      <a href="/chatbot" class="nav-item {% if '/chatbot' in request.url.path %}active{% endif %}">
-        <span class="nav-icon">💬</span>
-        Asesor
-      </a>
-      {% if user.is_admin %}
-      <div class="nav-divider"></div>
-      <a href="/admin" class="nav-item {% if '/admin' in request.url.path and 'optimizar-ig' not in request.url.path %}active{% endif %}">
-        <span class="nav-icon">🛠</span>
-        Admin
-      </a>
-      <a href="/admin/altas" class="nav-item {% if '/admin/altas' in request.url.path %}active{% endif %}">
-        <span class="nav-icon">🎟️</span>
-        <span class="nav-text">Altas</span>
-      </a>
-      <a href="/admin/alumnos" class="nav-item {% if '/admin/alumnos' in request.url.path %}active{% endif %}">
-        <span class="nav-icon">📈</span>
-        <span class="nav-text">Alumnos</span>
-      </a>
-      <a href="/admin/tareas" class="nav-item {% if '/admin/tareas' in request.url.path %}active{% endif %}">
-        <span class="nav-icon">✅</span>
-        <span class="nav-text">Tareas</span>
-      </a>
-      <a href="/crm" class="nav-item {% if '/crm' in request.url.path %}active{% endif %}">
-        <span class="nav-icon">🗂</span>
-        Mis Leads
-      </a>
-      <a href="/biblioteca" class="nav-item {% if '/biblioteca' in request.url.path %}active{% endif %}">
-        <span class="nav-icon">🎬</span>
-        Biblioteca
-      </a>
-      <a href="/admin/optimizar-ig" class="nav-item {% if 'optimizar-ig' in request.url.path %}active{% endif %}">
-        <span class="nav-icon">🚀</span>
-        Optimizar IG
-      </a>
-      {% endif %}
+      {% endfor %}
     </nav>
 
     <div class="sidebar-footer">
@@ -119,6 +121,45 @@
     </div>
   </div>
 
+</div>
+
+{#
+  ── Navegación del móvil ──
+  Barra inferior con cuatro destinos y «Más». No hay barra superior a propósito:
+  el título de cada página ya dice dónde estás, y una cabecera fija se come
+  espacio vertical, que en un móvil es lo que falta.
+#}
+<nav class="mov-barra">
+  {% for e in enlaces %}{% if e.abajo %}
+  <a href="{{ e.url }}" class="mov-tab {% if e.activo %}mov-tab--on{% endif %}">
+    <span class="mov-icono">{{ e.icono }}</span>
+    <i>{{ e.texto }}</i>
+  </a>
+  {% endif %}{% endfor %}
+  <button type="button" class="mov-tab" id="mov-mas" aria-expanded="false">
+    <span class="mov-icono">☰</span>
+    <i>Más</i>
+  </button>
+</nav>
+
+<div class="mov-fondo" id="mov-fondo" hidden></div>
+<div class="mov-hoja" id="mov-hoja" hidden role="dialog" aria-label="Más secciones">
+  <div class="mov-asa"></div>
+  <div class="mov-quien">
+    <div class="user-avatar">{{ (user.name[:2] if user.name else user.email[:2]).upper() }}</div>
+    <div>
+      <b>{{ user.name or user.email.split('@')[0] }}</b>
+      <span>{{ user.email }}</span>
+    </div>
+  </div>
+  <div class="mov-lista">
+    {% for e in enlaces %}{% if not e.abajo %}
+    <a href="{{ e.url }}" class="mov-enlace {% if e.activo %}mov-enlace--on{% endif %}">
+      <span class="mov-icono">{{ e.icono }}</span>{{ e.texto }}
+    </a>
+    {% endif %}{% endfor %}
+  </div>
+  <a href="/logout" class="mov-salir">↩ Cerrar sesión</a>
 </div>
 
 {# ══ Robert: chat flotante con el creador de la academia ══ #}
@@ -288,5 +329,6 @@
 {% endif %}
 
 {% block scripts %}{% endblock %}
+<script src="/static/js/movil.js?v=1"></script>
 </body>
 </html>
