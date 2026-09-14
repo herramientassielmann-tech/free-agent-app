@@ -12,6 +12,7 @@ llamada.
 """
 import hashlib
 import json
+import logging
 import secrets
 from datetime import datetime, timedelta
 from typing import Optional
@@ -27,6 +28,8 @@ from app.config import (
 )
 from app.database import get_db
 from app.models import Alta, FirmaContrato, User
+
+log = logging.getLogger(__name__)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -47,6 +50,9 @@ EMPRESA = {
     "empresa_nif": "[pendiente]",
     "empresa_firmante": "Robert Sielmann",
     "contacto": "herramientassielmann@gmail.com",
+    # Se escribe tal cual va a leerse detrás de «se rige por las leyes de …»,
+    # así que sin artículo delante: «Florida (EE. UU.)», no «el Estado de
+    # Florida» —saldría «de el Estado de Florida»—.
     "ley": "[pendiente: estado aplicable]",
 }
 
@@ -217,10 +223,36 @@ async def onboarding(token: str, db: Session = Depends(get_db)):
 
 # ── Contrato ─────────────────────────────────────────────────────────────────
 
+
+def _huecos_legales() -> list:
+    """Los datos del contrato que siguen sin rellenar.
+
+    Existe para que no se pueda firmar a medias. Un contrato que dice «se rige
+    por las leyes de [pendiente: estado aplicable]» no es un contrato a medio
+    hacer: es un contrato con un agujero en la clausula que decide dónde se
+    reclama, y firmado vale menos que no tener nada. Mejor que no se pueda
+    abrir a que alguien lo firme así.
+    """
+    return sorted(k for k, v in EMPRESA.items() if "[pendiente" in str(v))
+
+
+
 @router.get("/bienvenida/{token}/contrato", response_class=HTMLResponse)
 async def contrato(token: str, request: Request, db: Session = Depends(get_db)):
     alta = _alta(token, db)
     firma = alta.firma
+    # Si ya está firmado se enseña siempre: es su copia, y se guardó con los
+    # datos que hubiera en ese momento. Lo que se corta es firmar de nuevo.
+    faltan = _huecos_legales()
+    if faltan and firma is None:
+        # La página no dice qué falta —eso es cosa nuestra, no del alumno—, así
+        # que queda en el registro del servidor para que se pueda ver por qué.
+        log.warning(
+            "Contrato no firmable: faltan %s en EMPRESA (app/routers/bienvenida.py). "
+            "Alta %s quedó esperando.", ", ".join(faltan), alta.id)
+        return templates.TemplateResponse("contrato_pendiente.html", {
+            "request": request, "alta": alta, "faltan": faltan,
+        }, status_code=503)
     return templates.TemplateResponse("contrato_firma.html", {
         "request": request,
         "alta": alta,
@@ -246,6 +278,10 @@ async def firmar(
 ):
     alta = _alta(token, db)
     if alta.firma is not None:
+        return RedirectResponse(url=f"/bienvenida/{token}/contrato", status_code=303)
+    # La misma puerta que en el GET: sin esto, un formulario ya cargado antes de
+    # que faltaran datos podría enviarse igual.
+    if _huecos_legales():
         return RedirectResponse(url=f"/bienvenida/{token}/contrato", status_code=303)
 
     marcados = [c for c, v in (("resultados", r_resultados),

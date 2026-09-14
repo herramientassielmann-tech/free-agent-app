@@ -28,6 +28,14 @@
     `abajo` marca los que van en la barra inferior del móvil. Son cuatro porque
     con cinco ya no se acierta con el pulgar; el resto vive en «Más».
   #}
+  {# Los enlaces, definidos una sola vez y pintados en tres sitios: la barra
+     lateral, la barra de abajo del móvil y la hoja de «Más».
+
+     `abajo: true` = va en la barra de abajo. Sólo caben CINCO sitios a 390px
+     (cuatro destinos y el botón de «Más»), así que añadir uno obliga a sacar
+     otro. El Asesor se queda fuera porque el botón flotante de Robert ya está
+     en todas las pantallas; Leads, no: es de uso diario y no está en ningún
+     otro sitio. #}
   {% set enlaces = (
     [
       {'url': '/admin',           'icono': '🛠',  'texto': 'Admin',     'abajo': true,
@@ -63,9 +71,11 @@
        'activo': request.url.path == '/'},
       {'url': '/ideas-iniciales', 'icono': '💡',  'texto': 'Ideas',     'abajo': true,
        'activo': request.url.path == '/ideas-iniciales'},
+      {'url': '/crm',             'icono': '🗂',  'texto': 'Leads',     'abajo': true,
+       'activo': '/crm' in request.url.path},
       {'url': '/history',         'icono': '📋',  'texto': 'Historial', 'abajo': true,
        'activo': request.url.path == '/history'},
-      {'url': '/chatbot',         'icono': '💬',  'texto': 'Asesor',    'abajo': true,
+      {'url': '/chatbot',         'icono': '💬',  'texto': 'Asesor',    'abajo': false,
        'activo': '/chatbot' in request.url.path},
       {'url': '/optimizar-ig',    'icono': '🚀',  'texto': 'Optimizar IG', 'abajo': false,
        'activo': request.url.path == '/optimizar-ig'},

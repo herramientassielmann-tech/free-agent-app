@@ -14,7 +14,9 @@ justo lo que se olvida.
 
 Nadie se borra: quien no responde va a "frío" y se revisa de vez en cuando.
 
-De momento solo lo ve el admin.
+Cada realtor tiene el suyo. Todas las consultas van filtradas por
+`Lead.user_id == current_user.id`, así que un tablero no ve nunca los leads
+de otro; el aislamiento lo da la consulta, no el permiso de entrada.
 """
 from collections import OrderedDict
 from datetime import datetime, timedelta
@@ -28,7 +30,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User, Lead, LeadNota, LeadTarea, LeadContacto
-from app.auth import require_admin
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/crm")
 templates = Jinja2Templates(directory="app/templates")
@@ -156,7 +158,7 @@ def _json(lead: Lead) -> dict:
 @router.get("/", response_class=HTMLResponse)
 async def tablero(
     request: Request,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     leads = (
@@ -190,7 +192,7 @@ async def tablero(
 @router.post("/leads")
 async def crear(
     payload: LeadIn,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     nombre = (payload.nombre or "").strip()
@@ -219,7 +221,7 @@ async def crear(
 async def mover(
     lid: int,
     payload: MoverIn,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     lead = _mi_lead(lid, current_user, db)
@@ -235,7 +237,7 @@ async def mover(
 async def editar(
     lid: int,
     payload: LeadIn,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     lead = _mi_lead(lid, current_user, db)
@@ -255,7 +257,7 @@ async def editar(
 @router.get("/leads/{lid}")
 async def detalle(
     lid: int,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     lead = _mi_lead(lid, current_user, db)
@@ -276,7 +278,7 @@ async def detalle(
 async def apuntar(
     lid: int,
     payload: NotaIn,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     lead = _mi_lead(lid, current_user, db)
@@ -302,7 +304,7 @@ async def apuntar(
 @router.post("/leads/{lid}/contactado")
 async def contactado(
     lid: int,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Para cuando hablas con alguien y no hay nada que apuntar."""
@@ -330,7 +332,7 @@ async def contactado(
 @router.delete("/leads/{lid}")
 async def borrar(
     lid: int,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     lead = _mi_lead(lid, current_user, db)
@@ -345,7 +347,7 @@ async def borrar(
 async def crear_tarea(
     lid: int,
     payload: TareaIn,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     lead = _mi_lead(lid, current_user, db)
@@ -364,7 +366,7 @@ async def crear_tarea(
 @router.post("/tareas/{tid}/toggle")
 async def marcar_tarea(
     tid: int,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     tarea = (
@@ -386,7 +388,7 @@ async def marcar_tarea(
 @router.delete("/tareas/{tid}")
 async def borrar_tarea(
     tid: int,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     tarea = (
@@ -404,7 +406,7 @@ async def borrar_tarea(
 @router.get("/tareas", response_class=HTMLResponse)
 async def registro(
     request: Request,
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Lo que queda por hacer y, sobre todo, lo que ya se ha hecho.
