@@ -64,10 +64,14 @@ async def idea_detalle(
 
     # Su versión, si ya la ha tocado; si no, el guión tal cual
     from app.routers.editor import _leer_edicion, _secciones
+    # Las CUATRO secciones. El caption faltaba aquí, y como la plantilla pinta
+    # `secciones.caption`, las 23 ideas enseñaban la tarjeta de caption vacía
+    # aunque el texto estuviera guardado en la columna todo el tiempo.
     original = {
         "hook": script.hook or "",
         "development": script.development or "",
         "conclusion": script.conclusion or "",
+        "caption": script.caption or "",
     }
     fila = db.query(StarterScriptEdit).filter(
         StarterScriptEdit.user_id == current_user.id,
