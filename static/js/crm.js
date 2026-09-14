@@ -225,6 +225,39 @@
     hueco.replaceWith(el);
   }
 
+  /* ── Las pestañas de fase del móvil ──────────
+   * En el teléfono se enseña una columna cada vez. Deslizar a ciegas entre
+   * seis columnas no dice en cuál estás; tocar la fase, sí.
+   */
+  (function () {
+    const barra = document.getElementById("crm-fases");
+    if (!barra) return;
+    const mostrar = clave => {
+      tablero.querySelectorAll("[data-etapa]").forEach(c =>
+        c.classList.toggle("crm-col--oculta", c.dataset.etapa !== clave));
+      barra.querySelectorAll(".crm-fase").forEach(b =>
+        b.classList.toggle("crm-fase--on", b.dataset.fase === clave));
+      try { sessionStorage.setItem("crm_fase", clave); } catch (e) {}
+    };
+    barra.addEventListener("click", e => {
+      const b = e.target.closest(".crm-fase");
+      if (b) mostrar(b.dataset.fase);
+    });
+    // Se recuerda la última mirada: al volver de una ficha no se pierde el sitio
+    let guardada = null;
+    try { guardada = sessionStorage.getItem("crm_fase"); } catch (e) {}
+
+    /* Si no hay nada recordado, se abre por la primera fase CON gente. Abrir
+     * siempre por «Nuevo» enseñaba «nadie en esta fase todavía» a quien tiene
+     * seis leads repartidos por el resto del embudo. */
+    const conGente = [...barra.querySelectorAll(".crm-fase")].find(b =>
+      (tablero.querySelector(`[data-lista="${b.dataset.fase}"]`)?.children.length ?? 0) > 0);
+
+    mostrar(guardada && barra.querySelector(`[data-fase="${guardada}"]`)
+            ? guardada
+            : (conGente || barra.querySelector(".crm-fase")).dataset.fase);
+  })();
+
   /* Quita a alguien del aviso de «llevas días sin hablar con…».
    * Sin esto el aviso seguiría nombrando a quien acabas de llamar hasta
    * recargar la página, que es justo cuando deja de tener sentido: pierdes
@@ -329,6 +362,9 @@
         const f = document.createElement("time"); f.textContent = n.fecha;
         d.append(t, f); cont.appendChild(d);
       });
+
+      document.querySelectorAll(".crm-etapa").forEach(b =>
+        b.classList.toggle("crm-etapa--on", b.dataset.etapa === lead.etapa));
 
       pintarTareas(tareas);
       pintarSeguimiento(contactos || []);
@@ -459,6 +495,35 @@
       // por delante la animación justo cuando el tick está aterrizando.
       await animarContacto(contacto, contactos || []);
     } catch (e) { alert(e.message); }
+  });
+
+  /* Cambiar de fase desde la ficha. Sin esto, en el móvil —donde no se puede
+   * arrastrar— un lead se quedaba atrapado en la fase en la que naciera. */
+  document.querySelectorAll(".crm-etapa").forEach(boton => {
+    boton.addEventListener("click", async () => {
+      if (!abierto) return;
+      const antes = document.querySelector(".crm-etapa--on");
+      document.querySelectorAll(".crm-etapa").forEach(b => b.classList.remove("crm-etapa--on"));
+      boton.classList.add("crm-etapa--on");
+      try {
+        const { lead } = await api(`/crm/leads/${abierto}/mover`, {
+          method: "POST",
+          body: JSON.stringify({ etapa: boton.dataset.etapa, posicion: 0 }),
+        });
+        // La tarjeta se va a la columna nueva y los contadores se ponen al día
+        tablero.querySelector(`.crm-tarjeta[data-id="${lead.id}"]`)?.remove();
+        tablero.querySelector(`[data-lista="${lead.etapa}"]`)?.prepend(pintarTarjeta(lead));
+        contar();
+        document.querySelectorAll(".crm-fase").forEach(f => {
+          const n = tablero.querySelector(`[data-lista="${f.dataset.fase}"]`)?.children.length ?? 0;
+          f.querySelector("i").textContent = n;
+        });
+      } catch (e) {
+        document.querySelectorAll(".crm-etapa").forEach(b => b.classList.remove("crm-etapa--on"));
+        antes?.classList.add("crm-etapa--on");
+        alert(e.message);
+      }
+    });
   });
 
   $("crm-borrar").addEventListener("click", async () => {

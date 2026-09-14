@@ -41,9 +41,19 @@ window.EditorGuiones = (function () {
     let temporizador = null;
     let sinGuardar = false;
 
-    function marcar(texto, clase) {
+    /* `resto` es la parte que sólo se lee en pantalla grande: va dentro de un
+       <span class="solo-ancho">, que el móvil esconde. Antes esto escribía con
+       textContent, se llevaba por delante el span de la plantilla y en el
+       teléfono reaparecía la frase entera — justo la que no cabe en la barra. */
+    function marcar(texto, clase, resto) {
       if (!estado) return;
       estado.textContent = texto;
+      if (resto) {
+        const largo = document.createElement("span");
+        largo.className = "solo-ancho";
+        largo.textContent = resto;
+        estado.appendChild(largo);
+      }
       estado.dataset.edEstado = clase;
     }
 
@@ -79,7 +89,7 @@ window.EditorGuiones = (function () {
         if (!res.ok) throw new Error();
         sinGuardar = false;
         marcar("Guardado ✓", "guardado");
-        setTimeout(() => { if (!sinGuardar) marcar("Tus cambios están guardados", "editado"); }, 2000);
+        setTimeout(() => { if (!sinGuardar) marcar("Guardado ✓", "editado"); }, 2000);
       } catch (e) {
         marcar("No se pudo guardar", "error");
       }
@@ -174,7 +184,7 @@ window.EditorGuiones = (function () {
     return {
       recalcular,
       // El generador no conoce el id del guión hasta que la IA responde
-      activarGuardado(url) { urlGuardar = url; marcar("Editable — escribe encima", "listo"); },
+      activarGuardado(url) { urlGuardar = url; marcar("Editable", "listo", " — escribe encima"); },
     };
   }
 

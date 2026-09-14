@@ -7,8 +7,8 @@
   <div>
     <h1 class="page-title">Mis Leads</h1>
     <p class="page-subtitle">
-      {% if total %}{{ total }} personas en seguimiento. Arrastra las tarjetas según avanza la conversación.
-      {% else %}Cada persona que te escribe, aquí. Arrastra las tarjetas según avanza la conversación.{% endif %}
+      {% if total %}{{ total }} en seguimiento<span class="solo-ancho">. Arrastra las tarjetas según avanza la conversación</span>.
+      {% else %}Cada persona que te escribe, aquí<span class="solo-ancho">. Arrastra las tarjetas según avanza la conversación</span>.{% endif %}
     </p>
   </div>
   <div class="crm-acciones-cabecera">
@@ -31,6 +31,18 @@
   </div>
 </div>
 {% endif %}
+
+{# En el móvil no se puede arrastrar, así que el carrusel de columnas no aporta
+   nada y además parece roto con media columna asomando. Estas pestañas enseñan
+   el embudo entero de un vistazo y llevan a una fase de un toque. #}
+<div class="crm-fases" id="crm-fases">
+  {% for clave, titulo, ayuda in etapas %}
+  <button type="button" class="crm-fase {% if loop.first %}crm-fase--on{% endif %}"
+          data-fase="{{ clave }}">
+    {{ titulo }} <i>{{ por_etapa[clave]|length }}</i>
+  </button>
+  {% endfor %}
+</div>
 
 <div class="crm-tablero" id="crm-tablero">
   {% for clave, titulo, ayuda in etapas %}
@@ -61,8 +73,17 @@
 
   <div class="crm-panel-acciones">
     <a class="btn btn-primary btn-sm" id="crm-wa" href="#" target="_blank" rel="noopener" hidden>💬 WhatsApp</a>
-    <button type="button" class="btn btn-secondary btn-sm" id="crm-contactado">✓ He hablado con él/ella</button>
+    <button type="button" class="btn btn-secondary btn-sm" id="crm-contactado">✓ He hablado<span class="solo-ancho"> con él/ella</span></button>
     <button type="button" class="btn btn-ghost btn-sm" id="crm-editar">Editar datos</button>
+  </div>
+
+  <div class="crm-etapa-sel">
+    <span class="crm-etiqueta">En qué fase está</span>
+    <div class="crm-etapas">
+      {% for clave, titulo, ayuda in etapas %}
+      <button type="button" class="crm-etapa" data-etapa="{{ clave }}">{{ titulo }}</button>
+      {% endfor %}
+    </div>
   </div>
 
   <div class="crm-panel-datos" id="crm-panel-datos"></div>
@@ -152,5 +173,5 @@
 
 {% block scripts %}
 <script src="/static/js/sortable.min.js"></script>
-<script src="/static/js/crm.js?v=6"></script>
+<script src="/static/js/crm.js?v=7"></script>
 {% endblock %}

@@ -10,12 +10,12 @@
 <div class="page-header">
   <div>
     <h1 class="page-title">¿Qué vídeo viral adaptamos hoy?</h1>
-    <p class="page-subtitle">Pega la URL de un vídeo de TikTok o Instagram.</p>
+    <p class="page-subtitle solo-ancho">Pega la URL de un vídeo de TikTok o Instagram.</p>
   </div>
   {% if remaining is not none %}
   <div class="quota-chip {% if remaining == 0 %}empty{% elif remaining <= 3 %}low{% endif %}">
     <span class="quota-dot"></span>
-    {{ remaining }} guione{{ 's' if remaining != 1 else '' }} restante{{ 's' if remaining != 1 else '' }} este mes
+    <span class="quota-texto">{{ remaining }} {{ 'guión' if remaining == 1 else 'guiones' }} restante{{ 's' if remaining != 1 else '' }}</span><span class="solo-ancho">&nbsp;este mes</span>
   </div>
   {% endif %}
 </div>
@@ -30,7 +30,7 @@
 {# Input card #}
 <div class="card generator-card">
   <div class="form-group">
-    <label class="form-label" for="video-url">URL del vídeo <span class="form-hint">TikTok o Instagram</span></label>
+    <label class="form-label" for="video-url">URL del vídeo <span class="form-hint solo-ancho">TikTok o Instagram</span></label>
     <div class="input-row">
       <div class="form-group" style="margin-bottom:0; flex:1">
         <input
@@ -41,20 +41,20 @@
           autocomplete="off"
         />
       </div>
-      <button id="generate-btn" class="btn btn-primary" style="height:46px;margin-top:0;flex-shrink:0" {% if remaining == 0 %}disabled{% endif %}>
+      <button id="generate-btn" class="btn btn-primary" style="margin-top:0" {% if remaining == 0 %}disabled{% endif %}>
         ⚡&nbsp; Generar Guión
       </button>
     </div>
   </div>
   <div class="form-group" style="margin-bottom:0">
     <label class="form-label" for="instructions">
-      Instrucciones adicionales
-      <span class="form-hint">opcional — ej: "quiero adaptarlo para mi piso en Madrid de 350k"</span>
+      Instrucciones
+      <span class="form-hint">opcional</span>
     </label>
     <textarea
       class="form-input form-textarea"
       id="instructions"
-      placeholder="Déjalo vacío para una adaptación automática a Real Estate..."
+      placeholder="Ej: adáptalo a mi piso de 350k en Madrid"
       rows="2"
     ></textarea>
   </div>
@@ -141,7 +141,7 @@
               data-dev="{{ s.development or '' }}"
               data-conc="{{ s.conclusion or '' }}"
               data-caption="{{ s.caption or '' }}">
-        Copiar
+        📋<span class="solo-ancho">&nbsp;Copiar</span>
       </button>
     </div>
   </div>
@@ -209,6 +209,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/editor.js?v=3"></script>
-<script src="/static/js/app.js?v=7"></script>
+<script src="/static/js/editor.js?v=4"></script>
+<script src="/static/js/app.js?v=8"></script>
 {% endblock %}

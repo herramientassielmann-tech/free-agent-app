@@ -1346,7 +1346,7 @@ a:hover { color: #3d9eff; }
   color: transparent; font-size: 0.9rem; font-weight: 700; cursor: pointer;
   display: grid; place-items: center; transition: all 0.15s;
 }
-.idea-check:hover { border-color: var(--green); color: rgba(48,209,88,0.4); }
+@media (hover: hover) { .idea-check:not(.idea-check--on):hover { border-color: var(--green); color: rgba(48,209,88,0.4); } }
 .idea-check--on { background: var(--green); border-color: var(--green); color: #05230f; }
 .idea-check:disabled { opacity: 0.5; cursor: default; }
 
@@ -2140,7 +2140,7 @@ a:hover { color: #3d9eff; }
   border: 1.5px solid var(--c-linea); background: #fff; color: #fff;
   font-size: .7rem; line-height: 1; display: grid; place-items: center;
 }
-.crm-tarea-check:hover { border-color: var(--c-azul); }
+@media (hover: hover) { .crm-tarea-check:not(.crm-tarea-check--on):hover { border-color: var(--c-azul); } }
 .crm-tarea-check--on { background: var(--c-verde); border-color: var(--c-verde); }
 .crm-tarea-texto { flex: 1; min-width: 0; }
 .crm-tarea--hecha .crm-tarea-texto { color: var(--c-tenue); text-decoration: line-through; }
@@ -2201,7 +2201,7 @@ a:hover { color: #3d9eff; }
   border: 1.5px solid var(--c-linea); background: #fff; color: #fff;
   font-size: .72rem; line-height: 1; display: grid; place-items: center;
 }
-.tar-check:hover { border-color: var(--c-azul); }
+@media (hover: hover) { .tar-check:not(.tar-check--on):hover { border-color: var(--c-azul); } }
 .tar-check--on { background: var(--c-verde); border-color: var(--c-verde); }
 .tar-texto { flex: 1; min-width: 0; color: var(--c-tinta); }
 .tar-texto--hecha { color: var(--c-tenue); text-decoration: line-through; }
@@ -2276,7 +2276,7 @@ a:hover { color: #3d9eff; }
   font-size: .86rem; text-decoration: none; line-height: 1; padding: 0;
   font-family: inherit;
 }
-.alta-btn:hover { border-color: var(--border-hover); background: var(--s3); color: var(--t1); }
+@media (hover: hover) { .alta-btn:not(.alta-btn--on):hover { border-color: var(--border-hover); background: var(--s3); color: var(--t1); } }
 /* Encendido = ese interruptor está puesto (pago marcado a mano, accesos abiertos) */
 .alta-btn--on { background: rgba(48,209,88,.14); border-color: rgba(48,209,88,.35); color: var(--green); }
 
@@ -2419,7 +2419,7 @@ a:hover { color: #3d9eff; }
   border: 1px solid var(--c-linea); background: var(--c-tarjeta);
   color: var(--c-suave); text-decoration: none;
 }
-.eq-chip:hover { border-color: #B9C4CE; color: var(--c-tinta); }
+@media (hover: hover) { .eq-chip:not(.eq-chip--on):hover { border-color: #B9C4CE; color: var(--c-tinta); } }
 /* El número va SIEMPRE, también en el activo: es lo que deja ver de un vistazo
    quién está enterrado y quién libre antes de repartir nada. */
 .eq-chip i {
@@ -2483,7 +2483,7 @@ a:hover { color: #3d9eff; }
   border: 1.5px solid #B9C4CE; background: var(--c-tarjeta); color: #fff;
   display: grid; place-items: center; font-size: .7rem; padding: 0; font-family: inherit;
 }
-.eq-check:hover { border-color: var(--c-verde); }
+@media (hover: hover) { .eq-check:not(.eq-check--on):hover { border-color: var(--c-verde); } }
 .eq-check--on { background: var(--c-verde); border-color: var(--c-verde); }
 
 /* Los desplegables: invisibles hasta que los rozas, para que la lista se lea
@@ -2625,7 +2625,7 @@ a:hover { color: #3d9eff; }
   border-radius: var(--r-pill); padding: 4px 13px; font-size: .78rem; font-weight: 600;
   cursor: pointer; font-family: inherit;
 }
-.eq-prio:hover { border-color: #B9C4CE; color: var(--c-tinta); }
+@media (hover: hover) { .eq-prio:not(.eq-prio--on):hover { border-color: #B9C4CE; color: var(--c-tinta); } }
 .eq-prio--on { background: var(--c-tinta); border-color: var(--c-tinta); color: #fff; }
 .eq-prio--on[data-prio="urgente"] { background: var(--c-rojo); border-color: var(--c-rojo); }
 
@@ -2819,20 +2819,10 @@ a:hover { color: #3d9eff; }
   .alu-semana-txt { min-width: 104px; font-size: .84rem; }
 }
 
-/* ── MÓVIL · Tablero de leads ─────────────────────────────────────────────
-   Se mantiene el desplazamiento lateral, pero con anclaje: cada columna ocupa
-   la pantalla y el dedo pasa de una a otra como en las apps de tableros. La
-   alternativa —apilar las seis columnas— convierte el tablero en una lista y
-   se pierde justo lo que lo hace útil: ver en qué fase está cada uno. */
+/* ── MÓVIL · Leads ────────────────────────────────────────────────────────
+   Las columnas las reparten las pestañas de fase, más abajo. Aquí sólo queda
+   lo que no depende de ellas. */
 @media (max-width: 860px) {
-  .crm-tablero {
-    scroll-snap-type: x mandatory; gap: 12px;
-    padding-bottom: 8px; -webkit-overflow-scrolling: touch;
-  }
-  .crm-col {
-    scroll-snap-align: center; flex: 0 0 calc(100vw - 52px);
-    min-width: calc(100vw - 52px); max-width: calc(100vw - 52px);
-  }
   .crm-acciones-cabecera { width: 100%; }
   .crm-acciones-cabecera .btn { flex: 1; }
   /* El panel del lead, a pantalla completa: a 390px una columna lateral no cabe */
@@ -2841,6 +2831,11 @@ a:hover { color: #3d9eff; }
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 0));
   }
   .crm-form-fila { grid-template-columns: 1fr; }
+  /* El aviso de olvidados: los nombres son la acción, el párrafo era relleno
+     que empujaba el tablero fuera de la pantalla. */
+  .crm-olvidados p { display: none; }
+  .crm-olvidados { padding: 14px; }
+  .crm-panel-acciones .btn { flex: 1 1 auto; }
 }
 
 /* ── MÓVIL · Tareas del equipo ────────────────────────────────────────────
@@ -2865,7 +2860,7 @@ a:hover { color: #3d9eff; }
    Títulos, cabeceras y objetivos táctiles. Los títulos de escritorio se comen
    un tercio de la pantalla del teléfono. */
 @media (max-width: 860px) {
-  .page-title { font-size: 1.6rem; line-height: 1.15; }
+  .page-title { font-size: 1.45rem; line-height: 1.15; }
   .page-subtitle { font-size: .88rem; }
   .page-header { flex-direction: column; align-items: stretch; gap: 12px; }
   .page-header .btn { width: 100%; }
@@ -2895,6 +2890,11 @@ a:hover { color: #3d9eff; }
      `relative` aquí se escapaba 105 px por la derecha. */
   .auth-shell { position: relative; overflow: hidden; }
 
+  /* La fila entera ya es pulsable (va dentro de su <label>), pero el dedo
+     apunta al cuadrito: a 13 px se falla. */
+  .checkbox-label input[type="checkbox"] { width: 22px; height: 22px; }
+  .checkbox-label { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; }
+
   /* Los círculos de marcar eran de 20 px: el gesto más repetido de la app y
      el más fácil de fallar con el pulgar. La caja táctil crece sin que crezca
      el dibujo, para no romper el diseño. */
@@ -2904,4 +2904,143 @@ a:hover { color: #3d9eff; }
   .eq-check { font-size: .85rem; }
   .eq-texto { min-height: 38px; }
   .alu-nav { width: 40px; height: 40px; }
+}
+
+/* ── Fases del CRM ────────────────────────────────────────────────────────
+   El selector sólo existe en el móvil; en escritorio el tablero entero cabe y
+   arrastrar sigue siendo lo mejor. */
+.crm-fases { display: none; }
+.solo-ancho { display: inline; }
+
+/* En la ficha, cambiar de fase con un toque. Vale en las dos pantallas: en el
+   móvil es la ÚNICA forma de mover a alguien, y en el escritorio es más rápido
+   que arrastrar hasta una columna que está fuera de la vista. */
+.crm-etapa-sel { padding: 4px 0 16px; border-bottom: 1px solid var(--c-linea); margin-bottom: 14px; }
+.crm-etiqueta {
+  display: block; font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--c-tenue); margin-bottom: 9px;
+}
+.crm-etapas { display: flex; flex-wrap: wrap; gap: 6px; }
+.crm-etapa {
+  border: 1px solid var(--c-linea); background: var(--c-tarjeta); color: var(--c-suave);
+  border-radius: var(--r-pill); padding: 7px 13px; font-size: .8rem; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+/* El hover, sólo donde hay ratón. En el móvil iOS deja el :hover pegado al
+   último elemento tocado, y como `:hover` pesa más que `.crm-etapa--on`, la
+   fase recién elegida se quedaba con letra oscura sobre fondo oscuro: en
+   blanco. Además se excluye la activa por si acaso. */
+@media (hover: hover) {
+  .crm-etapa:not(.crm-etapa--on):hover { border-color: #B9C4CE; color: var(--c-tinta); }
+}
+.crm-etapa--on { background: var(--c-tinta); border-color: var(--c-tinta); color: #fff; }
+
+@media (max-width: 860px) {
+  .solo-ancho { display: none; }          /* el móvil no necesita la explicación */
+
+  .crm-fases {
+    display: flex; gap: 7px; overflow-x: auto; padding: 2px 16px 12px;
+    margin: 0 -16px; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .crm-fases::-webkit-scrollbar { display: none; }
+  .crm-fase {
+    flex: none; display: inline-flex; align-items: center; gap: 7px;
+    border: 1px solid var(--c-linea); background: var(--c-tarjeta);
+    color: var(--c-suave); border-radius: var(--r-pill); padding: 9px 15px;
+    font-size: .85rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    white-space: nowrap; min-height: 40px;
+  }
+  .crm-fase i {
+    font-style: normal; font-size: .72rem; font-weight: 700;
+    background: var(--c-columna); color: var(--c-tenue);
+    padding: 1px 7px; border-radius: var(--r-pill);
+  }
+  .crm-fase--on { background: var(--c-tinta); border-color: var(--c-tinta); color: #fff; }
+  .crm-fase--on i { background: rgba(255,255,255,.2); color: #fff; }
+
+  /* Una fase a la vez, a ancho completo: se acabó la media columna asomando */
+  .crm-tablero { display: block; overflow: visible; scroll-snap-type: none; }
+  .crm-col, .crm-col--oculta { display: none; }
+  /* `block` y no `flex`: en escritorio la columna es una celda de la rejilla,
+     así que no tiene dirección propia. Ponerla en flex la dejaba en fila y las
+     tarjetas se encogían al ancho de su texto —214 px de los 358 que había. */
+  .crm-col:not(.crm-col--oculta) {
+    display: block; width: 100%; min-width: 0; max-width: none;
+  }
+  /* El título de la columna ya lo dice la pestaña activa */
+  .crm-col-head, .crm-col-ayuda { display: none; }
+  .crm-col { min-height: 0; padding: 10px; background: transparent; }
+  .crm-lista { min-height: 0; }
+  /* Una fase vacía dejaba medio metro de gris sin nada dentro, que parece que
+     algo se ha roto. Mejor decir que está vacía y ocupar tres líneas. */
+  .crm-lista:empty::after {
+    content: "Nadie en esta fase todavía.";
+    display: block; padding: 26px 14px; text-align: center;
+    color: var(--c-tenue); font-size: .88rem;
+    border: 1px dashed var(--c-linea); border-radius: var(--r-md);
+  }
+  .crm-etapas { gap: 7px; }
+  .crm-etapa { padding: 9px 14px; min-height: 40px; }
+}
+
+/* ── MÓVIL · La barra del guión ───────────────────────────────────────────
+   Tenía dos frases diciendo lo mismo («Escribe encima para adaptarlo» y
+   «Editable — escribe encima») y cinco controles en una línea, así que el
+   botón de descargar se salía de la pantalla. En el móvil sobra la
+   explicación: quien llega aquí ya ha usado esto en el ordenador. */
+@media (max-width: 860px) {
+  .ed-toolbar { flex-wrap: wrap; gap: 10px; padding: 12px; }
+  .ed-editable-pista { display: none; }
+  .ed-tools { flex: 1 1 auto; gap: 6px; }
+  .ed-tool { min-width: 40px; min-height: 40px; }
+  .ed-right { flex: 1 1 100%; display: flex; gap: 8px; align-items: center; }
+  .ed-estado { flex: 1 1 auto; font-size: .78rem; }
+  .ed-right .btn { flex: 0 0 auto; min-height: 40px; }
+  .ed-sep { display: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MÓVIL · El generador
+   Es la pantalla que más se usa y la que peor estaba: el campo de la URL
+   —lo único que hay que rellenar— compartía línea con el botón y se quedaba
+   en 285 px, donde de una URL de TikTok sólo se lee «https://www.tik». Y el
+   chat flotante de Robert tapaba el último guión de la lista.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 860px) {
+  .page-header { gap: 10px; margin-bottom: 20px; }
+  .page-subtitle { margin-top: 3px; }
+
+  /* Lo importante primero y a lo ancho: se escribe la URL, luego se genera. */
+  .input-row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .input-row .btn-primary,
+  .generator-card #generate-btn {
+    width: 100%; height: 48px; margin-top: 0; justify-content: center;
+  }
+  .generator-card { margin-bottom: 24px; }
+  .form-group { margin-bottom: 16px; }
+
+  /* Sitio para que el chat de Robert no se coma el último guión de la lista.
+     El botón ocupa hasta 138 px desde abajo; esto deja que todo pase por
+     encima al llegar al final. */
+  .main-area { padding-bottom: calc(122px + env(safe-area-inset-bottom, 0)); }
+
+  /* Guiones recientes: la fila entera ya abre el guión, así que el botón se
+     queda en el icono y le deja el ancho al texto del gancho. */
+  .recent-item { padding: 11px 13px; gap: 11px; }
+  .recent-thumb { width: 38px; height: 50px; }
+  .recent-copy .btn { min-height: 38px; padding: 8px 11px; }
+}
+
+/* ── El chat de Robert, fuera de en medio ─────────────────────────────────
+   Flota con z-index 900, por encima de todo lo demás. En el escritorio no
+   estorba porque sobra sitio, pero en el teléfono la ficha de un lead ocupa
+   la pantalla entera y el botón caía justo encima del campo de notas y del
+   botón de apuntar. Mientras haya una ficha o una hoja abierta, se aparta. */
+body:has(.crm-fondo:not([hidden])) .rb-fab,
+body:has(.eq-fondo:not([hidden])) .rb-fab,
+body:has(.mov-fondo:not([hidden])) .rb-fab,
+body:has(.crm-fondo:not([hidden])) .rb-hello,
+body:has(.eq-fondo:not([hidden])) .rb-hello,
+body:has(.mov-fondo:not([hidden])) .rb-hello {
+  display: none;
 }

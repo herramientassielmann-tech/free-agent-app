@@ -167,26 +167,32 @@ function fillResult(data, url) {
 /* ── Quota ──────────────────────────────────── */
 function updateQuota(data) {
   if (data.limit === null || data.limit === undefined) return;
+  const r = data.remaining;
+  if (r === null || r === undefined) return;
 
-  // Chip in header
+  /* «guión» pierde la tilde en plural: «guiónes» no existe. */
+  const cuantos = r === 1 ? '1 guión restante' : `${r} guiones restantes`;
+
+  // La chapa de la cabecera
   const chip = document.querySelector('.quota-chip');
-  if (chip && data.remaining !== null && data.remaining !== undefined) {
-    const dot = chip.querySelector('.quota-dot');
+  if (chip) {
     chip.classList.remove('low', 'empty');
-    const r = data.remaining;
-    const s = r === 1 ? '' : 's';
-    chip.lastChild.textContent = ` ${r} guión${r !== 1 ? 'es' : ''} restante${s} este mes`;
+    /* Un hueco propio para el número. Antes se escribía en `chip.lastChild`,
+       que es el último nodo que haya: en cuanto la chapa creció por dentro,
+       el recuento acababa en el sitio equivocado. */
+    const texto = chip.querySelector('.quota-texto');
+    if (texto) texto.textContent = cuantos;
     if (r === 0) { chip.classList.add('empty'); generateBtn.disabled = true; }
     else if (r <= 3) { chip.classList.add('low'); }
   }
 
-  // Sidebar quota text
+  // Y lo mismo en la barra lateral
   const sidebarQuota = document.querySelector('.user-quota');
-  if (sidebarQuota && data.remaining !== null) {
-    sidebarQuota.textContent = `${data.remaining} guiones restantes`;
+  if (sidebarQuota) {
+    sidebarQuota.textContent = cuantos;
     sidebarQuota.className = 'user-quota';
-    if (data.remaining === 0) sidebarQuota.classList.add('empty');
-    else if (data.remaining <= 3) sidebarQuota.classList.add('low');
+    if (r === 0) sidebarQuota.classList.add('empty');
+    else if (r <= 3) sidebarQuota.classList.add('low');
   }
 }
 
@@ -292,12 +298,16 @@ if (pwdSubmit) {
 }
 
 function copyText(text, btn) {
-  const original = btn.textContent;
-  navigator.clipboard.writeText(text).then(() => {
+  /* innerHTML y no textContent: algunos botones llevan dentro un <span> que el
+     móvil esconde, y restaurar con textContent lo borraba — a partir de la
+     primera copia reaparecía la palabra entera y descuadraba la fila. */
+  const original = btn.innerHTML;
+  const marcar = () => {
     btn.textContent = '¡Copiado!';
     btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 2000);
-  }).catch(() => {
+    setTimeout(() => { btn.innerHTML = original; btn.classList.remove('copied'); }, 2000);
+  };
+  navigator.clipboard.writeText(text).then(marcar).catch(() => {
     const ta = document.createElement('textarea');
     ta.value = text;
     ta.style.cssText = 'position:fixed;opacity:0';
@@ -305,7 +315,6 @@ function copyText(text, btn) {
     ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    btn.textContent = '¡Copiado!';
-    setTimeout(() => { btn.textContent = original; }, 2000);
+    marcar();
   });
 }
