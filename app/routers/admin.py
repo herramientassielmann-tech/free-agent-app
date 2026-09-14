@@ -171,6 +171,8 @@ async def user_detail(
     user_id: int,
     request: Request,
     saved: str = "",
+    reiniciada: str = "",
+    error: str = "",
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
@@ -195,6 +197,8 @@ async def user_detail(
             "profile": profile,
             "scripts": scripts,
             "saved": saved,
+            "reiniciada": reiniciada,
+            "error": error,
             **stats,
         },
     )
@@ -225,6 +229,47 @@ async def edit_user(
 
     db.commit()
     return RedirectResponse(url=f"/admin/users/{user_id}", status_code=303)
+
+
+@router.post("/users/{user_id}/reiniciar-password")
+async def reiniciar_password(
+    user_id: int,
+    password: str = Form(""),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Le pone una contraseña temporal al realtor y le obliga a cambiarla.
+
+    Existe aparte del formulario de editar porque son dos gestos distintos:
+    editar es «corrijo un dato», esto es «ha perdido el acceso, se lo devuelvo
+    ahora». Mezclarlos obligaba a reenviar nombre, límite y estado para tocar
+    solo la contraseña.
+
+    `temp_password` se guarda en claro a propósito: es la que hay que dictarle
+    por WhatsApp, y deja de servir en cuanto él elige la suya —ahí se borra—.
+    """
+    realtor = db.query(User).filter(User.id == user_id).first()
+    if not realtor:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+
+    # El aviso de «cambia tu contraseña» vive en el panel del realtor, y un
+    # admin entra directo a /admin: nunca lo vería, y se quedaría con una
+    # contraseña temporal para siempre sin saberlo.
+    if realtor.is_admin:
+        return RedirectResponse(
+            url=f"/admin/users/{user_id}?error=admin", status_code=303)
+
+    limpia = password.strip()
+    if len(limpia) < 8:
+        return RedirectResponse(
+            url=f"/admin/users/{user_id}?error=corta", status_code=303)
+
+    realtor.password_hash = hash_password(limpia)
+    realtor.temp_password = limpia
+    realtor.must_change_password = True
+    db.commit()
+    return RedirectResponse(
+        url=f"/admin/users/{user_id}?reiniciada=1", status_code=303)
 
 
 # ── Guardar el perfil del realtor (solo admin) ────────────────────────────

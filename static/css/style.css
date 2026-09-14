@@ -2898,7 +2898,7 @@ a:hover { color: #3d9eff; }
   /* Los círculos de marcar eran de 20 px: el gesto más repetido de la app y
      el más fácil de fallar con el pulgar. La caja táctil crece sin que crezca
      el dibujo, para no romper el diseño. */
-  .eq-check, .tar-check {
+  .eq-check, .tar-check, .idea-check {
     width: 34px; height: 34px; border-width: 2px;
   }
   .eq-check { font-size: .85rem; }
@@ -3043,4 +3043,24 @@ body:has(.crm-fondo:not([hidden])) .rb-hello,
 body:has(.eq-fondo:not([hidden])) .rb-hello,
 body:has(.mov-fondo:not([hidden])) .rb-hello {
   display: none;
+}
+
+/* ── Reiniciar la contraseña de un realtor ────────────────────────────────
+   Bloque propio y no un campo más del formulario de editar: son dos gestos
+   distintos y se hacen en momentos distintos. */
+.acc-ayuda { color: var(--t2); font-size: .88rem; margin-bottom: 16px; max-width: 62ch; }
+.acc-aviso { margin-bottom: 16px; }
+.acc-fila { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.acc-fila .form-input {
+  flex: 1 1 260px; min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em;
+}
+.acc-fila .btn { flex: none; height: 46px; }
+
+@media (max-width: 860px) {
+  /* El botón que de verdad importa, a lo ancho y el último: en el móvil el
+     pulgar llega abajo, no al centro de la fila. */
+  .acc-fila { flex-direction: column; align-items: stretch; }
+  .acc-fila .form-input { flex: 1 1 auto; }
+  .acc-fila .btn { width: 100%; height: 48px; }
 }

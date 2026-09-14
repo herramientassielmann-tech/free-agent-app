@@ -74,10 +74,6 @@
         <label class="form-label" for="monthly_limit">Límite mensual <span class="form-hint">vacío = ilimitado</span></label>
         <input class="form-input" type="number" id="monthly_limit" name="monthly_limit" value="{{ realtor.monthly_limit if realtor.monthly_limit else '' }}" min="1" />
       </div>
-      <div class="form-group">
-        <label class="form-label" for="new_password">Nueva contraseña <span class="form-hint">vacío = no cambiar</span></label>
-        <input class="form-input" type="password" id="new_password" name="new_password" placeholder="••••••••" minlength="8" />
-      </div>
       <div class="form-group checkbox-group">
         <label class="checkbox-label">
           <input type="checkbox" name="is_active" value="on" {% if realtor.is_active %}checked{% endif %} />
@@ -89,6 +85,41 @@
       </div>
     </form>
   </div>
+</div>
+
+{# ── Devolverle el acceso ──
+   Va en su propio bloque y no dentro de «Editar cuenta» porque son dos gestos
+   distintos: editar es corregir un dato, esto es «ha perdido el acceso y se lo
+   devuelvo ahora». #}
+<div class="card" style="margin-top:24px">
+  <h2 class="section-title" style="margin-bottom:6px">Reiniciar contraseña</h2>
+  <p class="acc-ayuda">
+    Le pones una contraseña, entra con ella y la app le obliga a elegir una suya
+    antes de poder usar nada.
+  </p>
+
+  {% if reiniciada %}
+  <div class="alert alert-success acc-aviso">
+    ✅ Hecho. Pásale la contraseña de arriba{% if realtor.email %} y su correo
+    (<b>{{ realtor.email }}</b>){% endif %}. Al entrar le saltará el aviso.
+  </div>
+  {% elif error == 'corta' %}
+  <div class="alert alert-error acc-aviso">La contraseña debe tener al menos 8 caracteres.</div>
+  {% elif error == 'admin' %}
+  <div class="alert alert-error acc-aviso">
+    Esta cuenta es de administrador. El aviso de cambiar contraseña solo aparece
+    en el panel del realtor, así que se quedaría con la temporal sin enterarse.
+  </div>
+  {% endif %}
+
+  <form method="POST" action="/admin/users/{{ realtor.id }}/reiniciar-password"
+        class="acc-fila" id="acc-form">
+    <input class="form-input" type="text" name="password" id="acc-pwd"
+           placeholder="Contraseña nueva" minlength="8" required
+           autocomplete="off" spellcheck="false" />
+    <button type="button" class="btn btn-ghost" id="acc-generar">Generar</button>
+    <button type="submit" class="btn btn-primary">Reiniciar contraseña</button>
+  </form>
 </div>
 
 {# ── Perfil del realtor (configurado por el admin) ── #}
@@ -307,4 +338,34 @@
     });
   }
 </script>
+
+<script>
+  /* Se escribe a la vista y no con puntitos: esta contraseña hay que dictarla
+     por WhatsApp, y no verla es la forma más rápida de dictarla mal. */
+  (function () {
+    const campo = document.getElementById('acc-pwd');
+    const generar = document.getElementById('acc-generar');
+    const form = document.getElementById('acc-form');
+    if (!campo || !generar || !form) return;
+
+    /* Sin l/I/1 ni O/0: se confunden al leerlas en voz alta. */
+    const LETRAS = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    generar.addEventListener('click', () => {
+      const n = new Uint32Array(10);
+      crypto.getRandomValues(n);
+      campo.value = [...n].map(x => LETRAS[x % LETRAS.length]).join('');
+      campo.focus();
+      campo.select();
+    });
+
+    form.addEventListener('submit', (e) => {
+      const nombre = {{ (realtor.name or realtor.email) | tojson }};
+      if (!confirm('Se cambiará la contraseña de ' + nombre + '.\n\n' +
+                   'La que tenga ahora dejará de funcionar. ¿Seguro?')) {
+        e.preventDefault();
+      }
+    });
+  })();
+</script>
+
 {% endblock %}
