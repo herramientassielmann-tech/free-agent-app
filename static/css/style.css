@@ -2309,10 +2309,6 @@ a:hover { color: #3d9eff; }
 .alu-envoltura { overflow-x: auto; }
 .alu-tabla th.alu-col, .alu-tabla td.alu-col { text-align: center; }
 .alu-tabla th.alu-col { font-size: .66rem; }
-/* Los trials van visualmente aparte: piden 1.000 seguidores y no cuentan para
-   el mínimo, así que no deben leerse como una columna más del compromiso. */
-.alu-col--suelta { border-left: 1px dashed var(--c-linea); }
-.alu-paso--suelta { opacity: .72; }
 
 .alu-quien b { display: block; color: var(--c-tinta); }
 .alu-historial {
@@ -2344,12 +2340,20 @@ a:hover { color: #3d9eff; }
 }
 .alu-num:focus { outline: 2px solid var(--c-azul); outline-offset: 2px; border-radius: 4px; }
 
-.alu-total {
-  display: inline-block; min-width: 30px; padding: 3px 10px; border-radius: 20px;
-  font-weight: 700; font-size: .9rem; background: var(--c-columna); color: var(--c-tenue);
-  font-variant-numeric: tabular-nums; transition: background .2s ease, color .2s ease;
+/* «Editados» es el número que cuenta, así que el semáforo va en su propia
+   casilla en vez de en una columna aparte repitiendo la misma cifra. */
+.alu-paso--cuenta { border-color: #C9D4DF; background: #fff; }
+.alu-num--cuenta { font-weight: 700; }
+.alu-num--ok { color: var(--c-verde); }
+.alu-paso--cuenta:has(.alu-num--ok) {
+  background: var(--c-verde-luz); border-color: #BFE3CE;
 }
-.alu-total--ok { background: var(--c-verde-luz); color: var(--c-verde); }
+
+/* Lo grabado que sigue sin montar. Va bajo el nombre y en tono menor: no es un
+   tirón de orejas, es el pie para ofrecerle edición. */
+.alu-pendiente {
+  display: block; margin-top: 3px; font-size: .72rem; color: var(--c-tenue);
+}
 
 .alu-nota {
   width: 100%; min-width: 150px; background: transparent; border: 1px solid transparent;
@@ -2796,23 +2800,28 @@ a:hover { color: #3d9eff; }
 }
 
 /* ── MÓVIL · Alumnos ──────────────────────────────────────────────────────
-   Los cinco contadores en rejilla de dos, con su etiqueta encima. Apilados
-   uno por fila serían cinco pantallas para seis alumnos. */
+   Grabados y editados al 50% cada uno: caben en una fila, con su etiqueta
+   encima y el nombre y la nota a lo ancho. */
 @media (max-width: 860px) {
   .alu-zona .admin-table tr {
     background: var(--c-tarjeta); border-color: var(--c-linea); padding: 14px;
   }
   .alu-zona .admin-table td { border-bottom-color: var(--c-linea); }
+  /* La fila es un flex y no una caja de elementos en línea: con `inline-flex`
+     los dos contadores sumaban 142+4 cada uno MÁS el espacio en blanco del
+     HTML, se pasaban por un píxel del ancho disponible y el segundo caía a
+     otra línea. Repartiéndolos con flex no hay nada que contar a mano. */
+  .alu-zona .admin-table tr { display: flex; flex-wrap: wrap; gap: 0 10px; }
   .alu-tabla td.alu-col {
-    display: inline-flex; flex-direction: column; align-items: flex-start;
-    width: calc(50% - 5px); margin-right: 4px; gap: 5px; padding: 8px 0;
-    text-align: left; border-bottom: 0;
+    display: flex; flex: 1 1 0; min-width: 0;
+    flex-direction: column; align-items: flex-start;
+    gap: 5px; padding: 8px 0; text-align: left; border-bottom: 0;
   }
   .alu-tabla td.alu-col::before {
     content: attr(data-etiqueta); font-size: .66rem; font-weight: 700;
     letter-spacing: .06em; text-transform: uppercase; color: var(--c-tenue);
   }
-  .alu-tabla td.alu-quien, .alu-tabla td:last-child { width: 100%; }
+  .alu-tabla td.alu-quien, .alu-tabla td:last-child { flex: 1 1 100%; width: 100%; }
   .alu-mas-menos { width: 34px; height: 34px; font-size: 1.15rem; }
   .alu-num { width: 38px; font-size: 1.05rem; }
   .alu-nota { min-width: 0; }
@@ -2981,6 +2990,9 @@ a:hover { color: #3d9eff; }
   }
   .crm-etapas { gap: 7px; }
   .crm-etapa { padding: 9px 14px; min-height: 40px; }
+  /* La pastilla de «llevas días sin hablar con» medía 30px: es un botón que se
+     toca con el pulgar y es el único camino a esa ficha desde el aviso. */
+  .crm-olvidado { min-height: 40px; padding: 9px 14px; }
 }
 
 /* ── MÓVIL · La barra del guión ───────────────────────────────────────────

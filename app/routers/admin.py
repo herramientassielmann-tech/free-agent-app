@@ -605,7 +605,11 @@ async def alta_contrato(
 
 # ── Seguimiento semanal de alumnos ───────────────────────────────────────────
 
-CAMPOS_SEMANA = ("grabados", "editados", "publicados_ig", "publicados_tiktok", "trials")
+# Solo estos dos se piden y se guardan. Las columnas de publicados y trials
+# siguen en la tabla con lo que se anotó en su día, pero ya no se tocan: nadie
+# podía comprobarlas sin preguntar al alumno, así que costaban cada semana y
+# valían poco.
+CAMPOS_SEMANA = ("grabados", "editados")
 SEMANAS_HISTORIAL = 8
 
 
@@ -632,8 +636,7 @@ def _semana(db: Session, user_id: int, lunes: "date") -> "SemanaAlumno":
 def _semana_json(s: "SemanaAlumno") -> dict:
     return {
         "grabados": s.grabados, "editados": s.editados,
-        "publicados_ig": s.publicados_ig, "publicados_tiktok": s.publicados_tiktok,
-        "trials": s.trials, "publicados": s.publicados, "cumple": s.cumple,
+        "sin_editar": s.sin_editar, "cumple": s.cumple,
         "nota": s.nota or "",
     }
 
@@ -674,10 +677,11 @@ async def alumnos(
         filas.append({
             "user": u,
             "datos": _semana_json(actual) if actual else {
-                **{c: 0 for c in CAMPOS_SEMANA}, "publicados": 0, "cumple": False, "nota": ""},
+                **{c: 0 for c in CAMPOS_SEMANA},
+                "sin_editar": 0, "cumple": False, "nota": ""},
             "historial": [
                 {"lunes": l.strftime("%d/%m"),
-                 "publicados": historico[(u.id, l)].publicados if (u.id, l) in historico else 0,
+                 "editados": historico[(u.id, l)].editados if (u.id, l) in historico else 0,
                  "cumple": historico[(u.id, l)].cumple if (u.id, l) in historico else False}
                 for l in lunes_previos
             ],

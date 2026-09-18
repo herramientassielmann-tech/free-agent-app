@@ -24,15 +24,24 @@
   /* Misma fórmula que la plantilla: 3px de base y 2px por vídeo, con tope en 8.
      Si se toca una hay que tocar la otra, o la barra daría un salto al
      recargar la página. */
-  const altoBarra = pub => 3 + Math.min(pub, 8) * 2;
+  const altoBarra = n => 3 + Math.min(n, 8) * 2;
 
   function pintar(fila, datos) {
     fila.querySelectorAll(".alu-num").forEach(i => {
       i.value = datos[i.dataset.campo];
     });
-    const total = fila.querySelector("[data-total]");
-    total.textContent = datos.publicados;
-    total.classList.toggle("alu-total--ok", datos.cumple);
+
+    /* El semáforo vive en la propia casilla de editados: es el número que
+       cuenta, y una casilla aparte repitiendo la misma cifra sobraba. */
+    const editados = fila.querySelector('.alu-num[data-campo="editados"]');
+    if (editados) editados.classList.toggle("alu-num--ok", datos.cumple);
+
+    /* Lo grabado que sigue sin montar. Aparece y desaparece solo. */
+    const pendiente = fila.querySelector("[data-pendiente]");
+    if (pendiente) {
+      pendiente.textContent = datos.sin_editar + " sin editar";
+      pendiente.hidden = !datos.sin_editar;
+    }
 
     /* La última barra es SIEMPRE la semana que estás mirando (el historial se
        pinta de la más antigua a la actual), así que vale igual en semanas
@@ -41,10 +50,10 @@
     const barras = fila.querySelectorAll(".alu-barra");
     const ultima = barras[barras.length - 1];
     if (ultima) {
-      ultima.style.height = altoBarra(datos.publicados) + "px";
+      ultima.style.height = altoBarra(datos.editados) + "px";
       ultima.classList.toggle("alu-barra--ok", datos.cumple);
       const cuando = (ultima.title || "").split(":")[0];
-      ultima.title = `${cuando}: ${datos.publicados}`;
+      ultima.title = `${cuando}: ${datos.editados}`;
     }
   }
 

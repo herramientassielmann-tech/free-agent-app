@@ -481,17 +481,24 @@ class AccesoRegistrado(Base):
 class SemanaAlumno(Base):
     """Lo que un alumno ha hecho en una semana concreta.
 
-    Se guardan NÚMEROS y no casillas de sí/no porque el contrato exige un mínimo
+    Se siguen DOS números: grabados y editados. Editados es el que cuenta para
+    el mínimo semanal, porque es el último paso que depende de nosotros —lo que
+    se publica y cuándo se publica ya no— y porque es el que de verdad marca si
+    la semana ha existido.
+
+    Se guardan números y no casillas de sí/no porque el contrato exige un mínimo
     de dos vídeos por semana: con una casilla no se puede saber si fueron dos o
     siete, y entonces el seguimiento no sirve para lo único que tiene que servir.
 
-    Grabado, editado y publicado van separados a propósito. Si alguien graba
-    cinco y publica uno, el cuello de botella es la edición — que es un servicio
-    que ya vendéis a 15 $ el reel, no un motivo para llamarle la atención.
+    La distancia entre los dos números es la señal útil: quien graba cinco y
+    edita uno no tiene un problema de constancia, tiene un cuello de botella en
+    la edición — que es un servicio que ya vendéis a 15 $ el reel, no un motivo
+    para llamarle la atención.
 
-    Los trials de Instagram van aparte y NUNCA cuentan para el semáforo: piden
-    1.000 seguidores y cuenta profesional, así que quien no llega no puede
-    hacerlos y no debe salir en rojo por ello.
+    Las columnas de publicados y trials siguen existiendo con lo que se anotó
+    en su día, pero ya no se piden ni se cuentan: nadie tenía forma de
+    comprobarlas sin preguntar, así que el dato valía poco y costaba cada
+    semana. Se conservan para no perder el histórico.
 
     Una fila por alumno y semana. `lunes` identifica la semana (ISO, de lunes a
     domingo), igual que el registro de tareas del CRM.
@@ -519,11 +526,19 @@ class SemanaAlumno(Base):
 
     @property
     def publicados(self) -> int:
+        """Histórico. Ya no se pide ni cuenta para nada; se conserva para no
+        perder lo que se anotó antes de dejar de seguirlo."""
         return self.publicados_ig + self.publicados_tiktok
 
     @property
+    def sin_editar(self) -> int:
+        """Grabados que siguen esperando montaje. Es la lectura útil de los dos
+        números juntos y lo que convierte el repaso en una conversación."""
+        return max(0, self.grabados - self.editados)
+
+    @property
     def cumple(self) -> bool:
-        return self.publicados >= self.MINIMO_SEMANAL
+        return self.editados >= self.MINIMO_SEMANAL
 
 
 class TareaEquipo(Base):

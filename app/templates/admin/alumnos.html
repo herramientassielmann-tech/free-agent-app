@@ -9,7 +9,7 @@
     <h1 class="page-title">Alumnos</h1>
     <p class="page-subtitle">
       {% if filas %}{{ cumplen }} de {{ filas|length }} llegan a los {{ minimo }} vídeos
-      de esta semana.{% else %}Todavía no hay nadie en el seguimiento.{% endif %}
+      editados esta semana.{% else %}Todavía no hay nadie en el seguimiento.{% endif %}
     </p>
   </div>
   <div class="alu-semana">
@@ -34,10 +34,6 @@
         <th>Alumno</th>
         <th class="alu-col">Grabados</th>
         <th class="alu-col">Editados</th>
-        <th class="alu-col">Instagram</th>
-        <th class="alu-col">TikTok</th>
-        <th class="alu-col alu-col--suelta">Trials</th>
-        <th class="alu-col">Publicados</th>
         <th>Nota de la semana</th>
       </tr>
     </thead>
@@ -46,29 +42,32 @@
       <tr data-uid="{{ f.user.id }}">
         <td class="alu-quien">
           <b>{{ f.user.name }}</b>
-          <span class="alu-historial" title="Publicados en las últimas semanas">
+          <span class="alu-historial" title="Vídeos editados en las últimas semanas">
             {% for h in f.historial %}
             <i class="alu-barra {% if h.cumple %}alu-barra--ok{% endif %}"
-               style="height:{{ 3 + (h.publicados if h.publicados < 8 else 8) * 2 }}px"
-               title="{{ h.lunes }}: {{ h.publicados }}"></i>
+               style="height:{{ 3 + (h.editados if h.editados < 8 else 8) * 2 }}px"
+               title="{{ h.lunes }}: {{ h.editados }}"></i>
             {% endfor %}
           </span>
+          {# La lectura útil de los dos números juntos: lo que grabó y sigue sin
+             montar. No es un tirón de orejas, es el pie para venderle edición. #}
+          <span class="alu-pendiente" data-pendiente
+                {% if not f.datos.sin_editar %}hidden{% endif %}>{{ f.datos.sin_editar }} sin editar</span>
         </td>
-        {% for campo, rotulo in [('grabados','Grabados'),('editados','Editados'),
-              ('publicados_ig','Instagram'),('publicados_tiktok','TikTok'),('trials','Trials')] %}
+        {# Grabados y editados, en ese orden: es el orden en que pasan las
+           cosas. «Editados» lleva además el semáforo, porque es el número que
+           cuenta — una columna aparte repitiendo la misma cifra sobraba. #}
+        {% for campo, rotulo in [('grabados','Grabados'), ('editados','Editados')] %}
         <td class="alu-col" data-etiqueta="{{ rotulo }}">
-          <span class="alu-paso {% if campo == 'trials' %}alu-paso--suelta{% endif %}">
+          <span class="alu-paso {% if campo == 'editados' %}alu-paso--cuenta{% endif %}">
             <button type="button" class="alu-mas-menos" data-campo="{{ campo }}" data-paso="-1">−</button>
-            <input class="alu-num" data-campo="{{ campo }}" type="text" inputmode="numeric"
-                   value="{{ f.datos[campo] }}" aria-label="{{ campo }}">
+            <input class="alu-num {% if campo == 'editados' %}alu-num--cuenta{% if f.datos.cumple %} alu-num--ok{% endif %}{% endif %}"
+                   data-campo="{{ campo }}" type="text" inputmode="numeric"
+                   value="{{ f.datos[campo] }}" aria-label="{{ rotulo }}">
             <button type="button" class="alu-mas-menos" data-campo="{{ campo }}" data-paso="1">+</button>
           </span>
         </td>
         {% endfor %}
-        <td class="alu-col" data-etiqueta="Publicados">
-          <span class="alu-total {% if f.datos.cumple %}alu-total--ok{% endif %}"
-                data-total>{{ f.datos.publicados }}</span>
-        </td>
         <td>
           <input class="alu-nota" data-campo="nota" value="{{ f.datos.nota }}"
                  placeholder="Lo que quieras recordar…">
@@ -78,9 +77,9 @@
     </tbody>
   </table>
   </div>
-  <p class="alu-pie">Las barras junto al nombre son los vídeos publicados de las
-  últimas {{ filas[0].historial|length }} semanas. Los trials van aparte y no
-  cuentan para el mínimo: piden 1.000 seguidores y no todos llegan.</p>
+  <p class="alu-pie">Las barras junto al nombre son los vídeos editados de las
+  últimas {{ filas[0].historial|length }} semanas. Cuenta lo editado, no lo
+  publicado: es el último paso que depende de nosotros.</p>
   {% else %}
   <div class="alta-vacio">
     <b>Nadie en el seguimiento todavía.</b>
@@ -107,5 +106,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/alumnos.js?v=2"></script>
+<script src="/static/js/alumnos.js?v=3"></script>
 {% endblock %}
