@@ -682,7 +682,11 @@ async def alumnos(
             "historial": [
                 {"lunes": l.strftime("%d/%m"),
                  "editados": historico[(u.id, l)].editados if (u.id, l) in historico else 0,
-                 "cumple": historico[(u.id, l)].cumple if (u.id, l) in historico else False}
+                 "cumple": historico[(u.id, l)].cumple if (u.id, l) in historico else False,
+                 # Sin fila no es «semana floja», es «no lo apuntamos». Pintar de
+                 # rojo las semanas de antes de que entrara seria inventarse un
+                 # incumplimiento que nunca ocurrio.
+                 "hay_datos": (u.id, l) in historico}
                 for l in lunes_previos
             ],
         })

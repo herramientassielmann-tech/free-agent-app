@@ -2321,6 +2321,9 @@ a:hover { color: #3d9eff; }
   transition: height .28s cubic-bezier(.32,.72,0,1), background .28s ease;
 }
 .alu-barra--ok { background: var(--c-verde-vivo); }
+/* Solo las semanas que SE APUNTARON y se quedaron cortas. Una semana sin fila
+   se queda gris: no sabemos si no hizo nada o si nadie lo anotó. */
+.alu-barra--bajo { background: #E8A9A4; }
 
 .alu-paso {
   display: inline-flex; align-items: center; gap: 2px;
@@ -2348,12 +2351,20 @@ a:hover { color: #3d9eff; }
 .alu-paso--cuenta:has(.alu-num--ok) {
   background: var(--c-verde-luz); border-color: #BFE3CE;
 }
+/* Por debajo del mínimo de la semana. Es el estado en el que empieza el lunes
+   todo el mundo, así que el rojo es de aviso y no de alarma: se lee de un
+   vistazo pero no grita desde el otro lado de la mesa. */
+.alu-num--bajo { color: var(--c-rojo); }
+.alu-paso--cuenta:has(.alu-num--bajo) {
+  background: var(--c-rojo-luz); border-color: #F0C9C6;
+}
 
 /* Lo grabado que sigue sin montar. Va bajo el nombre y en tono menor: no es un
    tirón de orejas, es el pie para ofrecerle edición. */
 .alu-pendiente {
   display: block; margin-top: 3px; font-size: .72rem; color: var(--c-tenue);
 }
+.alu-flojos { color: var(--c-rojo); font-weight: 600; }
 
 .alu-nota {
   width: 100%; min-width: 150px; background: transparent; border: 1px solid transparent;

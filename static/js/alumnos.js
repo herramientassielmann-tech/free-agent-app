@@ -34,7 +34,10 @@
     /* El semáforo vive en la propia casilla de editados: es el número que
        cuenta, y una casilla aparte repitiendo la misma cifra sobraba. */
     const editados = fila.querySelector('.alu-num[data-campo="editados"]');
-    if (editados) editados.classList.toggle("alu-num--ok", datos.cumple);
+    if (editados) {
+      editados.classList.toggle("alu-num--ok", datos.cumple);
+      editados.classList.toggle("alu-num--bajo", !datos.cumple);
+    }
 
     /* Lo grabado que sigue sin montar. Aparece y desaparece solo. */
     const pendiente = fila.querySelector("[data-pendiente]");
@@ -52,6 +55,9 @@
     if (ultima) {
       ultima.style.height = altoBarra(datos.editados) + "px";
       ultima.classList.toggle("alu-barra--ok", datos.cumple);
+      /* La semana que estás tocando SIEMPRE tiene fila —la crea el propio
+         guardado—, así que aquí el rojo es simplemente «no llega». */
+      ultima.classList.toggle("alu-barra--bajo", !datos.cumple);
       const cuando = (ultima.title || "").split(":")[0];
       ultima.title = `${cuando}: ${datos.editados}`;
     }

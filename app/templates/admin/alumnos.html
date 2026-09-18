@@ -8,8 +8,10 @@
   <div>
     <h1 class="page-title">Alumnos</h1>
     <p class="page-subtitle">
-      {% if filas %}{{ cumplen }} de {{ filas|length }} llegan a los {{ minimo }} vídeos
-      editados esta semana.{% else %}Todavía no hay nadie en el seguimiento.{% endif %}
+      {% if filas %}{% set flojos = filas|length - cumplen %}{{ cumplen }} de {{ filas|length }}
+      llegan a los {{ minimo }} vídeos editados esta semana{% if flojos %} ·
+      <b class="alu-flojos">{{ flojos }} por debajo</b>{% endif %}.{% else %}Todavía no
+      hay nadie en el seguimiento.{% endif %}
     </p>
   </div>
   <div class="alu-semana">
@@ -44,7 +46,7 @@
           <b>{{ f.user.name }}</b>
           <span class="alu-historial" title="Vídeos editados en las últimas semanas">
             {% for h in f.historial %}
-            <i class="alu-barra {% if h.cumple %}alu-barra--ok{% endif %}"
+            <i class="alu-barra {% if h.cumple %}alu-barra--ok{% elif h.hay_datos %}alu-barra--bajo{% endif %}"
                style="height:{{ 3 + (h.editados if h.editados < 8 else 8) * 2 }}px"
                title="{{ h.lunes }}: {{ h.editados }}"></i>
             {% endfor %}
@@ -61,7 +63,7 @@
         <td class="alu-col" data-etiqueta="{{ rotulo }}">
           <span class="alu-paso {% if campo == 'editados' %}alu-paso--cuenta{% endif %}">
             <button type="button" class="alu-mas-menos" data-campo="{{ campo }}" data-paso="-1">−</button>
-            <input class="alu-num {% if campo == 'editados' %}alu-num--cuenta{% if f.datos.cumple %} alu-num--ok{% endif %}{% endif %}"
+            <input class="alu-num {% if campo == 'editados' %}alu-num--cuenta {{ 'alu-num--ok' if f.datos.cumple else 'alu-num--bajo' }}{% endif %}"
                    data-campo="{{ campo }}" type="text" inputmode="numeric"
                    value="{{ f.datos[campo] }}" aria-label="{{ rotulo }}">
             <button type="button" class="alu-mas-menos" data-campo="{{ campo }}" data-paso="1">+</button>
@@ -106,5 +108,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/alumnos.js?v=3"></script>
+<script src="/static/js/alumnos.js?v=4"></script>
 {% endblock %}
