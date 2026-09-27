@@ -42,6 +42,10 @@ EMAIL_FROM = get_env("EMAIL_FROM",
 EMAIL_REPLY_TO = get_env("EMAIL_REPLY_TO", default=None, required=False)
 APP_URL = get_env("APP_URL", default="https://tool.robertsielmann.com", required=False)
 
+# A dónde llevan los enlaces de seguimiento (/r/<codigo>). Es la landing, que
+# vive en otro alojamiento distinto al de esta app.
+LANDING_URL = get_env("LANDING_URL", default="https://robertsielmann.com", required=False)
+
 # ── Alta de alumnos (onboarding) ───────────────────────────────────────────
 # Todo opcional: sin estas claves el circuito se puede recorrer igual, sólo que
 # los botones correspondientes salen desactivados con un aviso. Así se puede

@@ -3087,3 +3087,69 @@ body:has(.mov-fondo:not([hidden])) .rb-hello {
   .acc-fila .form-input { flex: 1 1 auto; }
   .acc-fila .btn { width: 100%; height: 48px; }
 }
+
+/* ── Enlaces de seguimiento ───────────────────────────────────────────────
+   Vive en la zona clara, como el CRM y Alumnos. `.crm-zona` solo define los
+   colores; las tarjetas y la tabla hay que aclararlas a mano, igual que hace
+   `.alu-zona`. */
+.enl-zona .card { background: var(--c-tarjeta); border: 1px solid var(--c-linea); }
+.enl-zona .section-title { color: var(--c-tinta); }
+.enl-zona .admin-table th { color: var(--c-tenue); border-bottom: 1px solid var(--c-linea); }
+.enl-zona .admin-table td { border-bottom: 1px solid var(--c-linea); color: var(--c-suave); }
+.enl-zona .admin-table tr:last-child td { border-bottom: none; }
+.enl-zona .form-input {
+  background: #fff; border: 1px solid var(--c-linea); color: var(--c-tinta);
+}
+.enl-zona .alu-pie { color: var(--c-tenue); }
+
+.enl-crear { margin-bottom: 16px; }
+.enl-ayuda { color: var(--c-suave); font-size: .9rem; margin: 6px 0 16px; max-width: 64ch; }
+.enl-fabrica { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.enl-base {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .86rem; color: var(--c-tenue); white-space: nowrap;
+}
+.enl-codigo {
+  flex: 1 1 190px; min-width: 0; max-width: 260px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.enl-fabrica .btn { flex: none; height: 46px; }
+.enl-pista {
+  margin-top: 10px; font-size: .82rem; color: var(--c-tenue);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+}
+
+.enl-tabla th.enl-num, .enl-tabla td.enl-num { text-align: right; font-variant-numeric: tabular-nums; }
+.enl-nombre { color: var(--c-tinta); }
+.enl-gana { color: var(--c-verde); }
+.enl-copia-fila {
+  margin-left: 10px; border: 1px solid var(--c-linea); background: var(--c-tarjeta);
+  color: var(--c-suave); border-radius: var(--r-pill); padding: 3px 10px;
+  font-size: .72rem; cursor: pointer; font-family: inherit;
+}
+.enl-copia-fila:hover { border-color: #B9C4CE; color: var(--c-tinta); }
+
+.enl-ultimos { margin-top: 16px; }
+.enl-lista { list-style: none; display: grid; gap: 2px; margin-top: 10px; }
+.enl-lista li {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  padding: 7px 0; border-bottom: 1px solid var(--c-linea); font-size: .85rem;
+}
+.enl-lista li:last-child { border-bottom: 0; }
+.enl-lista b { color: var(--c-tinta); min-width: 96px; }
+.enl-cuando { color: var(--c-suave); font-variant-numeric: tabular-nums; }
+.enl-desde { color: var(--c-tenue); overflow-wrap: anywhere; }
+
+@media (max-width: 860px) {
+  /* El botón a lo ancho y el último: el pulgar llega abajo, no al centro. */
+  .enl-fabrica { flex-direction: column; align-items: stretch; }
+  .enl-codigo { max-width: none; }
+  .enl-fabrica .btn { width: 100%; height: 48px; }
+  .enl-base { display: none; }       /* ya va entera en la pista de debajo */
+  .enl-tabla td.enl-num { justify-content: space-between; }
+  .enl-lista b { min-width: 0; }
+  /* El de copiar es el gesto de esta pantalla: tiene que poder pulsarse. */
+  .enl-copia-fila { min-height: 34px; padding: 6px 14px; margin-left: 0; }
+  .enl-tabla td:first-child { display: flex; align-items: center; gap: 12px; }
+}

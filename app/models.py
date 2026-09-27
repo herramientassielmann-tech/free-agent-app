@@ -399,6 +399,10 @@ class Alta(Base):
 
     user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
     recordatorios_enviados: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # De qué enlace vino. Lo rellena el webhook de Calendly leyendo el utm_source
+    # que el widget arrastra desde la URL de la landing. Vacío = entró por su
+    # cuenta, o Calendly no nos mandó el dato.
+    origen: Mapped[Optional[str]] = mapped_column(String(60), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     firma: Mapped[Optional["FirmaContrato"]] = relationship(
@@ -418,6 +422,27 @@ class Alta(Base):
     @property
     def completada(self) -> bool:
         return bool(self.pagado_en and self.contrato_firmado_en and self.cuenta_creada_en)
+
+
+class ClicEnlace(Base):
+    """Una visita llegada por un enlace de seguimiento (/r/<codigo>).
+
+    Se guarda una fila por clic, no un contador: con el contador sabes cuántos
+    han entrado, pero no cuándo ni desde dónde, que es lo que dice si un sitio
+    funciona o si alguien le dio veinte veces el mismo día.
+
+    No se guarda la IP. Se guarda un hash de IP+navegador, que sirve para contar
+    personas distintas sin conservar de quién es cada visita.
+    """
+    __tablename__ = "clics_enlace"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    codigo: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    creado_en: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow,
+                                                nullable=False, index=True)
+    referente: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    agente: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    visitante: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
 
 
 class FirmaContrato(Base):

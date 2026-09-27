@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Enlaces — Admin — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="crm-zona enl-zona">
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Enlaces</h1>
+    <p class="page-subtitle">
+      {% if filas %}{{ total_clics }} visita{{ 's' if total_clics != 1 }} ·
+      {{ total_reuniones }} reunión{{ 'es' if total_reuniones != 1 }} con origen
+      {%- if sin_origen %} · {{ sin_origen }} sin origen{% endif %}.
+      {% else %}Todavía no ha entrado nadie por ningún enlace.{% endif %}
+    </p>
+  </div>
+</div>
+
+{# ── Fabricar un enlace ── #}
+<div class="card enl-crear">
+  <h2 class="section-title">Crea un enlace</h2>
+  <p class="enl-ayuda">Escribe un nombre para el sitio donde lo vas a publicar y
+  copia la dirección. No hay que darlo de alta: aparece solo en la tabla en
+  cuanto alguien lo pulse.</p>
+  <div class="enl-fabrica">
+    <span class="enl-base">{{ base }}</span>
+    <input class="form-input enl-codigo" id="enl-codigo" type="text"
+           placeholder="instagram" autocomplete="off" spellcheck="false"
+           maxlength="40" value="instagram">
+    <button type="button" class="btn btn-primary" id="enl-copiar">Copiar enlace</button>
+  </div>
+  <p class="enl-pista" id="enl-pista">Solo letras, números y guiones.</p>
+</div>
+
+{# ── Qué está haciendo cada uno ── #}
+{% if filas %}
+<div class="card">
+  <div class="alu-envoltura">
+  <table class="admin-table enl-tabla">
+    <thead>
+      <tr>
+        <th>Enlace</th>
+        <th class="enl-num">Visitas</th>
+        <th class="enl-num">Personas</th>
+        <th class="enl-num">Últimos 30 días</th>
+        <th class="enl-num">Reuniones</th>
+        <th class="enl-num">Convierte</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in filas %}
+      <tr>
+        <td data-etiqueta="Enlace">
+          <b class="enl-nombre">{{ f.codigo }}</b>
+          <button type="button" class="enl-copia-fila" data-url="{{ f.url }}"
+                  title="Copiar {{ f.url }}">Copiar</button>
+        </td>
+        <td class="enl-num" data-etiqueta="Visitas">{{ f.clics }}</td>
+        <td class="enl-num" data-etiqueta="Personas">{{ f.unicos }}</td>
+        <td class="enl-num" data-etiqueta="Últimos 30 días">{{ f.recientes }}</td>
+        <td class="enl-num" data-etiqueta="Reuniones">
+          <b class="{% if f.reuniones %}enl-gana{% endif %}">{{ f.reuniones }}</b>
+        </td>
+        <td class="enl-num" data-etiqueta="Convierte">
+          {% if f.conversion is not none %}{{ f.conversion }}%{% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="alu-pie">«Personas» cuenta visitantes distintos, no clics: quien abre
+  el enlace cinco veces cuenta una. La conversión se calcula sobre personas.</p>
+</div>
+{% endif %}
+
+{# ── Las últimas visitas ── #}
+{% if ultimos %}
+<div class="card enl-ultimos">
+  <h2 class="section-title">Últimas visitas</h2>
+  <ul class="enl-lista">
+    {% for c in ultimos %}
+    <li>
+      <b>{{ c.codigo }}</b>
+      <span class="enl-cuando">{{ c.creado_en.strftime('%d/%m %H:%M') }}</span>
+      <span class="enl-desde">{% if c.referente %}desde {{ c.referente[:58] }}{% else %}entrada directa{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    const campo  = document.getElementById('enl-codigo');
+    const boton  = document.getElementById('enl-copiar');
+    const pista  = document.getElementById('enl-pista');
+    const BASE   = {{ base | tojson }};
+    if (!campo || !boton) return;
+
+    /* Se limpia mientras escribe: el código acaba en una URL pública, así que
+       más vale corregirlo aquí que descubrirlo cuando el enlace ya está impreso. */
+    const limpiar = v => v.toLowerCase().normalize('NFD')
+      .replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9_-]+/g, '-')
+      .replace(/-{2,}/g, '-').slice(0, 40)
+      .replace(/^-+|-+$/g, '');          // sin guiones colgando en los extremos
+
+    function pintar() {
+      const c = limpiar(campo.value);
+      if (campo.value !== c) campo.value = c;
+      pista.textContent = c ? BASE + c : 'Escribe un nombre para el enlace.';
+      boton.disabled = !c;
+    }
+    campo.addEventListener('input', pintar);
+    pintar();
+
+    async function copiar(texto, btn) {
+      const antes = btn.textContent;
+      try { await navigator.clipboard.writeText(texto); }
+      catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = texto; ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+      }
+      btn.textContent = '¡Copiado!';
+      setTimeout(() => { btn.textContent = antes; }, 1800);
+    }
+
+    boton.addEventListener('click', () => copiar(BASE + limpiar(campo.value), boton));
+    document.querySelectorAll('.enl-copia-fila').forEach(b =>
+      b.addEventListener('click', () => copiar(b.dataset.url, b)));
+  })();
+</script>
+{% endblock %}

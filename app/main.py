@@ -14,7 +14,7 @@ from app.database import engine, SessionLocal
 from app.models import Base, User
 from app.auth import hash_password
 from app.config import ADMIN_EMAIL, ADMIN_PASSWORD
-from app.routers import auth, scripts, profile, admin, chatbot, robert, ideas, editor, biblioteca, crm, bienvenida, webhooks
+from app.routers import auth, scripts, profile, admin, chatbot, robert, ideas, editor, biblioteca, crm, bienvenida, webhooks, enlaces
 
 
 def _create_admin_if_missing(db: Session):
@@ -50,6 +50,7 @@ def _migrate_db(db: Session):
         "ALTER TABLE users ADD COLUMN temp_password VARCHAR(255)",
         "ALTER TABLE users ADD COLUMN es_alumno BOOLEAN DEFAULT 0",
         "ALTER TABLE tareas_equipo ADD COLUMN notas TEXT",
+        "ALTER TABLE altas ADD COLUMN origen VARCHAR(60)",
     ]
     for sql in simple:
         try:
@@ -151,6 +152,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Rutas públicas: las únicas de la app que no exigen sesión. Van primero
 # para que se vea de un vistazo que existen.
+app.include_router(enlaces.router)
 app.include_router(bienvenida.router)
 app.include_router(webhooks.router)
 app.include_router(auth.router)

@@ -603,6 +603,70 @@ async def alta_contrato(
     return HTMLResponse(a.firma.html_firmado)
 
 
+# ── Enlaces de seguimiento ───────────────────────────────────────────────────
+
+@router.get("/enlaces", response_class=HTMLResponse)
+async def enlaces(
+    request: Request,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Cuántos entran por cada enlace y cuántos acaban agendando.
+
+    No hay que dar de alta los códigos en ningún sitio: aparecen aquí solos en
+    cuanto alguien pulsa el enlace o agenda con ese origen. Inventarse un código
+    nuevo es escribirlo en la URL y ya.
+    """
+    from sqlalchemy import func
+    from app.models import ClicEnlace, Alta
+    from app.config import APP_URL
+
+    hoy = datetime.utcnow()
+    hace30 = hoy - timedelta(days=30)
+
+    clics = dict(db.query(ClicEnlace.codigo, func.count(ClicEnlace.id))
+                   .group_by(ClicEnlace.codigo).all())
+    unicos = dict(db.query(ClicEnlace.codigo, func.count(func.distinct(ClicEnlace.visitante)))
+                    .group_by(ClicEnlace.codigo).all())
+    recientes = dict(db.query(ClicEnlace.codigo, func.count(ClicEnlace.id))
+                       .filter(ClicEnlace.creado_en >= hace30)
+                       .group_by(ClicEnlace.codigo).all())
+    reuniones = dict(db.query(Alta.origen, func.count(Alta.id))
+                       .filter(Alta.origen.isnot(None))
+                       .group_by(Alta.origen).all())
+
+    filas = []
+    for codigo in sorted(set(clics) | set(reuniones)):
+        c, r = clics.get(codigo, 0), reuniones.get(codigo, 0)
+        u = unicos.get(codigo, 0)
+        filas.append({
+            "codigo": codigo,
+            "url": f"{APP_URL.rstrip('/')}/r/{codigo}",
+            "clics": c,
+            "unicos": u,
+            "recientes": recientes.get(codigo, 0),
+            "reuniones": r,
+            # Sobre personas distintas, no sobre clics: si alguien abre el
+            # enlace cinco veces y agenda una, la conversión no es del 20%.
+            "conversion": round(r * 100 / u, 1) if u else None,
+        })
+    filas.sort(key=lambda f: (-f["reuniones"], -f["clics"]))
+
+    ultimos = (db.query(ClicEnlace).order_by(ClicEnlace.creado_en.desc()).limit(25).all())
+
+    # Las que llegaron sin código: entraron por su cuenta o el UTM no llegó.
+    sin_origen = db.query(Alta).filter(Alta.origen.is_(None)).count()
+
+    return templates.TemplateResponse("admin/enlaces.html", {
+        "request": request, "user": current_user,
+        "filas": filas, "ultimos": ultimos,
+        "total_clics": sum(clics.values()),
+        "total_reuniones": sum(reuniones.values()),
+        "sin_origen": sin_origen,
+        "base": f"{APP_URL.rstrip('/')}/r/",
+    })
+
+
 # ── Seguimiento semanal de alumnos ───────────────────────────────────────────
 
 # Solo estos dos se piden y se guardan. Las columnas de publicados y trials

@@ -60,6 +60,19 @@ def _firma_valida(cuerpo: bytes, cabecera: str, secreto: str) -> bool:
     return hmac.compare_digest(esperada, v1)
 
 
+def _origen(p: dict) -> Optional[str]:
+    """De qué enlace viene esta reserva.
+
+    Calendly mete en `tracking` los UTM que arrastró desde la URL de la landing,
+    y ahí es donde aterriza el código de /r/<codigo>. Si la persona entró
+    escribiendo la web a mano, no hay nada y se queda vacío — que también es un
+    dato: significa que llegó por su cuenta.
+    """
+    t = p.get("tracking") or {}
+    origen = (t.get("utm_source") or t.get("utm_campaign") or "").strip()
+    return origen[:60] or None
+
+
 # ── Calendly ─────────────────────────────────────────────────────────────────
 
 @router.post("/calendly")
@@ -102,6 +115,10 @@ async def calendly(
 
     if alta:                       # reagendada: se mueve la hora, nada más
         alta.programada_para = inicio
+        # El origen solo se rellena si estaba vacío: la primera vez es la buena,
+        # y al reagendar Calendly ya no manda los UTM de la visita original.
+        if not alta.origen:
+            alta.origen = _origen(p)
         if not alta.email_enviado_en:
             alta.nombre = p.get("name") or alta.nombre
             alta.email = (p.get("email") or alta.email).strip().lower()
@@ -114,6 +131,7 @@ async def calendly(
         telefono=(p.get("text_reminder_number") or None),
         programada_para=inicio,
         calendly_uri=uri[:300],
+        origen=_origen(p),
         token=nuevo_token(),
         token_expira=caducidad(),
     )
