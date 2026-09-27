@@ -438,6 +438,10 @@ class ClicEnlace(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     codigo: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    # "visita" al pulsar el enlace, "formulario" al enviar el Typeform. Dos
+    # filas del mismo código son el embudo entero: cuántos entraron y cuántos
+    # llegaron a dejar sus datos.
+    tipo: Mapped[str] = mapped_column(String(12), default="visita", nullable=False, index=True)
     creado_en: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow,
                                                 nullable=False, index=True)
     referente: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)

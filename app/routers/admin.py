@@ -624,35 +624,42 @@ async def enlaces(
     hoy = datetime.utcnow()
     hace30 = hoy - timedelta(days=30)
 
+    visitas = ClicEnlace.tipo == "visita"
     clics = dict(db.query(ClicEnlace.codigo, func.count(ClicEnlace.id))
-                   .group_by(ClicEnlace.codigo).all())
+                   .filter(visitas).group_by(ClicEnlace.codigo).all())
     unicos = dict(db.query(ClicEnlace.codigo, func.count(func.distinct(ClicEnlace.visitante)))
-                    .group_by(ClicEnlace.codigo).all())
+                    .filter(visitas).group_by(ClicEnlace.codigo).all())
     recientes = dict(db.query(ClicEnlace.codigo, func.count(ClicEnlace.id))
-                       .filter(ClicEnlace.creado_en >= hace30)
+                       .filter(visitas, ClicEnlace.creado_en >= hace30)
                        .group_by(ClicEnlace.codigo).all())
+    # Quién llegó a dejar sus datos. Personas, no envíos: si alguien manda el
+    # formulario dos veces no son dos personas interesadas.
+    formularios = dict(db.query(ClicEnlace.codigo, func.count(func.distinct(ClicEnlace.visitante)))
+                         .filter(ClicEnlace.tipo == "formulario")
+                         .group_by(ClicEnlace.codigo).all())
     reuniones = dict(db.query(Alta.origen, func.count(Alta.id))
                        .filter(Alta.origen.isnot(None))
                        .group_by(Alta.origen).all())
 
     filas = []
-    for codigo in sorted(set(clics) | set(reuniones)):
+    for codigo in sorted(set(clics) | set(reuniones) | set(formularios)):
         c, r = clics.get(codigo, 0), reuniones.get(codigo, 0)
-        u = unicos.get(codigo, 0)
+        u, fo = unicos.get(codigo, 0), formularios.get(codigo, 0)
         filas.append({
             "codigo": codigo,
             "url": f"{APP_URL.rstrip('/')}/r/{codigo}",
             "clics": c,
             "unicos": u,
             "recientes": recientes.get(codigo, 0),
+            "formularios": fo,
             "reuniones": r,
             # Sobre personas distintas, no sobre clics: si alguien abre el
-            # enlace cinco veces y agenda una, la conversión no es del 20%.
-            "conversion": round(r * 100 / u, 1) if u else None,
+            # enlace cinco veces y deja sus datos una, no convierte al 20%.
+            "conversion": round(fo * 100 / u, 1) if u else None,
         })
-    filas.sort(key=lambda f: (-f["reuniones"], -f["clics"]))
+    filas.sort(key=lambda f: (-f["formularios"], -f["clics"]))
 
-    ultimos = (db.query(ClicEnlace).order_by(ClicEnlace.creado_en.desc()).limit(25).all())
+    ultimos = (db.query(ClicEnlace).order_by(ClicEnlace.creado_en.desc()).limit(30).all())
 
     # Las que llegaron sin código: entraron por su cuenta o el UTM no llegó.
     sin_origen = db.query(Alta).filter(Alta.origen.is_(None)).count()
@@ -661,6 +668,7 @@ async def enlaces(
         "request": request, "user": current_user,
         "filas": filas, "ultimos": ultimos,
         "total_clics": sum(clics.values()),
+        "total_formularios": sum(formularios.values()),
         "total_reuniones": sum(reuniones.values()),
         "sin_origen": sin_origen,
         "base": f"{APP_URL.rstrip('/')}/r/",

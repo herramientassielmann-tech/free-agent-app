@@ -9,8 +9,8 @@
     <h1 class="page-title">Enlaces</h1>
     <p class="page-subtitle">
       {% if filas %}{{ total_clics }} visita{{ 's' if total_clics != 1 }} ·
-      {{ total_reuniones }} reunión{{ 'es' if total_reuniones != 1 }} con origen
-      {%- if sin_origen %} · {{ sin_origen }} sin origen{% endif %}.
+      {{ total_formularios }} formulario{{ 's' if total_formularios != 1 }} ·
+      {{ total_reuniones }} reunión{{ 'es' if total_reuniones != 1 }} con origen.
       {% else %}Todavía no ha entrado nadie por ningún enlace.{% endif %}
     </p>
   </div>
@@ -42,7 +42,8 @@
         <th>Enlace</th>
         <th class="enl-num">Visitas</th>
         <th class="enl-num">Personas</th>
-        <th class="enl-num">Últimos 30 días</th>
+        <th class="enl-num">30 días</th>
+        <th class="enl-num">Formularios</th>
         <th class="enl-num">Reuniones</th>
         <th class="enl-num">Convierte</th>
       </tr>
@@ -57,10 +58,11 @@
         </td>
         <td class="enl-num" data-etiqueta="Visitas">{{ f.clics }}</td>
         <td class="enl-num" data-etiqueta="Personas">{{ f.unicos }}</td>
-        <td class="enl-num" data-etiqueta="Últimos 30 días">{{ f.recientes }}</td>
-        <td class="enl-num" data-etiqueta="Reuniones">
-          <b class="{% if f.reuniones %}enl-gana{% endif %}">{{ f.reuniones }}</b>
+        <td class="enl-num" data-etiqueta="30 días">{{ f.recientes }}</td>
+        <td class="enl-num" data-etiqueta="Formularios">
+          <b class="{% if f.formularios %}enl-gana{% endif %}">{{ f.formularios }}</b>
         </td>
+        <td class="enl-num" data-etiqueta="Reuniones">{{ f.reuniones }}</td>
         <td class="enl-num" data-etiqueta="Convierte">
           {% if f.conversion is not none %}{{ f.conversion }}%{% else %}—{% endif %}
         </td>
@@ -70,7 +72,10 @@
   </table>
   </div>
   <p class="alu-pie">«Personas» cuenta visitantes distintos, no clics: quien abre
-  el enlace cinco veces cuenta una. La conversión se calcula sobre personas.</p>
+  el enlace cinco veces cuenta una. «Formularios» son los que llegaron a dejar
+  sus datos en el Typeform — <b>ahí tienes el nombre de cada uno</b>. La
+  conversión es formularios sobre personas. «Reuniones» solo se rellena cuando
+  el webhook de Calendly esté activo.</p>
 </div>
 {% endif %}
 
@@ -82,6 +87,7 @@
     {% for c in ultimos %}
     <li>
       <b>{{ c.codigo }}</b>
+      <span class="enl-tipo enl-tipo--{{ c.tipo }}">{{ 'formulario' if c.tipo == 'formulario' else 'visita' }}</span>
       <span class="enl-cuando">{{ c.creado_en.strftime('%d/%m %H:%M') }}</span>
       <span class="enl-desde">{% if c.referente %}desde {{ c.referente[:58] }}{% else %}entrada directa{% endif %}</span>
     </li>

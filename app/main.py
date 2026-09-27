@@ -51,6 +51,7 @@ def _migrate_db(db: Session):
         "ALTER TABLE users ADD COLUMN es_alumno BOOLEAN DEFAULT 0",
         "ALTER TABLE tareas_equipo ADD COLUMN notas TEXT",
         "ALTER TABLE altas ADD COLUMN origen VARCHAR(60)",
+        "ALTER TABLE clics_enlace ADD COLUMN tipo VARCHAR(12) DEFAULT 'visita'",
     ]
     for sql in simple:
         try:
