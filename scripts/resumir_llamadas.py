@@ -30,7 +30,7 @@ import json
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -137,7 +137,11 @@ def main() -> int:
 
         for t in datos.get("transcripts") or []:
             fid = t.get("id") or ""
-            cuando = datetime.utcfromtimestamp((t.get("date") or 0) / 1000)
+            # `utcfromtimestamp` está en retirada y avisaba en cada pasada, dos
+            # veces al día. Se construye con zona y se guarda sin ella, que es
+            # como almacena las fechas el resto de la app.
+            cuando = datetime.fromtimestamp((t.get("date") or 0) / 1000,
+                                            timezone.utc).replace(tzinfo=None)
             minutos = round(t.get("duration") or 0)
 
             if fid in ya or cuando < desde:
