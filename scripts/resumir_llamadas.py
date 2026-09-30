@@ -122,7 +122,9 @@ def main() -> int:
         print("Falta FIREFLIES_API_KEY en el .env. No hago nada.")
         return 1
 
-    desde = datetime.utcnow() - timedelta(days=args.dias)
+    # Igual que arriba: con zona para calcular, sin ella para comparar con lo
+    # que hay guardado.
+    desde = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=args.dias)
     db = SessionLocal()
     try:
         try:
