@@ -570,6 +570,33 @@ class SemanaAlumno(Base):
         return self.editados >= self.MINIMO_SEMANAL
 
 
+class LlamadaResumen(Base):
+    """Lo que se habló en una llamada, traído de Fireflies y destilado.
+
+    Existe porque las llamadas son donde pasa todo —los acuerdos, las
+    objeciones, quién va flojo— y hasta ahora no dejaban ningún rastro. A los
+    diez días nadie se acuerda de qué se le dijo a quién.
+
+    Se guarda el resumen, no la transcripción entera: la transcripción ya vive
+    en Fireflies y ocupa. Aquí queda lo que se consulta.
+
+    `fireflies_id` es único: el trabajo se lanza dos veces al día y así una
+    misma llamada no se resume —ni se paga— dos veces.
+    """
+    __tablename__ = "llamadas_resumen"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    fireflies_id: Mapped[str] = mapped_column(String(60), nullable=False, unique=True, index=True)
+    titulo: Mapped[str] = mapped_column(String(300), nullable=False)
+    fecha: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    duracion_min: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    participantes: Mapped[Optional[str]] = mapped_column(String(400), nullable=True)
+    resumen: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    acuerdos: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    atencion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    creado_en: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class TareaEquipo(Base):
     """Algo que tiene que hacer el equipo: pedir un testimonio, llamar a alguien.
 

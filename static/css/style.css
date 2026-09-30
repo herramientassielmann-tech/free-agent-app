@@ -3160,3 +3160,39 @@ body:has(.mov-fondo:not([hidden])) .rb-hello {
   border-radius: var(--r-pill); padding: 2px 8px; background: var(--c-columna); color: var(--c-tenue);
 }
 .enl-tipo--formulario { background: var(--c-verde-luz); color: var(--c-verde); }
+
+/* ── Llamadas resumidas ───────────────────────────────────────────────────
+   Zona clara, como el resto del panel. */
+.lla-zona .card { background: var(--c-tarjeta); border: 1px solid var(--c-linea); }
+.lla-zona .alta-vacio { color: var(--c-suave); }
+.lla-zona .alta-vacio b { color: var(--c-tinta); }
+.lla-zona .form-input { background: #fff; border: 1px solid var(--c-linea); color: var(--c-tinta); }
+
+.lla-buscar { display: flex; gap: 9px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.lla-buscar .form-input { flex: 1 1 260px; min-width: 0; }
+.lla-buscar .btn { flex: none; height: 46px; }
+
+.lla-lista { display: grid; gap: 14px; }
+.lla-cab { margin-bottom: 11px; }
+.lla-titulo {
+  display: block; font-size: 1.03rem; color: var(--c-tinta);
+  font-weight: 700; letter-spacing: -.01em;
+}
+.lla-meta { display: block; font-size: .8rem; color: var(--c-tenue); margin-top: 3px; }
+.lla-resumen { color: var(--c-suave); font-size: .94rem; line-height: 1.6; }
+
+.lla-bloque { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--c-linea); }
+.lla-rotulo {
+  display: block; font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--c-tenue); margin-bottom: 7px;
+}
+.lla-bloque ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.lla-bloque li { color: var(--c-suave); font-size: .9rem; line-height: 1.5; }
+/* Lo que necesita atención se marca en ámbar: es a lo que hay que reaccionar. */
+.lla-bloque--ojo { border-top-color: #EBD5B0; }
+.lla-bloque--ojo .lla-rotulo { color: var(--c-ambar); }
+
+@media (max-width: 860px) {
+  .lla-buscar { flex-direction: column; align-items: stretch; }
+  .lla-buscar .btn { width: 100%; height: 48px; }
+}

@@ -46,6 +46,10 @@ APP_URL = get_env("APP_URL", default="https://tool.robertsielmann.com", required
 # vive en otro alojamiento distinto al de esta app.
 LANDING_URL = get_env("LANDING_URL", default="https://robertsielmann.com", required=False)
 
+# Fireflies graba y transcribe las llamadas. La clave sirve solo para leer;
+# se saca de Fireflies en Settings → Developer Settings.
+FIREFLIES_API_KEY = get_env("FIREFLIES_API_KEY", default=None, required=False)
+
 # ── Alta de alumnos (onboarding) ───────────────────────────────────────────
 # Todo opcional: sin estas claves el circuito se puede recorrer igual, sólo que
 # los botones correspondientes salen desactivados con un aviso. Así se puede

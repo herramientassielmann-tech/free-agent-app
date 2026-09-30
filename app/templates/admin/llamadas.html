@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Llamadas — Admin — Free Agent Academy{% endblock %}
+
+{% block content %}
+<div class="crm-zona lla-zona">
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Llamadas</h1>
+    <p class="page-subtitle">
+      {% if total %}{{ total }} llamada{{ 's' if total != 1 }} resumida{{ 's' if total != 1 }}.
+      Se revisa Fireflies a las 13:00 y a las 20:00.
+      {% else %}Todavía no hay ninguna llamada resumida.{% endif %}
+    </p>
+  </div>
+</div>
+
+<form class="card lla-buscar" method="GET" action="/admin/llamadas">
+  <input class="form-input" type="search" name="q" value="{{ q }}"
+         placeholder="Busca por alumno, tema o lo que se dijo…" autocomplete="off">
+  <button type="submit" class="btn btn-primary">Buscar</button>
+  {% if q %}<a class="btn btn-secondary" href="/admin/llamadas">Ver todas</a>{% endif %}
+</form>
+
+{% if llamadas %}
+<div class="lla-lista">
+  {% for l in llamadas %}
+  <div class="card lla-ficha">
+    <div class="lla-cab">
+      <div>
+        <b class="lla-titulo">{{ l.titulo }}</b>
+        <span class="lla-meta">
+          {{ l.fecha.strftime('%d/%m/%Y · %H:%M') }} UTC · {{ l.duracion_min }} min
+          {%- if l.participantes %} · {{ l.participantes }}{% endif %}
+        </span>
+      </div>
+    </div>
+
+    {% if l.resumen %}
+    <p class="lla-resumen">{{ l.resumen }}</p>
+    {% endif %}
+
+    {% if l.acuerdos %}
+    <div class="lla-bloque">
+      <span class="lla-rotulo">Acuerdos</span>
+      <ul>{% for a in l.acuerdos.split('\n') %}{% if a.strip() %}<li>{{ a }}</li>{% endif %}{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    {% if l.atencion %}
+    <div class="lla-bloque lla-bloque--ojo">
+      <span class="lla-rotulo">Para tener en cuenta</span>
+      <ul>{% for a in l.atencion.split('\n') %}{% if a.strip() %}<li>{{ a }}</li>{% endif %}{% endfor %}</ul>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% elif q %}
+<div class="card">
+  <div class="alta-vacio">
+    <b>Nada con «{{ q }}».</b>
+    <p>Prueba con el nombre de un alumno o con una palabra del tema.</p>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="alta-vacio">
+    <b>Todavía no hay nada.</b>
+    <p>Las llamadas aparecen aquí solas tras la siguiente revisión de Fireflies.</p>
+  </div>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

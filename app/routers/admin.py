@@ -603,6 +603,42 @@ async def alta_contrato(
     return HTMLResponse(a.firma.html_firmado)
 
 
+# ── Llamadas resumidas ───────────────────────────────────────────────────────
+
+@router.get("/llamadas", response_class=HTMLResponse)
+async def llamadas(
+    request: Request,
+    q: str = "",
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Lo que se habló en cada llamada, sin depender de que alguien se acuerde.
+
+    Lo rellena solo `scripts/resumir_llamadas.py` dos veces al día. El buscador
+    va contra el título, los participantes y el propio resumen: buscar por el
+    nombre de un alumno es el uso real de esta pantalla.
+    """
+    from app.models import LlamadaResumen
+
+    consulta = db.query(LlamadaResumen)
+    termino = (q or "").strip()
+    if termino:
+        like = f"%{termino}%"
+        consulta = consulta.filter(
+            LlamadaResumen.titulo.ilike(like)
+            | LlamadaResumen.participantes.ilike(like)
+            | LlamadaResumen.resumen.ilike(like)
+            | LlamadaResumen.acuerdos.ilike(like)
+        )
+    filas = consulta.order_by(LlamadaResumen.fecha.desc()).limit(60).all()
+
+    return templates.TemplateResponse("admin/llamadas.html", {
+        "request": request, "user": current_user,
+        "llamadas": filas, "q": termino,
+        "total": db.query(LlamadaResumen).count(),
+    })
+
+
 # ── Enlaces de seguimiento ───────────────────────────────────────────────────
 
 @router.get("/enlaces", response_class=HTMLResponse)

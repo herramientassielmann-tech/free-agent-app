@@ -1,0 +1,20 @@
+[Unit]
+Description=Busca llamadas nuevas dos veces al día
+
+[Timer]
+# Dos pasadas: a mediodía coge las llamadas de la mañana, y por la noche las
+# de la tarde. Se declaran las dos horas en el mismo temporizador; systemd
+# admite varias líneas y así no hacen falta dos ficheros.
+# El servidor va en UTC: se fija la zona para que las horas sean las de
+# siempre aunque cambie el horario de verano.
+OnCalendar=*-*-* 13:00:00 America/New_York
+OnCalendar=*-*-* 20:00:00 America/New_York
+# Si el servidor estuvo apagado a esa hora, se lanza al arrancar en vez de
+# saltarse la pasada.
+Persistent=true
+# Unos minutos de margen: nada depende del minuto exacto, y así no coincide
+# con los otros trabajos.
+RandomizedDelaySec=240
+
+[Install]
+WantedBy=timers.target
