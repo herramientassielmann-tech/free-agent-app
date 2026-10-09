@@ -2575,6 +2575,53 @@ a:hover { color: #3d9eff; }
 .eq-vacio p { margin: 0; font-size: .9rem; }
 .eq-rojo { color: var(--c-rojo); }
 
+/* ── Las tareas fijas: la lista que se repite cada semana ──────────────────
+   Van al final de la página y no arriba: se tocan una vez cada mucho, y lo
+   que se mira a diario es lo pendiente. */
+.eq-fijas { margin-top: 34px; padding-top: 24px; border-top: 1px solid var(--c-linea); }
+.eq-fijas-intro { margin: -6px 0 16px; font-size: .88rem; color: var(--c-suave); line-height: 1.5; }
+
+.eq-fijas-nueva { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.eq-fijas-nueva input[type="text"] {
+  flex: 1; min-width: 200px; font: inherit; font-size: .92rem; padding: 10px 13px;
+  border: 1px solid var(--c-linea); border-radius: var(--r-md);
+  background: var(--c-tarjeta); color: var(--c-tinta);
+}
+.eq-fijas-nueva select {
+  font: inherit; font-size: .88rem; padding: 10px 11px;
+  border: 1px solid var(--c-linea); border-radius: var(--r-md);
+  background: var(--c-tarjeta); color: var(--c-tinta);
+}
+.eq-fijas-nueva input[type="text"]:focus, .eq-fijas-nueva select:focus {
+  outline: none; border-color: var(--c-azul); box-shadow: 0 0 0 3px rgba(10,111,212,.13);
+}
+
+.eq-fijas-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.fija {
+  display: flex; align-items: center; gap: 12px; padding: 11px 13px;
+  background: var(--c-tarjeta); border: 1px solid var(--c-linea); border-radius: var(--r-md);
+}
+.fija--off { opacity: .5; }
+.fija--off .fija-texto { text-decoration: line-through; }
+.fija input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--c-azul); cursor: pointer; }
+.fija-texto { flex: 1; min-width: 0; font-size: .93rem; color: var(--c-tinta); }
+.fija-meta { font-size: .78rem; color: var(--c-tenue); white-space: nowrap; }
+.fija-x {
+  flex: none; border: 0; background: none; cursor: pointer; padding: 2px 6px;
+  font-size: 1.15rem; line-height: 1; color: var(--c-tenue); border-radius: 6px;
+}
+@media (hover: hover) {
+  .fija-x:hover { color: var(--c-rojo); background: var(--c-rojo-luz); }
+}
+
+@media (max-width: 640px) {
+  .eq-fijas-nueva input[type="text"] { min-width: 100%; }
+  .eq-fijas-nueva select { flex: 1; }
+  .fija { flex-wrap: wrap; }
+  .fija-texto { flex-basis: calc(100% - 60px); }
+  .fija-meta { margin-left: 29px; }
+}
+
 @media (max-width: 640px) {
   .eq-dia { font-size: .76rem; padding: 3px 5px; }
   .eq-persona { padding: 3px 8px; font-size: .72rem; }

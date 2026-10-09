@@ -1,0 +1,19 @@
+{% extends "mis_tareas_base.html" %}
+{% block title %}Entrar{% endblock %}
+
+{% block cuerpo %}
+<div class="puerta">
+  <form method="post" action="/mis-tareas/entrar">
+    <svg class="logo" width="44" height="44"><use href="#fa"/></svg>
+    <h1>Hola, {{ persona }}</h1>
+    <p>Pon la contraseña para ver tus tareas.</p>
+
+    {# autofocus para que el teclado del móvil salga solo y no haya que tocar #}
+    <input type="password" name="clave" autocomplete="current-password"
+           autofocus required aria-label="Contraseña" />
+    <button type="submit">Entrar</button>
+
+    {% if aviso %}<div class="aviso">{{ aviso }}</div>{% endif %}
+  </form>
+</div>
+{% endblock %}

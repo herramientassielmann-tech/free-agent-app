@@ -307,4 +307,103 @@
       setTimeout(() => fila.classList.remove("eq-guardado"), 600);
     } catch (err) { fallo(control, err.message); }
   });
+
+  /* ── Las que se repiten cada semana ─────────────────────────────
+     Se tocan una vez cada mucho, así que no hay guardado optimista ni nada
+     fino: se pide, y cuando el servidor contesta se pinta lo que diga. */
+  const fijaLista = $("fija-lista");
+  if (fijaLista) {
+    const fijaTexto = $("fija-texto");
+    const fijaQuien = $("fija-quien");
+    const fijaDia   = $("fija-dia");
+
+    function recontarFijas() {
+      const bloque = fijaLista.closest(".eq-bloque");
+      bloque.querySelector(".eq-titulo span").textContent = fijaLista.children.length;
+    }
+
+    function pintarFija(f) {
+      const li = document.createElement("li");
+      li.className = "fija" + (f.activa ? "" : " fija--off");
+      li.dataset.id = f.id;
+      const marca = document.createElement("input");
+      marca.type = "checkbox";
+      marca.checked = f.activa;
+      marca.dataset.activa = "";
+      marca.setAttribute("aria-label", "Crear esta tarea cada semana");
+      const texto = document.createElement("span");
+      texto.className = "fija-texto";
+      texto.textContent = f.texto;           // textContent, no innerHTML: lo
+      const meta = document.createElement("span");  // escribe una persona
+      meta.className = "fija-meta";
+      meta.textContent = (f.asignado_a || "Sin asignar") +
+                         (f.dia_nombre ? " · " + f.dia_nombre : "");
+      const x = document.createElement("button");
+      x.type = "button";
+      x.className = "fija-x";
+      x.dataset.borrar = "";
+      x.setAttribute("aria-label", "Borrar");
+      x.textContent = "×";
+      li.append(marca, texto, meta, x);
+      return li;
+    }
+
+    async function anadirFija() {
+      const texto = fijaTexto.value.trim();
+      if (!texto) return;
+      try {
+        const f = await pedir("/admin/tareas/fijas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            texto,
+            asignado_a: fijaQuien.value || null,
+            dia_semana: fijaDia.value === "" ? null : Number(fijaDia.value),
+          }),
+        });
+        fijaLista.appendChild(pintarFija(f));
+        fijaTexto.value = "";
+        fijaTexto.focus();
+        recontarFijas();
+      } catch (err) { fallo(fijaTexto, err.message); }
+    }
+
+    $("fija-anadir").addEventListener("click", anadirFija);
+    fijaTexto.addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); anadirFija(); }
+    });
+
+    fijaLista.addEventListener("change", async e => {
+      const marca = e.target.closest("[data-activa]");
+      if (!marca) return;
+      const li = marca.closest(".fija");
+      const encendida = marca.checked;
+      li.classList.toggle("fija--off", !encendida);
+      try {
+        await pedir(`/admin/tareas/fijas/${li.dataset.id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ campo: "activa", valor: encendida ? "1" : "0" }),
+        });
+      } catch (err) {
+        marca.checked = !encendida;
+        li.classList.toggle("fija--off", encendida);
+        fallo(li, err.message);
+      }
+    });
+
+    fijaLista.addEventListener("click", async e => {
+      const x = e.target.closest("[data-borrar]");
+      if (!x) return;
+      const li = x.closest(".fija");
+      const nombre = li.querySelector(".fija-texto").textContent;
+      if (!confirm(`¿Quitar «${nombre}» de las de cada semana?\n\n` +
+                   "Lo ya hecho no se borra: las copias de semanas anteriores se quedan.")) return;
+      try {
+        await pedir(`/admin/tareas/fijas/${li.dataset.id}`, { method: "DELETE" });
+        li.remove();
+        recontarFijas();
+      } catch (err) { fallo(li, err.message); }
+    });
+  }
 })();

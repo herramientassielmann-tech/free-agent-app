@@ -60,5 +60,14 @@ SKOOL_INVITE_URL = get_env("SKOOL_INVITE_URL", default=None, required=False)
 CALENDLY_ONBOARDING_URL = get_env("CALENDLY_ONBOARDING_URL", default=None, required=False)
 CALENDLY_WEBHOOK_SECRET = get_env("CALENDLY_WEBHOOK_SECRET", default=None, required=False)
 
+# ── Panel de tareas de una colaboradora ───────────────────────────────────
+# Una sola página, fuera de la app, con su propia contraseña: ve sus tareas,
+# las marca, las anota y puede apuntarse alguna. No llega a nada más, y por eso
+# no necesita cuenta de usuario ni toca el sistema de permisos.
+TAREAS_PERSONA = get_env("TAREAS_PERSONA", default="Cat", required=False)
+# Sin contraseña configurada la página no existe: devuelve 404. Así, si alguien
+# despliega sin poner la variable, no queda un panel abierto por ahí.
+TAREAS_PASSWORD = get_env("TAREAS_PASSWORD", default=None, required=False)
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 8

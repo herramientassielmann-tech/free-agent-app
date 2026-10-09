@@ -24,7 +24,7 @@ ESTADOS = ("pendiente", "hecha")
 # El equipo son tres nombres, no tres cuentas: los tres entran con el mismo
 # usuario de administrador. El responsable es una etiqueta, y por eso se guarda
 # el nombre y no un identificador de usuario.
-EQUIPO = ("Robert", "David", "Kevin")
+EQUIPO = ("Robert", "David", "Kevin", "Cat")
 
 # Los acentos se aceptan escritos o no: nadie va a poner «miércoles» con tilde
 # mientras apunta algo deprisa.

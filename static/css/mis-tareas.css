@@ -1,0 +1,190 @@
+/* Panel de tareas de una colaboradora. Hoja aparte y no style.css: esta página
+   no hereda de base.html —no tiene barra lateral ni menú, y esa es justo la
+   idea—, así que carga sólo lo suyo. Los colores son los mismos de .crm-zona
+   para que no parezca otra aplicación. */
+
+:root {
+  --lienzo:  #F1F4F8;
+  --tarjeta: #FFFFFF;
+  --linea:   #D8E0E9;
+  --tinta:   #16202C;
+  --suave:   #495765;
+  --tenue:   #5A6874;
+  --azul:    #0A6FD4;
+  --azul-luz:#E8F1FC;
+  --verde:   #1E7F4B;
+  --verde-luz:#E8F5EE;
+  --verde-vivo:#2FBF6B;
+  --rojo:    #B3261E;
+  --rojo-luz:#FDEDEC;
+  --r-md: 12px;
+  --r-lg: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--lienzo); color: var(--tinta);
+  -webkit-font-smoothing: antialiased;
+  /* Que el iPhone no haga zoom al enfocar un campo: pasa en cuanto la letra
+     baja de 16px, y entonces la página se queda descolocada. */
+  -webkit-text-size-adjust: 100%;
+}
+
+.envoltorio { max-width: 640px; margin: 0 auto; padding: 0 0 80px; }
+
+/* ── Cabecera ── */
+.cabecera {
+  background: var(--tarjeta); border-bottom: 1px solid var(--linea);
+  padding: 18px 20px 16px; position: sticky; top: 0; z-index: 5;
+}
+.cabecera .marca { display: flex; align-items: center; gap: 10px; }
+.cabecera h1 {
+  font-family: "Montserrat", -apple-system, sans-serif;
+  font-weight: 800; font-size: 1.25rem; letter-spacing: -.025em;
+}
+.cabecera .semana { font-size: .85rem; color: var(--tenue); margin-top: 7px; }
+.cabecera .semana b { color: var(--azul); font-weight: 600; }
+
+/* ── Apuntar algo ── */
+.apuntar { padding: 16px 16px 4px; display: flex; gap: 8px; }
+.apuntar input {
+  flex: 1; min-width: 0; font: inherit; font-size: 1rem;
+  padding: 13px 15px; border: 1px solid var(--linea); border-radius: var(--r-md);
+  background: var(--tarjeta); color: var(--tinta);
+}
+.apuntar input::placeholder { color: #9AA7B4; }
+.apuntar input:focus {
+  outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px rgba(10,111,212,.13);
+}
+.apuntar button {
+  flex: none; font: inherit; font-weight: 600; font-size: 1rem;
+  padding: 0 18px; border: 0; border-radius: var(--r-md);
+  background: var(--azul); color: #fff; cursor: pointer;
+}
+.apuntar button:disabled { opacity: .45; cursor: default; }
+
+/* ── Grupos ── */
+.rotulo {
+  font-family: "Montserrat", -apple-system, sans-serif;
+  font-weight: 800; font-size: .68rem; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--tenue); margin: 26px 20px 10px; display: flex; align-items: center; gap: 8px;
+}
+.rotulo em { font-style: normal; font-weight: 700; font-size: .78rem;
+             letter-spacing: 0; text-transform: none; }
+.vacio { margin: 0 20px; font-size: .9rem; color: var(--tenue); line-height: 1.5; }
+
+.lista { padding: 0 16px; }
+
+/* ── Una tarea ── */
+.tarea {
+  background: var(--tarjeta); border: 1px solid var(--linea); border-radius: var(--r-lg);
+  padding: 14px 15px; display: flex; gap: 13px; align-items: flex-start; margin-bottom: 9px;
+}
+.tarea.--guardando { opacity: .55; }
+
+.marcar {
+  flex: none; width: 26px; height: 26px; margin-top: 1px; padding: 0;
+  border: 2px solid #C3CEDA; border-radius: 50%; background: transparent;
+  cursor: pointer; display: grid; place-items: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.marcar svg { width: 13px; height: 13px; opacity: 0; }
+.tarea.--hecha .marcar { border-color: var(--verde-vivo); background: var(--verde-vivo); }
+.tarea.--hecha .marcar svg { opacity: 1; }
+/* El :hover sólo donde hay ratón de verdad. En el móvil se queda pegado
+   después de tocar y la tarea se ve "a medio marcar" para siempre. */
+@media (hover: hover) {
+  .tarea:not(.--hecha) .marcar:hover { border-color: var(--verde-vivo); }
+}
+
+.cuerpo { flex: 1; min-width: 0; }
+.texto { font-size: .98rem; font-weight: 500; line-height: 1.35; word-wrap: break-word; }
+.tarea.--hecha { background: #FAFCFE; border-color: #E6EDF4; }
+.tarea.--hecha .texto { color: var(--tenue); }
+
+.marcas { margin-top: 8px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.chip {
+  font-size: .72rem; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+  background: #EDF1F6; color: var(--tenue);
+}
+.chip.--urge  { background: var(--rojo-luz);  color: var(--rojo); }
+.chip.--hoy   { background: var(--azul-luz);  color: var(--azul); }
+.chip.--ok    { background: var(--verde-luz); color: var(--verde); }
+.chip.--tarde { background: var(--rojo-luz);  color: var(--rojo); }
+
+/* ── La anotación ── */
+.abrir-nota {
+  margin-top: 9px; font: inherit; font-size: .82rem; font-weight: 600;
+  color: var(--azul); background: none; border: 0; padding: 0; cursor: pointer;
+}
+.nota-caja { margin-top: 10px; display: none; }
+.tarea.--abierta .nota-caja { display: block; }
+.tarea.--abierta { border-color: var(--azul); box-shadow: 0 0 0 3px rgba(10,111,212,.12); }
+.nota-caja textarea {
+  width: 100%; font: inherit; font-size: .92rem; line-height: 1.45; color: var(--tinta);
+  padding: 11px 12px; border: 1px solid var(--linea); border-radius: var(--r-md);
+  background: #fff; resize: vertical; min-height: 76px;
+}
+.nota-caja textarea:focus {
+  outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px rgba(10,111,212,.13);
+}
+.estado-nota {
+  margin-top: 7px; font-size: .74rem; font-weight: 600; color: var(--verde);
+  display: flex; align-items: center; gap: 6px; min-height: 16px; opacity: 0;
+  transition: opacity .18s;
+}
+.estado-nota.--visible { opacity: 1; }
+.estado-nota i { width: 6px; height: 6px; border-radius: 50%; background: var(--verde-vivo); }
+.estado-nota.--mal { color: var(--rojo); }
+.estado-nota.--mal i { background: var(--rojo); }
+
+/* La nota ya escrita, cuando la caja está cerrada */
+.nota-vista {
+  margin-top: 10px; background: #F4F7FA; border-left: 2.5px solid var(--linea);
+  border-radius: 0 8px 8px 0; padding: 9px 12px;
+  font-size: .88rem; color: var(--suave); line-height: 1.45; white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.tarea.--abierta .nota-vista { display: none; }
+
+/* ── Pantalla de la contraseña ── */
+.puerta {
+  min-height: 100svh; display: grid; place-items: center; padding: 24px;
+}
+.puerta form {
+  width: 100%; max-width: 340px; background: var(--tarjeta);
+  border: 1px solid var(--linea); border-radius: 20px; padding: 32px 26px 28px;
+  text-align: center; box-shadow: 0 12px 40px rgba(13,26,45,.07);
+}
+.puerta svg.logo { margin-bottom: 18px; }
+.puerta h1 {
+  font-family: "Montserrat", -apple-system, sans-serif;
+  font-weight: 800; font-size: 1.3rem; letter-spacing: -.025em;
+}
+.puerta p { font-size: .9rem; color: var(--tenue); margin-top: 8px; line-height: 1.5; }
+.puerta input {
+  width: 100%; font: inherit; font-size: 1.05rem; text-align: center;
+  margin-top: 22px; padding: 14px; border: 1px solid var(--linea);
+  border-radius: var(--r-md); background: #fff; color: var(--tinta);
+}
+.puerta input:focus {
+  outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px rgba(10,111,212,.13);
+}
+.puerta button {
+  width: 100%; font: inherit; font-size: 1rem; font-weight: 600; margin-top: 12px;
+  padding: 14px; border: 0; border-radius: var(--r-md);
+  background: var(--azul); color: #fff; cursor: pointer;
+}
+.puerta .aviso {
+  margin-top: 16px; background: var(--rojo-luz); color: var(--rojo);
+  border-radius: 10px; padding: 10px 12px; font-size: .85rem; font-weight: 600;
+}
+
+/* ── Pie ── */
+.pie { margin-top: 34px; padding: 0 20px; text-align: center; }
+.pie button {
+  font: inherit; font-size: .82rem; color: var(--tenue);
+  background: none; border: 0; cursor: pointer; text-decoration: underline;
+}

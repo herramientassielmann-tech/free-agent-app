@@ -14,7 +14,8 @@ from app.database import engine, SessionLocal
 from app.models import Base, User
 from app.auth import hash_password
 from app.config import ADMIN_EMAIL, ADMIN_PASSWORD
-from app.routers import auth, scripts, profile, admin, chatbot, robert, ideas, editor, biblioteca, crm, bienvenida, webhooks, enlaces
+from app.routers import (auth, scripts, profile, admin, chatbot, robert, ideas, editor,
+                         biblioteca, crm, bienvenida, webhooks, enlaces, panel_tareas)
 
 
 def _create_admin_if_missing(db: Session):
@@ -52,6 +53,13 @@ def _migrate_db(db: Session):
         "ALTER TABLE tareas_equipo ADD COLUMN notas TEXT",
         "ALTER TABLE altas ADD COLUMN origen VARCHAR(60)",
         "ALTER TABLE clics_enlace ADD COLUMN tipo VARCHAR(12) DEFAULT 'visita'",
+        "ALTER TABLE tareas_equipo ADD COLUMN fija_id INTEGER",
+        "ALTER TABLE tareas_equipo ADD COLUMN semana DATE",
+        # La copia semanal de una tarea fija existe una vez y sólo una. Se
+        # apoya en que NULL no choca con NULL en un índice único, así que las
+        # tareas sueltas (fija_id y semana a NULL) no se estorban entre ellas.
+        ("CREATE UNIQUE INDEX IF NOT EXISTS ix_tareas_equipo_fija_semana "
+         "ON tareas_equipo (fija_id, semana)"),
     ]
     for sql in simple:
         try:
@@ -154,6 +162,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Rutas públicas: las únicas de la app que no exigen sesión. Van primero
 # para que se vea de un vistazo que existen.
 app.include_router(enlaces.router)
+app.include_router(panel_tareas.router)
 app.include_router(bienvenida.router)
 app.include_router(webhooks.router)
 app.include_router(auth.router)

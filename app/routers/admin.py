@@ -900,8 +900,14 @@ async def tareas_equipo(
     from collections import OrderedDict
     from app.models import TareaEquipo
 
+    from app.models import TareaFija
+    from app.services.tareas_fijas import asegurar_semana
     from app.services.tareas_texto import EQUIPO
     hoy = datetime.utcnow().date()
+
+    # Las copias de esta semana se crean al abrir, igual que en la página de
+    # ella: así las dos pantallas ven lo mismo sin un temporizador de por medio.
+    asegurar_semana(db, hoy=hoy)
 
     consulta = db.query(TareaEquipo)
     # El filtro va por nombre: los tres entran con la misma cuenta, así que no
@@ -960,6 +966,8 @@ async def tareas_equipo(
         "request": request, "user": current_user,
         "equipo": EQUIPO, "quien": elegido or "todas", "cuentas": cuentas,
         "grupos": grupos, "semanas": semanas,
+        "fijas": db.query(TareaFija).order_by(TareaFija.orden, TareaFija.id).all(),
+        "dias": TareaFija.DIAS,
         "abiertas": len(abiertas),
         "vencidas": len(grupos["vencidas"]),
         "hechas_semana": sum(1 for t in hechas
@@ -1015,6 +1023,138 @@ async def crear_tarea_equipo(
         bloque = "adelante"
     return JSONResponse({"tarea": datos, "bloque": bloque,
                          "html": str(macro.fila(datos, EQUIPO))})
+
+
+# ── Tareas fijas: las que vuelven cada semana ─────────────────────────────
+# Van declaradas ANTES que las de /tareas/{tid}. Si fueran después, una
+# petición a /admin/tareas/fijas se estrellaría contra el comodín {tid},
+# intentaría convertir «fijas» en un número y devolvería un 422 sin llegar
+# nunca aquí. FastAPI resuelve por orden de declaración.
+
+class FijaIn(BaseModel):
+    texto: str
+    asignado_a: Optional[str] = None
+    dia_semana: Optional[int] = None
+    prioridad: str = "normal"
+
+
+def _fija_json(f: "TareaFija") -> dict:
+    return {
+        "id": f.id, "texto": f.texto, "asignado_a": f.asignado_a,
+        "dia_semana": f.dia_semana, "dia_nombre": f.dia_nombre,
+        "prioridad": f.prioridad, "activa": f.activa,
+    }
+
+
+@router.post("/tareas/fijas")
+async def crear_fija(
+    payload: FijaIn,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Una tarea nueva de las que se repiten todas las semanas."""
+    from app.models import TareaFija
+    from app.services.tareas_fijas import asegurar_semana
+    from app.services.tareas_texto import EQUIPO
+
+    texto = (payload.texto or "").strip()
+    if not texto:
+        raise HTTPException(status_code=422, detail="La tarea está vacía.")
+
+    quien = None
+    if payload.asignado_a:
+        quien = next((n for n in EQUIPO if n.lower() == payload.asignado_a.lower()), None)
+        if quien is None:
+            raise HTTPException(status_code=400, detail="Esa persona no es del equipo")
+    if payload.dia_semana is not None and not 0 <= payload.dia_semana <= 6:
+        raise HTTPException(status_code=400, detail="Ese día no existe")
+    if payload.prioridad not in ("urgente", "normal", "baja"):
+        raise HTTPException(status_code=400, detail="Prioridad no válida")
+
+    f = TareaFija(texto=texto[:300], asignado_a=quien,
+                  dia_semana=payload.dia_semana, prioridad=payload.prioridad)
+    db.add(f)
+    db.commit()
+    db.refresh(f)
+    # Que aparezca ya en la semana en curso, sin esperar al lunes que viene.
+    asegurar_semana(db, quien)
+    return JSONResponse(_fija_json(f))
+
+
+@router.post("/tareas/fijas/{fid}")
+async def editar_fija(
+    fid: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    campo: str = Form(...),
+    valor: str = Form(""),
+):
+    from app.models import TareaFija
+    f = db.get(TareaFija, fid)
+    if f is None:
+        raise HTTPException(status_code=404, detail="No encontrada")
+
+    if campo == "activa":
+        f.activa = valor in ("1", "true", "si", "sí")
+    elif campo == "texto":
+        nuevo = (valor or "").strip()
+        if not nuevo:
+            raise HTTPException(status_code=422, detail="La tarea está vacía.")
+        f.texto = nuevo[:300]
+    elif campo == "dia_semana":
+        if valor == "":
+            f.dia_semana = None
+        else:
+            try:
+                dia = int(valor)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Ese día no existe")
+            if not 0 <= dia <= 6:
+                raise HTTPException(status_code=400, detail="Ese día no existe")
+            f.dia_semana = dia
+    elif campo == "asignado_a":
+        from app.services.tareas_texto import EQUIPO
+        if not valor:
+            f.asignado_a = None
+        else:
+            quien = next((n for n in EQUIPO if n.lower() == valor.lower()), None)
+            if quien is None:
+                raise HTTPException(status_code=400, detail="Esa persona no es del equipo")
+            f.asignado_a = quien
+    else:
+        raise HTTPException(status_code=400, detail="Campo no válido")
+
+    db.commit()
+    db.refresh(f)
+    return JSONResponse(_fija_json(f))
+
+
+@router.delete("/tareas/fijas/{fid}")
+async def borrar_fija(
+    fid: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Borra la plantilla. Las copias ya creadas se quedan, sueltas.
+
+    No se borran en cascada a propósito: una copia ya hecha es parte del
+    registro de lo que se trabajó esa semana, y quitar hoy una tarea fija no
+    debería reescribir el pasado. Se quedan como tareas normales.
+    """
+    from app.models import TareaEquipo, TareaFija
+    f = db.get(TareaFija, fid)
+    if f is None:
+        raise HTTPException(status_code=404, detail="No encontrada")
+
+    # A mano y no con ON DELETE: en SQLite las claves ajenas no se aplican a
+    # menos que se encienda el PRAGMA, así que confiar en la cascada dejaría
+    # filas apuntando a una plantilla que ya no existe.
+    (db.query(TareaEquipo)
+       .filter(TareaEquipo.fija_id == fid)
+       .update({"fija_id": None, "semana": None}, synchronize_session=False))
+    db.delete(f)
+    db.commit()
+    return JSONResponse({"borrado": True})
 
 
 @router.post("/tareas/{tid}/estado")

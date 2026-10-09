@@ -641,6 +641,15 @@ class TareaEquipo(Base):
     # rellenar un formulario para apuntar una nota, no se apunta.
     notas: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
+    # De qué tarea fija salió, si salió de alguna. Junto con `semana` es lo que
+    # impide que la copia de esta semana se cree dos veces: hay un índice único
+    # sobre el par, porque dos pestañas abiertas a la vez llegan a la vez.
+    fija_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("tareas_fijas.id", ondelete="SET NULL"), nullable=True, index=True)
+    # El lunes de la semana a la que pertenece la copia. Sólo lo llevan las que
+    # vienen de una fija: las sueltas no pertenecen a ninguna semana concreta.
+    semana: Mapped[Optional[date]] = mapped_column(Date, nullable=True, index=True)
+
     completada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     # Se marca al avisar por correo, para no repetir el mismo aviso cada mañana
     avisada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -659,3 +668,43 @@ class TareaEquipo(Base):
     def es_hoy(self) -> bool:
         return bool(self.abierta and self.fecha_limite
                     and self.fecha_limite == datetime.utcnow().date())
+
+
+class TareaFija(Base):
+    """Una tarea que se repite todas las semanas: la plantilla, no la tarea.
+
+    Las fijas no se marcan ni se anotan. Cada lunes se saca de cada fija una
+    copia en `tareas_equipo`, y es la copia la que se marca y se anota. Así la
+    semana pasada sigue contando lo que se hizo aunque hoy se cambie la lista
+    de fijas, que es justo lo que se pierde si se reutiliza la misma fila.
+
+    La copia se crea **al abrir la página**, no con un temporizador. Es una
+    pieza menos que mantener en el servidor, y el efecto es el mismo: si nadie
+    abre la página, nadie estaba esperando las tareas.
+    """
+    __tablename__ = "tareas_fijas"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    texto: Mapped[str] = mapped_column(String(300), nullable=False)
+    # El mismo nombre-etiqueta que `TareaEquipo.asignado_a`, no un usuario.
+    asignado_a: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, index=True)
+
+    # 0=lunes … 6=domingo. Sin día, la copia sale sin fecha y vale para toda la
+    # semana: hay cosas que son "en algún momento de la semana" y forzarlas a un
+    # día concreto sólo consigue que venzan sin motivo.
+    dia_semana: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    prioridad: Mapped[str] = mapped_column(String(10), default="normal", nullable=False)
+    # Desactivar en vez de borrar: así las copias ya hechas no pierden su origen
+    # y se puede volver a encender sin reescribirla.
+    activa: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    orden: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    DIAS = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
+
+    @property
+    def dia_nombre(self) -> Optional[str]:
+        if self.dia_semana is None:
+            return None
+        return self.DIAS[self.dia_semana]

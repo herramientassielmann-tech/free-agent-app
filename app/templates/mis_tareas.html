@@ -1,0 +1,53 @@
+{% extends "mis_tareas_base.html" %}
+{% from "_mis_tareas_fila.html" import fila %}
+{% block title %}Tus tareas{% endblock %}
+
+{% block cuerpo %}
+<div class="envoltorio">
+
+  <header class="cabecera">
+    <div class="marca">
+      <svg width="26" height="26" aria-hidden="true"><use href="#fa"/></svg>
+      <h1>Tus tareas</h1>
+    </div>
+    <div class="semana">
+      {{ semana }} · <b id="cuenta-pendientes">{{ pendientes }}</b>
+      <span id="cuenta-palabra">{{ 'cosa pendiente' if pendientes == 1 else 'cosas pendientes' }}</span>
+    </div>
+  </header>
+
+  {# Apuntar lo suyo. Va arriba del todo: si hay que bajar para encontrarlo,
+     no se apunta y acaba en un papel. #}
+  <form class="apuntar" id="apuntar" autocomplete="off">
+    <input type="text" name="texto" maxlength="300"
+           placeholder="Apunta algo…" aria-label="Nueva tarea" />
+    <button type="submit">Añadir</button>
+  </form>
+
+  <h2 class="rotulo">De cada semana <em>· <span data-cuenta="fijas">{{ fijas|length }}</span></em></h2>
+  <ul class="lista" id="fijas">
+    {% for t in fijas %}{{ fila(t) }}{% endfor %}
+  </ul>
+  <p class="vacio" data-vacio="fijas"{% if fijas %} hidden{% endif %}>Aún no hay tareas fijas puestas.</p>
+
+  <h2 class="rotulo">Puntuales <em>· <span data-cuenta="puntuales">{{ puntuales|length }}</span></em></h2>
+  <ul class="lista" id="puntuales">
+    {% for t in puntuales %}{{ fila(t) }}{% endfor %}
+  </ul>
+  <p class="vacio" data-vacio="puntuales"{% if puntuales %} hidden{% endif %}>Nada suelto por ahora.</p>
+
+  <h2 class="rotulo">Hechas esta semana <em>· <span data-cuenta="hechas">{{ hechas|length }}</span></em></h2>
+  <ul class="lista" id="hechas">
+    {% for t in hechas %}{{ fila(t) }}{% endfor %}
+  </ul>
+  <p class="vacio" data-vacio="hechas"{% if hechas %} hidden{% endif %}>Todavía nada. Es lunes para todos.</p>
+
+  <div class="pie">
+    <form method="post" action="/mis-tareas/salir">
+      <button type="submit">Cerrar sesión</button>
+    </form>
+  </div>
+</div>
+
+<script src="/static/js/mis_tareas.js" defer></script>
+{% endblock %}

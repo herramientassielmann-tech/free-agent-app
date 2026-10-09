@@ -1,0 +1,39 @@
+{# Una tarea. Vive en un macro porque la pinta el servidor en DOS sitios: al
+   cargar la página y al apuntar una nueva. Si el JS montara la segunda habría
+   dos versiones del mismo trozo y acabarían separándose sin que nadie lo note. #}
+{% macro fila(t) -%}
+<li class="tarea{{ ' --hecha' if t.estado == 'hecha' }}"
+    data-id="{{ t.id }}" data-fija="{{ '1' if t.fija else '0' }}">
+  <button class="marcar" type="button" data-marcar
+          aria-pressed="{{ 'true' if t.estado == 'hecha' else 'false' }}"
+          aria-label="{{ 'Desmarcar' if t.estado == 'hecha' else 'Marcar como hecha' }}">
+    <svg aria-hidden="true"><use href="#ok"/></svg>
+  </button>
+
+  <div class="cuerpo">
+    <div class="texto">{{ t.texto }}</div>
+
+    <div class="marcas">
+      {%- if t.estado == 'hecha' %}
+        <span class="chip --ok">Hecha{{ ' el ' ~ t.hecha_el if t.hecha_el }}</span>
+      {%- else %}
+        {%- if t.urgente %}<span class="chip --urge">Urgente</span>{% endif %}
+        {%- if t.vencida %}<span class="chip --tarde">Se pasó el {{ t.fecha_corta }}</span>
+        {%- elif t.hoy %}<span class="chip --hoy">Hoy</span>
+        {%- elif t.dia %}<span class="chip">{{ t.dia }} {{ t.fecha_corta }}</span>{% endif %}
+      {%- endif %}
+    </div>
+
+    <button class="abrir-nota" type="button" data-nota>
+      {{ 'Ver o cambiar la nota' if t.notas else 'Añadir una nota' }}
+    </button>
+    {% if t.notas %}<div class="nota-vista">{{ t.notas }}</div>{% endif %}
+
+    <div class="nota-caja">
+      <textarea data-texto placeholder="¿Cómo lo llevas? Lo que escribas se guarda solo."
+                aria-label="Nota">{{ t.notas }}</textarea>
+      <div class="estado-nota" data-estado aria-live="polite"><i></i><span></span></div>
+    </div>
+  </div>
+</li>
+{%- endmacro %}

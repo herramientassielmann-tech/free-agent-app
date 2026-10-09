@@ -70,6 +70,45 @@
 {% endif %}
 
 
+{# ── Las que se repiten cada semana ──
+   La plantilla, no la tarea. Cada lunes sale de aquí una copia en la lista de
+   arriba, y es la copia la que se marca. Así lo hecho la semana pasada sigue
+   contando aunque hoy se cambie esta lista. #}
+<section class="eq-bloque eq-fijas">
+  <h2 class="eq-titulo">Cada semana <span>{{ fijas|length }}</span></h2>
+  <p class="eq-fijas-intro">
+    Estas aparecen solas cada lunes en la lista de quien las tenga. Desmarca una
+    para dejar de crearla, sin perder lo ya hecho.
+  </p>
+
+  <div class="eq-fijas-nueva">
+    <input type="text" id="fija-texto" maxlength="300" autocomplete="off"
+           placeholder="Algo que haya que hacer todas las semanas…">
+    <select id="fija-quien" aria-label="Quién">
+      <option value="">Sin asignar</option>
+      {% for p in equipo %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
+    </select>
+    <select id="fija-dia" aria-label="Qué día">
+      <option value="">Cualquier día</option>
+      {% for d in dias %}<option value="{{ loop.index0 }}">{{ d|capitalize }}</option>{% endfor %}
+    </select>
+    <button type="button" class="btn btn-primary" id="fija-anadir">Añadir</button>
+  </div>
+
+  <ul class="eq-fijas-lista" id="fija-lista">
+    {% for f in fijas %}
+    <li class="fija{{ ' fija--off' if not f.activa }}" data-id="{{ f.id }}">
+      <input type="checkbox" data-activa {{ 'checked' if f.activa }}
+             aria-label="Crear esta tarea cada semana">
+      <span class="fija-texto">{{ f.texto }}</span>
+      <span class="fija-meta">{{ f.asignado_a or 'Sin asignar' }}{% if f.dia_nombre %} · {{ f.dia_nombre }}{% endif %}</span>
+      <button type="button" class="fija-x" data-borrar aria-label="Borrar">×</button>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+
 {# ── Panel de la tarea: la nota rápida ──
    Se abre al pulsar el texto de una tarea. Sin barra de formato ni campos:
    un sitio donde escribir y ya. Si hay que rellenar un formulario para apuntar
@@ -120,5 +159,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/tareas_equipo.js?v=4"></script>
+<script src="/static/js/tareas_equipo.js?v=5"></script>
 {% endblock %}
