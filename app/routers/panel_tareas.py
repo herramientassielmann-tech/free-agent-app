@@ -236,6 +236,12 @@ async def pagina(request: Request,
     fijas, puntuales = grupos["fijas"], grupos["puntuales"]
     # Lo último marcado, arriba.
     hechas = sorted(grupos["hechas"], key=lambda x: x["id"], reverse=True)
+
+    # Las fijas que todavía no han empezado. Sin esto la página miente por
+    # omisión: una tarea de los lunes dada de alta un viernes no existe en
+    # ninguna parte de la pantalla hasta el lunes, y quien la creó da por hecho
+    # que no se guardó. Se enseñan apagadas, sin círculo que marcar.
+    proximas = _proximas(db, lunes)
     domingo = lunes + timedelta(days=6)
     if lunes.month == domingo.month:
         rotulo = f"Semana del {lunes.day} al {domingo.day} de {_MESES[domingo.month - 1]}"
@@ -246,8 +252,41 @@ async def pagina(request: Request,
     return templates.TemplateResponse("mis_tareas.html", {
         "request": request, "persona": TAREAS_PERSONA, "semana": rotulo,
         "fijas": fijas, "puntuales": puntuales, "hechas": hechas,
+        "proximas": proximas,
         "pendientes": len(fijas) + len(puntuales),
     })
+
+
+def _proximas(db: Session, lunes: date) -> list:
+    """Fijas suyas que aún no tienen copia esta semana, y por tanto no se ven.
+
+    Son las de un día concreto que se dieron de alta cuando ese día ya había
+    pasado: no se crean para esta semana para que no salgan vencidas de
+    nacimiento. Las diarias nunca entran aquí, porque la de hoy ya está.
+    """
+    from app.models import TareaFija
+
+    fijas = (db.query(TareaFija)
+               .filter(TareaFija.activa.is_(True),
+                       TareaFija.asignado_a == TAREAS_PERSONA,
+                       TareaFija.cada_dia.is_(False),
+                       TareaFija.dia_semana.isnot(None))
+               .order_by(TareaFija.dia_semana, TareaFija.id).all())
+    if not fijas:
+        return []
+
+    con_copia = {fid for (fid,) in
+                 db.query(TareaEquipo.fija_id)
+                   .filter(TareaEquipo.semana == lunes,
+                           TareaEquipo.fija_id.isnot(None)).all()}
+
+    return [{
+        "texto": f.texto,
+        "dia": TareaFija.DIAS[f.dia_semana].capitalize(),
+        "enlace": f.enlace or None,
+        "enlace_icono": f.enlace_icono or "enlace",
+        "enlace_nombre": _NOMBRES.get(f.enlace_icono or "", "Abrir el enlace"),
+    } for f in fijas if f.id not in con_copia]
 
 
 # ── Lo que puede hacer: apuntar, marcar y anotar ──────────────────────────

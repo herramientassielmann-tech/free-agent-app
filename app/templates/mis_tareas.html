@@ -30,6 +30,30 @@
   </ul>
   <p class="vacio" data-vacio="fijas"{% if fijas %} hidden{% endif %}>Aún no hay tareas fijas puestas.</p>
 
+  {# Las que aún no han empezado. Van apagadas y sin círculo: no son de esta
+     semana, así que no hay nada que marcar todavía. Están para que la lista
+     esté completa y nadie piense que se perdieron por el camino. #}
+  {% if proximas %}
+  <h2 class="rotulo">Empiezan la semana que viene <em>· <span>{{ proximas|length }}</span></em></h2>
+  <ul class="lista lista--proximas">
+    {% for t in proximas %}
+    <li class="tarea tarea--proxima">
+      <span class="punto" aria-hidden="true"></span>
+      <div class="cuerpo">
+        <div class="texto">{{ t.texto }}</div>
+        <div class="marcas"><span class="chip">Cada {{ t.dia|lower }}</span></div>
+        {%- if t.enlace %}
+        <a class="ir" href="{{ t.enlace }}" target="_blank" rel="noopener noreferrer">
+          <svg aria-hidden="true"><use href="#ico-{{ t.enlace_icono }}"/></svg>
+          <span>{{ t.enlace_nombre }}</span>
+        </a>
+        {%- endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
   <h2 class="rotulo">Puntuales <em>· <span data-cuenta="puntuales">{{ puntuales|length }}</span></em></h2>
   <ul class="lista" id="puntuales">
     {% for t in puntuales %}{{ fila(t) }}{% endfor %}

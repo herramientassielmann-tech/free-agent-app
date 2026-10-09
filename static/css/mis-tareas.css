@@ -114,6 +114,17 @@ body {
 .chip.--ok    { background: var(--verde-luz); color: var(--verde); }
 .chip.--tarde { background: var(--rojo-luz);  color: var(--rojo); }
 
+/* ── Las que todavía no han empezado ──
+   Apagadas y con un punto en vez de círculo: deja claro de un vistazo que no
+   hay nada que marcar ahí todavía, sin tener que explicarlo con texto. */
+.tarea--proxima { background: transparent; border-style: dashed; border-color: #CBD5E1; }
+.tarea--proxima .texto { color: var(--tenue); font-weight: 500; }
+.punto {
+  flex: none; width: 26px; height: 26px; margin-top: 1px;
+  display: grid; place-items: center;
+}
+.punto::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #C3CEDA; }
+
 /* ── El botón de ir al sitio de la tarea ──
    Con el nombre escrito al lado y no sólo el dibujo: un icono de 20px no se
    reconoce siempre, y menos en la calle con el móvil al sol. */
