@@ -114,6 +114,24 @@ body {
 .chip.--ok    { background: var(--verde-luz); color: var(--verde); }
 .chip.--tarde { background: var(--rojo-luz);  color: var(--rojo); }
 
+/* ── El botón de ir al sitio de la tarea ──
+   Con el nombre escrito al lado y no sólo el dibujo: un icono de 20px no se
+   reconoce siempre, y menos en la calle con el móvil al sol. */
+.ir {
+  margin-top: 10px; display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 12px 7px 9px; border: 1px solid var(--linea); border-radius: 999px;
+  background: var(--tarjeta); text-decoration: none;
+  font-size: .82rem; font-weight: 600; color: var(--suave);
+  -webkit-tap-highlight-color: transparent;
+}
+.ir svg { width: 17px; height: 17px; flex: none; }
+.ir:active { background: var(--azul-luz); border-color: var(--azul); color: var(--azul); }
+@media (hover: hover) {
+  .ir:hover { background: var(--azul-luz); border-color: var(--azul); color: var(--azul); }
+}
+/* El botón y el enlace de la nota, uno al lado del otro cuando caben */
+.ir + .abrir-nota { margin-left: 12px; }
+
 /* ── La anotación ── */
 .abrir-nota {
   margin-top: 9px; font: inherit; font-size: .82rem; font-weight: 600;
@@ -181,6 +199,18 @@ body {
   margin-top: 16px; background: var(--rojo-luz); color: var(--rojo);
   border-radius: 10px; padding: 10px 12px; font-size: .85rem; font-weight: 600;
 }
+
+/* ── El recordatorio de WhatsApp ──
+   Al final y no arriba: no es una tarea, es lo que se hace cuando algo se
+   atasca, y eso se busca al final, no al empezar. */
+.ayuda {
+  margin: 30px 16px 0; background: #E9F8EF; border: 1px solid #C6E9D5;
+  border-radius: var(--r-lg); padding: 15px 17px;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.ayuda svg { width: 22px; height: 22px; flex: none; margin-top: 1px; }
+.ayuda p { font-size: .9rem; line-height: 1.5; color: #22543D; }
+.ayuda b { font-weight: 600; }
 
 /* ── Pie ── */
 .pie { margin-top: 34px; padding: 0 20px; text-align: center; }

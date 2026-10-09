@@ -316,6 +316,7 @@
     const fijaTexto = $("fija-texto");
     const fijaQuien = $("fija-quien");
     const fijaDia   = $("fija-dia");
+    const fijaUrl   = $("fija-enlace");
 
     function recontarFijas() {
       const bloque = fijaLista.closest(".eq-bloque");
@@ -336,15 +337,25 @@
       texto.textContent = f.texto;           // textContent, no innerHTML: lo
       const meta = document.createElement("span");  // escribe una persona
       meta.className = "fija-meta";
-      meta.textContent = (f.asignado_a || "Sin asignar") +
-                         (f.dia_nombre ? " · " + f.dia_nombre : "");
+      meta.textContent = (f.asignado_a || "Sin asignar") + " · " + f.cuando;
       const x = document.createElement("button");
       x.type = "button";
       x.className = "fija-x";
       x.dataset.borrar = "";
       x.setAttribute("aria-label", "Borrar");
       x.textContent = "×";
-      li.append(marca, texto, meta, x);
+      if (f.enlace) {
+        const a = document.createElement("a");
+        a.className = "fija-enlace";
+        a.href = f.enlace;          // el servidor ya ha comprobado que es http(s)
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.title = f.enlace;
+        a.textContent = "enlace";
+        li.append(marca, texto, a, meta, x);
+      } else {
+        li.append(marca, texto, meta, x);
+      }
       return li;
     }
 
@@ -358,11 +369,16 @@
           body: JSON.stringify({
             texto,
             asignado_a: fijaQuien.value || null,
-            dia_semana: fijaDia.value === "" ? null : Number(fijaDia.value),
+            // «diario» no es un día de la semana: es otra forma de repetirse.
+            cada_dia: fijaDia.value === "diario",
+            dia_semana: (fijaDia.value === "" || fijaDia.value === "diario")
+                        ? null : Number(fijaDia.value),
+            enlace: fijaUrl.value.trim() || null,
           }),
         });
         fijaLista.appendChild(pintarFija(f));
         fijaTexto.value = "";
+        fijaUrl.value = "";
         fijaTexto.focus();
         recontarFijas();
       } catch (err) { fallo(fijaTexto, err.message); }

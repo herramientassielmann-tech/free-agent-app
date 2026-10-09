@@ -648,7 +648,20 @@ class TareaEquipo(Base):
         ForeignKey("tareas_fijas.id", ondelete="SET NULL"), nullable=True, index=True)
     # El lunes de la semana a la que pertenece la copia. Sólo lo llevan las que
     # vienen de una fija: las sueltas no pertenecen a ninguna semana concreta.
+    # Sirve para agrupar «esta semana», no para evitar duplicados: de eso se
+    # encarga `periodo`, porque una tarea diaria tiene siete copias por semana.
     semana: Mapped[Optional[date]] = mapped_column(Date, nullable=True, index=True)
+
+    # Qué repetición concreta es esta copia: el lunes si la fija es semanal, el
+    # día exacto si es diaria. Es la clave que impide crearla dos veces, y por
+    # eso el índice único va sobre (fija_id, periodo) y no sobre la semana.
+    periodo: Mapped[Optional[date]] = mapped_column(Date, nullable=True, index=True)
+
+    # El sitio donde se hace la tarea: el documento de los guiones, Metricool.
+    # Se copia de la fija en vez de leerse de ella, para que una copia vieja
+    # siga apuntando a donde apuntaba entonces y sobreviva a su plantilla.
+    enlace: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    enlace_icono: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
     completada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     # Se marca al avisar por correo, para no repetir el mismo aviso cada mañana
@@ -693,6 +706,18 @@ class TareaFija(Base):
     # semana: hay cosas que son "en algún momento de la semana" y forzarlas a un
     # día concreto sólo consigue que venzan sin motivo.
     dia_semana: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    # Las de todos los días (publicar los clips) sacan una copia por jornada, no
+    # una por semana, y entonces `dia_semana` no pinta nada. Una casilla y no un
+    # séptimo valor de `dia_semana` porque son dos preguntas distintas: cada
+    # cuánto se repite y, si es semanal, qué día.
+    cada_dia: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # A dónde lleva el botón de la derecha en su lista: el documento donde
+    # escribe los guiones, la herramienta donde programa. El icono se deduce de
+    # la dirección, para no tener que elegirlo a mano cada vez.
+    enlace: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    enlace_icono: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
     prioridad: Mapped[str] = mapped_column(String(10), default="normal", nullable=False)
     # Desactivar en vez de borrar: así las copias ya hechas no pierden su origen

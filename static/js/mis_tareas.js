@@ -69,9 +69,7 @@
       if (destino && li.parentElement !== destino) destino.prepend(li);
       const marcas = li.querySelector('.marcas');
       if (marcas) {
-        marcas.innerHTML = t.estado === 'hecha'
-          ? `<span class="chip --ok">Hecha${t.hecha_el ? ' el ' + t.hecha_el : ''}</span>`
-          : chipsPendiente(t);
+        marcas.innerHTML = t.estado === 'hecha' ? chipsHecha(t) : chipsPendiente(t);
       }
       const boton = li.querySelector('[data-marcar]');
       if (boton) {
@@ -90,6 +88,14 @@
       delete li.dataset.ocupada;
       recontar();
     }
+  }
+
+  // El día del que era la tarea, no sólo cuándo se marcó: una diaria deja
+  // varias filas iguales en la semana y sin el día no se distinguen.
+  function chipsHecha(t) {
+    if (t.dia) return `<span class="chip">${t.dia} ${t.fecha_corta}</span>` +
+                      '<span class="chip --ok">Hecha</span>';
+    return `<span class="chip --ok">Hecha${t.hecha_el ? ' el ' + t.hecha_el : ''}</span>`;
   }
 
   function chipsPendiente(t) {

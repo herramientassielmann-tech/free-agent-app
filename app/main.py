@@ -60,6 +60,19 @@ def _migrate_db(db: Session):
         # tareas sueltas (fija_id y semana a NULL) no se estorban entre ellas.
         ("CREATE UNIQUE INDEX IF NOT EXISTS ix_tareas_equipo_fija_semana "
          "ON tareas_equipo (fija_id, semana)"),
+        "ALTER TABLE tareas_fijas ADD COLUMN cada_dia BOOLEAN DEFAULT 0",
+        "ALTER TABLE tareas_fijas ADD COLUMN enlace VARCHAR(500)",
+        "ALTER TABLE tareas_fijas ADD COLUMN enlace_icono VARCHAR(20)",
+        "ALTER TABLE tareas_equipo ADD COLUMN periodo DATE",
+        "ALTER TABLE tareas_equipo ADD COLUMN enlace VARCHAR(500)",
+        "ALTER TABLE tareas_equipo ADD COLUMN enlace_icono VARCHAR(20)",
+        # Lo que ya existía era semanal, así que su periodo ES su semana.
+        "UPDATE tareas_equipo SET periodo = semana WHERE periodo IS NULL AND semana IS NOT NULL",
+        # Y el cerrojo pasa a (fija_id, periodo): una tarea diaria tiene siete
+        # copias dentro de la misma semana, y el índice viejo sólo dejaría una.
+        "DROP INDEX IF EXISTS ix_tareas_equipo_fija_semana",
+        ("CREATE UNIQUE INDEX IF NOT EXISTS ix_tareas_equipo_fija_periodo "
+         "ON tareas_equipo (fija_id, periodo)"),
     ]
     for sql in simple:
         try:

@@ -1035,13 +1035,29 @@ class FijaIn(BaseModel):
     texto: str
     asignado_a: Optional[str] = None
     dia_semana: Optional[int] = None
+    cada_dia: bool = False
+    enlace: Optional[str] = None
     prioridad: str = "normal"
+
+
+def _enlace_ok(url: Optional[str]) -> Optional[str]:
+    """Deja pasar sólo http y https. Acaba dentro de un `href`, y ahí un
+    `javascript:` sería código ejecutándose en la página de ella."""
+    limpio = (url or "").strip()
+    if not limpio:
+        return None
+    if not limpio.lower().startswith(("http://", "https://")):
+        raise HTTPException(status_code=400,
+                            detail="El enlace tiene que empezar por http:// o https://")
+    return limpio[:500]
 
 
 def _fija_json(f: "TareaFija") -> dict:
     return {
         "id": f.id, "texto": f.texto, "asignado_a": f.asignado_a,
-        "dia_semana": f.dia_semana, "dia_nombre": f.dia_nombre,
+        "dia_semana": f.dia_semana, "cada_dia": f.cada_dia,
+        "cuando": "cada día" if f.cada_dia else (f.dia_nombre or "cualquier día"),
+        "enlace": f.enlace, "enlace_icono": f.enlace_icono,
         "prioridad": f.prioridad, "activa": f.activa,
     }
 
@@ -1071,8 +1087,15 @@ async def crear_fija(
     if payload.prioridad not in ("urgente", "normal", "baja"):
         raise HTTPException(status_code=400, detail="Prioridad no válida")
 
+    from app.services.tareas_fijas import icono_de
+    enlace = _enlace_ok(payload.enlace)
     f = TareaFija(texto=texto[:300], asignado_a=quien,
-                  dia_semana=payload.dia_semana, prioridad=payload.prioridad)
+                  # En una diaria el día de la semana no pinta nada: se limpia
+                  # para que no queden los dos puestos diciendo cosas distintas.
+                  dia_semana=None if payload.cada_dia else payload.dia_semana,
+                  cada_dia=payload.cada_dia,
+                  enlace=enlace, enlace_icono=icono_de(enlace),
+                  prioridad=payload.prioridad)
     db.add(f)
     db.commit()
     db.refresh(f)
@@ -1101,6 +1124,14 @@ async def editar_fija(
         if not nuevo:
             raise HTTPException(status_code=422, detail="La tarea está vacía.")
         f.texto = nuevo[:300]
+    elif campo == "enlace":
+        from app.services.tareas_fijas import icono_de
+        f.enlace = _enlace_ok(valor)
+        f.enlace_icono = icono_de(f.enlace)
+    elif campo == "cada_dia":
+        f.cada_dia = valor in ("1", "true", "si", "sí")
+        if f.cada_dia:
+            f.dia_semana = None
     elif campo == "dia_semana":
         if valor == "":
             f.dia_semana = None

@@ -88,10 +88,13 @@
       <option value="">Sin asignar</option>
       {% for p in equipo %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
     </select>
-    <select id="fija-dia" aria-label="Qué día">
-      <option value="">Cualquier día</option>
-      {% for d in dias %}<option value="{{ loop.index0 }}">{{ d|capitalize }}</option>{% endfor %}
+    <select id="fija-dia" aria-label="Cada cuánto">
+      <option value="">Cualquier día de la semana</option>
+      <option value="diario">Cada día</option>
+      {% for d in dias %}<option value="{{ loop.index0 }}">Cada {{ d }}</option>{% endfor %}
     </select>
+    <input type="url" id="fija-enlace" maxlength="500" autocomplete="off"
+           placeholder="Enlace (opcional): documento, Metricool…">
     <button type="button" class="btn btn-primary" id="fija-anadir">Añadir</button>
   </div>
 
@@ -101,7 +104,12 @@
       <input type="checkbox" data-activa {{ 'checked' if f.activa }}
              aria-label="Crear esta tarea cada semana">
       <span class="fija-texto">{{ f.texto }}</span>
-      <span class="fija-meta">{{ f.asignado_a or 'Sin asignar' }}{% if f.dia_nombre %} · {{ f.dia_nombre }}{% endif %}</span>
+      {%- if f.enlace %}
+      <a class="fija-enlace" href="{{ f.enlace }}" target="_blank" rel="noopener noreferrer"
+         title="{{ f.enlace }}">enlace</a>
+      {%- endif %}
+      <span class="fija-meta">{{ f.asignado_a or 'Sin asignar' }} ·
+        {{ 'cada día' if f.cada_dia else (f.dia_nombre or 'cualquier día') }}</span>
       <button type="button" class="fija-x" data-borrar aria-label="Borrar">×</button>
     </li>
     {% endfor %}

@@ -28,6 +28,28 @@ from app.models import TareaEquipo, TareaFija
 log = logging.getLogger(__name__)
 
 
+# El icono se deduce de la dirección en vez de elegirse a mano: una cosa menos
+# que rellenar, y una cosa menos que se puede rellenar mal.
+ICONOS = (
+    ("docs.google.com",   "gdoc"),
+    ("drive.google.com",  "gdoc"),
+    ("metricool.com",     "metricool"),
+    ("wa.me",             "whatsapp"),
+    ("whatsapp.com",      "whatsapp"),
+)
+
+
+def icono_de(url: Optional[str]) -> Optional[str]:
+    """Qué dibujo le toca a esa dirección. `enlace` genérico si no es ninguna."""
+    if not url:
+        return None
+    bajo = url.lower()
+    for trozo, nombre in ICONOS:
+        if trozo in bajo:
+            return nombre
+    return "enlace"
+
+
 def lunes_de(d: date) -> date:
     """El lunes de la semana de esa fecha. Mismo criterio que el resto de la app."""
     return d - timedelta(days=d.weekday())
@@ -55,43 +77,68 @@ def asegurar_semana(db: Session, persona: Optional[str] = None,
 
     # Las que ya existen, de una sola consulta: lo normal es que estén todas y
     # no haya que insertar nada, y ese camino tiene que ser barato.
-    ya = {f for (f,) in db.query(TareaEquipo.fija_id)
-                          .filter(TareaEquipo.semana == lunes,
-                                  TareaEquipo.fija_id.isnot(None)).all()}
+    ya = {(fid, per) for fid, per in
+          db.query(TareaEquipo.fija_id, TareaEquipo.periodo)
+            .filter(TareaEquipo.semana == lunes,
+                    TareaEquipo.fija_id.isnot(None)).all()}
 
     creadas = 0
+    nacimiento = {f.id: (f.created_at.date() if f.created_at else None) for f in fijas}
+
     for f in fijas:
-        if f.id in ya:
-            continue
+        for periodo, fecha in _repeticiones(f, lunes, hoy):
+            if (f.id, periodo) in ya:
+                continue
+            # Una fija de los lunes creada un viernes NO se crea para esta
+            # semana: saldría ya vencida el día de estrenarla, por un lunes en
+            # el que aún no existía. Empieza en la siguiente repetición.
+            #
+            # Mira la FECHA de entrega, no el periodo. Una fija sin día concreto
+            # tiene el lunes por periodo pero no tiene fecha: vale para toda la
+            # semana y todavía se puede hacer, así que esa sí se crea hoy.
+            nace = nacimiento.get(f.id)
+            if fecha is not None and nace and fecha < nace:
+                continue
 
-        fecha = (lunes + timedelta(days=f.dia_semana)
-                 if f.dia_semana is not None else None)
-        # Una fija de los lunes creada un viernes NO se crea para esta semana:
-        # saldría ya vencida el día de estrenarla, por un lunes en el que aún
-        # no existía. Empieza el lunes que viene. Sólo afecta a la semana en
-        # que se crea: a partir de ahí la fecha siempre es posterior.
-        if fecha is not None and f.created_at and fecha < f.created_at.date():
-            continue
-
-        try:
-            db.add(TareaEquipo(
-                texto=f.texto,
-                asignado_a=f.asignado_a,
-                # Sin día concreto la copia sale sin fecha y vale para toda la
-                # semana. Ponerle una fecha inventada sólo haría que venciera.
-                fecha_limite=fecha,
-                prioridad=f.prioridad,
-                fija_id=f.id,
-                semana=lunes,
-            ))
-            db.commit()
-            creadas += 1
-        except IntegrityError:
-            # Otra pestaña se adelantó. Es el caso normal, no un fallo.
-            db.rollback()
-        except Exception:                                    # noqa: BLE001
-            # Que una fija rara no deje a la persona sin el resto de su semana.
-            db.rollback()
-            log.exception("No se pudo crear la copia de la tarea fija %s", f.id)
+            try:
+                db.add(TareaEquipo(
+                    texto=f.texto,
+                    asignado_a=f.asignado_a,
+                    # Sin día concreto la copia sale sin fecha y vale para toda
+                    # la semana. Una fecha inventada sólo haría que venciera.
+                    fecha_limite=fecha,
+                    prioridad=f.prioridad,
+                    fija_id=f.id,
+                    semana=lunes,
+                    periodo=periodo,
+                    enlace=f.enlace,
+                    enlace_icono=f.enlace_icono,
+                ))
+                db.commit()
+                creadas += 1
+            except IntegrityError:
+                # Otra pestaña se adelantó. Es el caso normal, no un fallo.
+                db.rollback()
+            except Exception:                                # noqa: BLE001
+                # Que una fija rara no deje sin el resto de su semana.
+                db.rollback()
+                log.exception("No se pudo crear la copia de la tarea fija %s", f.id)
 
     return creadas
+
+
+def _repeticiones(f: TareaFija, lunes: date, hoy: date):
+    """Qué copias le tocan a esta fija en la semana en curso: (periodo, fecha).
+
+    Una semanal tiene una. Una diaria tiene una por día **ya empezado**: del
+    lunes a hoy, no la semana entera. Se rellenan los días pasados a propósito,
+    aunque nadie abriera la página: si el martes no se publicó, el martes tiene
+    que verse sin marcar. Un hueco no cuenta nada; una tarea vencida sí.
+    """
+    if not f.cada_dia:
+        fecha = (lunes + timedelta(days=f.dia_semana)
+                 if f.dia_semana is not None else None)
+        return [(lunes, fecha)]
+    # En una diaria el periodo y la fecha límite son el mismo día.
+    dias = [lunes + timedelta(days=i) for i in range((hoy - lunes).days + 1)]
+    return [(d, d) for d in dias]

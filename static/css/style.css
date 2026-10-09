@@ -2582,7 +2582,8 @@ a:hover { color: #3d9eff; }
 .eq-fijas-intro { margin: -6px 0 16px; font-size: .88rem; color: var(--c-suave); line-height: 1.5; }
 
 .eq-fijas-nueva { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-.eq-fijas-nueva input[type="text"] {
+.eq-fijas-nueva input[type="text"],
+.eq-fijas-nueva input[type="url"] {
   flex: 1; min-width: 200px; font: inherit; font-size: .92rem; padding: 10px 13px;
   border: 1px solid var(--c-linea); border-radius: var(--r-md);
   background: var(--c-tarjeta); color: var(--c-tinta);
@@ -2592,7 +2593,8 @@ a:hover { color: #3d9eff; }
   border: 1px solid var(--c-linea); border-radius: var(--r-md);
   background: var(--c-tarjeta); color: var(--c-tinta);
 }
-.eq-fijas-nueva input[type="text"]:focus, .eq-fijas-nueva select:focus {
+.eq-fijas-nueva input[type="text"]:focus,
+.eq-fijas-nueva input[type="url"]:focus, .eq-fijas-nueva select:focus {
   outline: none; border-color: var(--c-azul); box-shadow: 0 0 0 3px rgba(10,111,212,.13);
 }
 
@@ -2606,6 +2608,10 @@ a:hover { color: #3d9eff; }
 .fija input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--c-azul); cursor: pointer; }
 .fija-texto { flex: 1; min-width: 0; font-size: .93rem; color: var(--c-tinta); }
 .fija-meta { font-size: .78rem; color: var(--c-tenue); white-space: nowrap; }
+.fija-enlace {
+  font-size: .74rem; font-weight: 600; color: var(--c-azul); text-decoration: none;
+  background: var(--c-azul-luz); padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+}
 .fija-x {
   flex: none; border: 0; background: none; cursor: pointer; padding: 2px 6px;
   font-size: 1.15rem; line-height: 1; color: var(--c-tenue); border-radius: 6px;
@@ -2615,7 +2621,8 @@ a:hover { color: #3d9eff; }
 }
 
 @media (max-width: 640px) {
-  .eq-fijas-nueva input[type="text"] { min-width: 100%; }
+  .eq-fijas-nueva input[type="text"],
+  .eq-fijas-nueva input[type="url"] { min-width: 100%; }
   .eq-fijas-nueva select { flex: 1; }
   .fija { flex-wrap: wrap; }
   .fija-texto { flex-basis: calc(100% - 60px); }

@@ -24,7 +24,7 @@
     <button type="submit">Añadir</button>
   </form>
 
-  <h2 class="rotulo">De cada semana <em>· <span data-cuenta="fijas">{{ fijas|length }}</span></em></h2>
+  <h2 class="rotulo">Lo que se repite <em>· <span data-cuenta="fijas">{{ fijas|length }}</span></em></h2>
   <ul class="lista" id="fijas">
     {% for t in fijas %}{{ fila(t) }}{% endfor %}
   </ul>
@@ -41,6 +41,12 @@
     {% for t in hechas %}{{ fila(t) }}{% endfor %}
   </ul>
   <p class="vacio" data-vacio="hechas"{% if hechas %} hidden{% endif %}>Todavía nada. Es lunes para todos.</p>
+
+  <aside class="ayuda">
+    <svg aria-hidden="true"><use href="#ico-whatsapp"/></svg>
+    <p>¿Alguna duda con algo de aquí? <b>Pregúntanos por WhatsApp</b>, como siempre.
+    Mejor preguntar que quedarte atascada.</p>
+  </aside>
 
   <div class="pie">
     <form method="post" action="/mis-tareas/salir">

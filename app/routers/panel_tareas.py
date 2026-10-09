@@ -143,7 +143,20 @@ def _json(t: TareaEquipo, lunes: Optional[date] = None) -> dict:
         "estado": t.estado,
         "notas": t.notas or "",
         "hecha_el": t.completada_en.strftime("%d/%m") if t.completada_en else None,
+        "enlace": t.enlace or None,
+        "enlace_icono": t.enlace_icono or "enlace",
+        "enlace_nombre": _NOMBRES.get(t.enlace_icono or "", "Abrir el enlace"),
     }
+
+
+# Cómo se llama cada sitio en el botón. El nombre va escrito al lado del icono:
+# un dibujo de 20px no se reconoce siempre, y menos en un móvil al sol.
+_NOMBRES = {
+    "gdoc": "Abrir el documento",
+    "metricool": "Abrir Metricool",
+    "whatsapp": "Abrir WhatsApp",
+    "enlace": "Abrir el enlace",
+}
 
 
 _DIAS = ("Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo")

@@ -15,7 +15,13 @@
 
     <div class="marcas">
       {%- if t.estado == 'hecha' %}
-        <span class="chip --ok">Hecha{{ ' el ' ~ t.hecha_el if t.hecha_el }}</span>
+        {#- De qué día era, no sólo cuándo se marcó. Una tarea diaria deja cinco
+            filas iguales en la semana, y sin el día no hay forma de saber
+            cuáles están y cuál falta. #}
+        {%- if t.dia %}<span class="chip">{{ t.dia }} {{ t.fecha_corta }}</span>
+          <span class="chip --ok">Hecha</span>
+        {%- else %}<span class="chip --ok">Hecha{{ ' el ' ~ t.hecha_el if t.hecha_el }}</span>
+        {%- endif %}
       {%- else %}
         {%- if t.urgente %}<span class="chip --urge">Urgente</span>{% endif %}
         {%- if t.vencida %}<span class="chip --tarde">Se pasó el {{ t.fecha_corta }}</span>
@@ -23,6 +29,16 @@
         {%- elif t.dia %}<span class="chip">{{ t.dia }} {{ t.fecha_corta }}</span>{% endif %}
       {%- endif %}
     </div>
+
+    {%- if t.enlace %}
+    {# El botón de ir al sitio donde se hace la tarea. `noopener` porque la
+       página de destino no tiene por qué poder tocar esta. #}
+    <a class="ir" href="{{ t.enlace }}" target="_blank" rel="noopener noreferrer"
+       aria-label="{{ t.enlace_nombre }}">
+      <svg aria-hidden="true"><use href="#ico-{{ t.enlace_icono }}"/></svg>
+      <span>{{ t.enlace_nombre }}</span>
+    </a>
+    {%- endif %}
 
     <button class="abrir-nota" type="button" data-nota>
       {{ 'Ver o cambiar la nota' if t.notas else 'Añadir una nota' }}
