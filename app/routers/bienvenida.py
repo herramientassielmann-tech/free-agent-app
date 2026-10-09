@@ -91,7 +91,10 @@ def _alta(token: str, db: Session) -> Alta:
     if not token or len(token) < 20:
         raise HTTPException(status_code=404, detail="No encontrado")
     fila = db.query(Alta).filter(Alta.token == token).first()
-    if fila is None or not secrets.compare_digest(fila.token, token):
+    # Sobre bytes y no sobre texto: `compare_digest` lanza con cualquier
+    # carácter no ASCII, y `token` llega de la URL, donde entra cualquier cosa.
+    if fila is None or not secrets.compare_digest(
+            (fila.token or "").encode("utf-8"), (token or "").encode("utf-8")):
         raise HTTPException(status_code=404, detail="No encontrado")
     if fila.token_expira < datetime.utcnow():
         raise HTTPException(status_code=404, detail="No encontrado")

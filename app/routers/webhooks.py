@@ -57,7 +57,9 @@ def _firma_valida(cuerpo: bytes, cabecera: str, secreto: str) -> bool:
     esperada = hmac.new(
         secreto.encode(), f"{t}.".encode() + cuerpo, hashlib.sha256
     ).hexdigest()
-    return hmac.compare_digest(esperada, v1)
+    # Sobre bytes: `v1` sale de una cabecera, y `compare_digest` lanza con
+    # cualquier carácter no ASCII. Una cabecera rara no puede ser un 500.
+    return hmac.compare_digest(esperada.encode(), (v1 or "").encode("utf-8", "replace"))
 
 
 def _origen(p: dict) -> Optional[str]:

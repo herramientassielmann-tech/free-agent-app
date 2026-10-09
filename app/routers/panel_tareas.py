@@ -175,7 +175,7 @@ async def entrar(request: Request, clave: str = Form("")):
     if _bloqueada(ip):
         return _pantalla_clave(request, "Demasiados intentos. Prueba dentro de un rato.")
 
-    if not secrets.compare_digest(clave.strip(), TAREAS_PASSWORD):
+    if not _coincide(clave, TAREAS_PASSWORD):
         veces, _ = _fallos.get(ip, (0, 0.0))
         _fallos[ip] = (veces + 1, time.time() + CASTIGO)
         log.warning("Panel de tareas: contraseña fallida desde %s", ip)
@@ -197,6 +197,22 @@ async def salir():
     r = RedirectResponse(url="/mis-tareas", status_code=303)
     r.delete_cookie(COOKIE)
     return r
+
+
+def _coincide(escrito: str, bueno: str) -> bool:
+    """¿Es esta la contraseña? Comparación en tiempo constante, sobre BYTES.
+
+    Sobre texto no: `secrets.compare_digest` lanza una excepción en cuanto una
+    de las dos cadenas trae un carácter que no sea ASCII, y lo que se compara
+    aquí lo teclea una persona en un móvil. Una tilde, una ñ o una comilla
+    curva del teclado tiraban la página entera con un error en crudo en vez de
+    decir simplemente que la contraseña no es.
+
+    De paso se quitan los espacios de los extremos, incluido el espacio duro
+    que cuelan algunos teclados y correctores al pegar texto.
+    """
+    limpio = (escrito or "").strip().strip("\u00a0").strip()
+    return secrets.compare_digest(limpio.encode("utf-8"), (bueno or "").encode("utf-8"))
 
 
 def _pantalla_clave(request: Request, aviso: str = "") -> HTMLResponse:
