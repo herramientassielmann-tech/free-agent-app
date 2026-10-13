@@ -13,13 +13,25 @@ from app.config import APP_URL
 from app.models import Alta
 
 # Qué le falta, en el orden en que tiene que hacerlo.
+# Los cuatro de /empieza. Antes eran los cinco del embudo viejo —pago, Skool—,
+# y el correo le pedía al alumno cosas que ya no existían.
 PENDIENTES = [
-    ("pagado_en", "Completar el pago"),
     ("contrato_firmado_en", "Firmar el contrato"),
+    ("onboarding_agendado_en", "Agendar tu llamada de onboarding con Robert"),
+    ("video_visto_en", "Ver el vídeo de cómo se usa la herramienta"),
     ("cuenta_creada_en", "Crear tu cuenta en la herramienta"),
-    ("skool_abierto_en", "Entrar en Skool"),
-    ("onboarding_agendado_en", "Agendar tu llamada de onboarding"),
 ]
+
+# El enlace general y el código, y no un enlace personal con token: un enlace
+# personal se reenvía y abre la puerta al que lo recibe. El código se le da a
+# una persona.
+ENTRADA = f"{APP_URL}/empieza"
+
+
+def _codigo_html(codigo: str) -> str:
+    return (f'<p style="margin:0 0 6px;font-size:13px;color:#5A6874">Tu código de acceso</p>'
+            f'<p style="margin:0 0 20px;font-family:ui-monospace,Menlo,Consolas,monospace;'
+            f'font-size:24px;font-weight:700;letter-spacing:4px;color:#16202C">{codigo}</p>')
 
 
 def que_falta(alta: Alta) -> List[str]:
@@ -38,7 +50,10 @@ def _enviar(destinatario: str, asunto: str, html: str, texto: str) -> bool:
 
 def _plantilla(titulo: str, parrafos: List[str], enlace: str,
                boton: str, faltan: Optional[List[str]] = None) -> str:
-    cuerpo = "".join(f'<p style="margin:0 0 14px">{p}</p>' for p in parrafos)
+    # Lo que ya viene maquetado (el bloque del código) entra tal cual: envolver
+    # un <p> dentro de otro <p> es HTML inválido y Gmail lo pinta a su manera.
+    cuerpo = "".join(p if p.lstrip().startswith("<") else
+                     f'<p style="margin:0 0 14px">{p}</p>' for p in parrafos)
     lista = ""
     if faltan:
         filas = "".join(
@@ -66,7 +81,7 @@ def _plantilla(titulo: str, parrafos: List[str], enlace: str,
       </p>
     </td></tr></table>
     <p style="max-width:520px;margin:16px auto 0;font-size:12px;color:#5A6874">
-      Este enlace es sólo tuyo. Si no lo esperabas, ignora este correo.
+      Tu código es sólo tuyo. Si no esperabas este correo, ignóralo.
     </p>
   </td></tr></table></body></html>'''
 
@@ -74,7 +89,6 @@ def _plantilla(titulo: str, parrafos: List[str], enlace: str,
 def mandar_bienvenida(alta: Alta) -> bool:
     """Sale a la hora exacta de la llamada de venta, para que el cierre se pueda
     hacer en vivo mientras la persona está al teléfono."""
-    enlace = f"{APP_URL}/bienvenida/{alta.token}"
     nombre = (alta.nombre or "").split()[0] or "Hola"
     faltan = que_falta(alta)
     return _enviar(
@@ -82,13 +96,14 @@ def mandar_bienvenida(alta: Alta) -> bool:
         "Tu acceso a Free Agent Academy",
         _plantilla(
             f"{nombre}, aquí tienes todo",
-            ["Este es tu enlace personal. Desde ahí haces el pago, firmas el "
-             "contrato, creas tu cuenta en la herramienta, entras en Skool y "
-             "agendas tu llamada de onboarding.",
-             "Lo puedes hacer ahora mismo durante la llamada. Si te quedas a "
-             "medias, vuelves al mismo enlace cuando quieras."],
-            enlace, "Abrir mi acceso", faltan),
-        f"{nombre}, aquí tienes tu acceso a Free Agent Academy:\n{enlace}\n\n"
+            [f"Entra en <b>{ENTRADA.replace('https://', '')}</b> y pon este código. "
+             "Es sólo tuyo: no lo compartas.",
+             _codigo_html(alta.codigo or ""),
+             "Son cuatro pasos y cada uno abre el siguiente. Si te quedas a "
+             "medias, vuelves cuando quieras con el mismo código."],
+            ENTRADA, "Entrar", faltan),
+        f"{nombre}, aquí tienes tu acceso a Free Agent Academy.\n\n"
+        f"Entra en {ENTRADA} con tu código: {alta.codigo}\n\n"
         + "\n".join(f"{i}. {f}" for i, f in enumerate(faltan, 1)) + "\n",
     )
 
@@ -99,7 +114,6 @@ def mandar_recordatorio(alta: Alta, dia: int) -> bool:
     faltan = que_falta(alta)
     if not faltan:
         return False
-    enlace = f"{APP_URL}/bienvenida/{alta.token}"
     nombre = (alta.nombre or "").split()[0] or "Hola"
     uno = len(faltan) == 1
 
@@ -111,13 +125,14 @@ def mandar_recordatorio(alta: Alta, dia: int) -> bool:
         parrafos = ["Sigue pendiente esto de tu alta. Si algo no te funciona o "
                     "tienes una duda, respóndenos a este correo y lo vemos."]
     else:
-        titulo = f"{nombre}, tu enlace caduca pronto"
-        parrafos = ["Tu alta sigue sin completar y el enlace tiene fecha de "
-                    "caducidad. Si ya no te interesa, dínoslo sin problema; y si "
-                    "es que se te ha pasado, aquí lo tienes."]
+        titulo = f"{nombre}, ¿lo dejamos para otro momento?"
+        parrafos = ["Tu alta sigue a medias. Si ya no te interesa, dínoslo sin "
+                    "problema; y si es que se te ha pasado, aquí lo tienes."]
 
+    parrafos.append(_codigo_html(alta.codigo or ""))
     return _enviar(
         alta.email, titulo,
-        _plantilla(titulo, parrafos, enlace, "Terminar mi alta", faltan),
-        f"{titulo}\n\n" + "\n".join(f"- {f}" for f in faltan) + f"\n\n{enlace}\n",
+        _plantilla(titulo, parrafos, ENTRADA, "Terminar mi alta", faltan),
+        f"{titulo}\n\n" + "\n".join(f"- {f}" for f in faltan)
+        + f"\n\nEntra en {ENTRADA} con tu código: {alta.codigo}\n",
     )

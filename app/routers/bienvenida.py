@@ -422,6 +422,34 @@ async def contrato(request: Request, db: Session = Depends(get_db)):
     })
 
 
+_HUELLA_OK = re.compile(r"^[0-9a-f]{64}$")
+
+
+@router.get("/contrato/{huella}", response_class=HTMLResponse)
+async def copia_firmada(huella: str, request: Request, db: Session = Depends(get_db)):
+    """La copia del contrato firmado, en una dirección que no caduca.
+
+    La clave es la propia huella SHA-256 del documento: 256 bits, imposible de
+    adivinar, y la misma que el alumno tiene impresa en su correo. Es la forma
+    de que la copia dure lo que dura un contrato y no catorce días, que es lo
+    que vive el token del alta. Sin cookie a propósito: se abre desde el correo
+    en cualquier dispositivo, meses después.
+
+    Se sirve el HTML congelado tal cual, no se vuelve a pintar: si se pintara
+    de nuevo con la plantilla de hoy, ya no sería el documento que firmó.
+    """
+    if not _HUELLA_OK.match(huella or ""):
+        raise HTTPException(status_code=404, detail="No encontrado")
+    firma = db.query(FirmaContrato).filter(FirmaContrato.huella_documento == huella).first()
+    if firma is None:
+        raise HTTPException(status_code=404, detail="No encontrado")
+    r = templates.TemplateResponse("contrato_copia.html", {"request": request, "firma": firma})
+    r.headers["X-Robots-Tag"] = "noindex, nofollow"
+    r.headers["Cache-Control"] = "private, no-store"
+    r.headers["Referrer-Policy"] = "no-referrer"
+    return r
+
+
 @router.post("/empieza/firmar")
 async def firmar(
     request: Request,
@@ -508,9 +536,12 @@ def _mandar_copia(alta: Alta, firma: FirmaContrato) -> None:
     try:
         from app.services.email import enviar, esta_configurado
         if not esta_configurado():
+            log.warning("Copia del contrato NO enviada a %s: falta RESEND_API_KEY", alta.email)
             return
-        enlace = f"{APP_URL}/bienvenida/{alta.token}/contrato"
-        enviar(
+        # Antes apuntaba a /bienvenida/<token>/contrato: esa ruta ya no existe y
+        # el token caduca a los catorce días. Esta no caduca nunca.
+        enlace = f"{APP_URL}/contrato/{firma.huella_documento}"
+        salio = enviar(
             alta.email,
             "Tu contrato firmado — FA Academy",
             f"""<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -525,8 +556,15 @@ def _mandar_copia(alta: Alta, firma: FirmaContrato) -> None:
             f"Has firmado el contrato de Free Agent Academy el "
             f"{firma.firmado_en.strftime('%d/%m/%Y %H:%M UTC')}.\nTu copia: {enlace}\n",
         )
+        if salio:
+            log.info("Copia del contrato enviada a %s (alta %s)", alta.email, alta.id)
+        else:
+            log.error("Copia del contrato NO enviada a %s (alta %s): Resend la rechazó",
+                      alta.email, alta.id)
     except Exception:
-        pass   # Un correo que no sale no puede tumbar una firma ya válida.
+        # Un correo que no sale no puede tumbar una firma ya válida. Pero antes
+        # se callaba del todo, y por eso no había forma de saber si llegaba.
+        log.exception("Copia del contrato NO enviada a %s (alta %s)", alta.email, alta.id)
 
 
 # ── Cuenta ───────────────────────────────────────────────────────────────────
@@ -543,16 +581,9 @@ async def crear_cuenta(
 
     def volver(error: str):
         return _pagina(request, alta, error)
-    if False:
-        return templates.TemplateResponse("bienvenida.html", {
-            "request": request, "alta": alta, "pasos": _pasos(alta),
-            "abiertos": alta.accesos_abiertos, "error_cuenta": error,
-            "video": _video_incrustado(VIDEO_ACADEMIA_URL),
-            "email_previo": email,
-        }, status_code=400)
 
     if not alta.video_visto_en:
-        return volver("Todavía no podemos abrirte la cuenta: falta confirmar el pago.")
+        return volver("Antes de crear la cuenta, mira el vídeo de cómo se usa la herramienta.")
     if alta.user_id:
         return volver("Tu cuenta ya está creada. Entra desde la página de acceso.")
 
