@@ -66,6 +66,12 @@
         <td>
           <b>{{ f.alta.nombre }}</b>
           <span class="alta-email">{{ f.alta.email }}</span>
+          {# El código va aquí y no entre los botones: es identidad, no una
+             acción, y en la celda de acciones ensanchaba la fila hasta sacar
+             la tabla de su recuadro. #}
+          {% if f.alta.codigo %}
+          <span class="alta-codigo" title="Su código para entrar en /empieza">{{ f.alta.codigo }}</span>
+          {% endif %}
           {% if f.alta.metodo_pago %}<span class="alta-metodo">{{ f.alta.metodo_pago }}</span>{% endif %}
         </td>
         {% for p in f.pasos %}
@@ -98,9 +104,6 @@
           <a class="alta-btn" href="/admin/altas/{{ f.alta.id }}/contrato"
              target="_blank" rel="noopener" title="Ver el contrato firmado">📄</a>
           {% endif %}
-          {# El código es lo que se le pasa a la persona, junto al enlace
-             general. El enlace largo queda sólo para mirarlo desde aquí. #}
-          <span class="alta-codigo" title="Su código para /empieza">{{ f.alta.codigo or '—' }}</span>
           <a class="alta-btn" href="/bienvenida/{{ f.alta.token }}"
              target="_blank" rel="noopener" title="Abrir su página como la ve él">↗</a>
         </td>

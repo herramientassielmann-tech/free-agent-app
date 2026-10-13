@@ -3251,11 +3251,13 @@ body:has(.mov-fondo:not([hidden])) .rb-hello {
   .lla-buscar .btn { width: 100%; height: 48px; }
 }
 
-/* El código de acceso del alumno, en la lista de altas. Monoespaciado y
-   seleccionable de un golpe: se copia para pegarlo en un WhatsApp. */
+/* El código de acceso del alumno, debajo de su nombre en la lista de altas.
+   Monoespaciado y seleccionable de un golpe: se copia para pegarlo en un
+   WhatsApp. En bloque, para que no ensanche la fila. */
 .alta-codigo {
+  display: inline-block; margin-top: 5px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: .82rem; font-weight: 600; letter-spacing: .06em;
-  background: var(--c-azul-luz, #E8F1FC); color: var(--c-azul, #0A6FD4);
-  padding: 3px 9px; border-radius: 6px; user-select: all; white-space: nowrap;
+  font-size: .76rem; font-weight: 600; letter-spacing: .08em;
+  background: var(--blue-dim); color: var(--blue);
+  padding: 2px 8px; border-radius: 5px; user-select: all;
 }
