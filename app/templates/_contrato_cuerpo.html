@@ -347,8 +347,10 @@
     <div class="parte">
       <p class="nombre">FA Academy</p>
       <p class="dato">Titular: <span class="valor">{{ d.empresa_titular }}</span></p>
+      {%- if d.empresa_domicilio %}
       <p class="dato">Domicilio: <span class="valor">{{ d.empresa_domicilio }}</span></p>
-      <p class="dato">Identificación fiscal: <span class="valor">{{ d.empresa_nif }}</span></p>
+      {%- endif %}
+      <p class="dato">EIN: <span class="valor">{{ d.empresa_nif }}</span></p>
       <p class="dato" style="margin-top:.5rem">En adelante, <b>«FA Academy»</b>.</p>
     </div>
     <div class="parte">

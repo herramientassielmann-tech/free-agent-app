@@ -45,15 +45,20 @@ templates = Jinja2Templates(directory="app/templates")
 #   v1.0 — 20 cláusulas, con arbitraje y compromiso de vídeos semanales
 #   v1.1 — fuera las cláusulas 6 y 20; la 18 pasa a cubrir la jurisdicción
 #   v1.2 — la ley aplicable deja de estar pendiente: Florida (EE. UU.)
-VERSION_CONTRATO = "v1.2"
+#   v1.3 — EIN de la empresa; el domicilio deja de figurar
+VERSION_CONTRATO = "v1.3"
 
 # Los datos de la empresa y las dos decisiones legales pendientes. Van aquí y no
 # en .env porque forman parte del texto del contrato, no de la configuración del
 # servidor: cambiarlos cambia el documento, y eso debe verse en un commit.
 EMPRESA = {
     "empresa_titular": "Robert Sielmann",
-    "empresa_domicilio": "[pendiente]",
-    "empresa_nif": "[pendiente]",
+    # Vacío a propósito: se decidió no publicar el domicilio. Las
+    # notificaciones van por correo (cláusula 15), así que la línea sobra
+    # en vez de quedarse a medias. La plantilla la oculta si está vacía.
+    "empresa_domicilio": "",
+    # EIN, no NIF: la empresa es de Florida. El rótulo del contrato lo dice.
+    "empresa_nif": "33-4956868",
     "empresa_firmante": "Robert Sielmann",
     "contacto": "herramientassielmann@gmail.com",
     # Se escribe tal cual va a leerse detrás de «se rige por las leyes de …»,
@@ -570,6 +575,10 @@ async def crear_cuenta(
         monthly_limit=None,          # sin límite de guiones
         must_change_password=False,  # la eligió él: no hay contraseña temporal
         temp_password=None,
+        # Quien entra por aquí es alumno por definición: ha firmado y ha hecho
+        # el onboarding. Sin esto no aparecería en el seguimiento semanal y
+        # habría que acordarse de marcarlo a mano uno por uno.
+        es_alumno=True,
     )
     db.add(user)
     db.commit()
