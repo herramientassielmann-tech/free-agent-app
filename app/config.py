@@ -60,6 +60,11 @@ SKOOL_INVITE_URL = get_env("SKOOL_INVITE_URL", default=None, required=False)
 CALENDLY_ONBOARDING_URL = get_env("CALENDLY_ONBOARDING_URL", default=None, required=False)
 CALENDLY_WEBHOOK_SECRET = get_env("CALENDLY_WEBHOOK_SECRET", default=None, required=False)
 
+# Vídeo que se le enseña al alumno en el paso de registrarse en la academia.
+# Admite YouTube o Loom; si no está puesto, el paso funciona igual, sin vídeo.
+VIDEO_ACADEMIA_URL = get_env("VIDEO_ACADEMIA_URL", default=None, required=False)
+
+
 # ── Panel de tareas de una colaboradora ───────────────────────────────────
 # Una sola página, fuera de la app, con su propia contraseña: ve sus tareas,
 # las marca, las anota y puede apuntarse alguna. No llega a nada más, y por eso

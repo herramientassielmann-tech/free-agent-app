@@ -13,6 +13,7 @@ llamada.
 import hashlib
 import json
 import logging
+import re
 import secrets
 from datetime import datetime, timedelta
 from typing import Optional
@@ -25,6 +26,7 @@ from sqlalchemy.orm import Session
 from app.auth import create_access_token, hash_password
 from app.config import (
     APP_URL, CALENDLY_ONBOARDING_URL, SKOOL_INVITE_URL, STRIPE_PAYMENT_LINK,
+    VIDEO_ACADEMIA_URL,
 )
 from app.database import get_db
 from app.models import Alta, FirmaContrato, User
@@ -157,7 +159,13 @@ def _huella(html: str) -> str:
 
 
 def _pasos(alta: Alta) -> list:
-    """Los cinco bloques y su estado. El orden es el del cierre en la llamada."""
+    """Los cinco bloques y su estado, en el orden en que se hacen.
+
+    Primero cobrar y firmar, que es lo que no puede quedarse a medias. Después
+    la academia y la llamada con Robert, que es donde empieza el producto. La
+    cuenta de la herramienta va al final a propósito: es la que se usa cada
+    semana a partir de entonces, y así es lo último que ve al terminar.
+    """
     abiertos = alta.accesos_abiertos
     return [
         {"n": 1, "clave": "pago", "titulo": "Completa tu pago",
@@ -165,15 +173,34 @@ def _pasos(alta: Alta) -> list:
          "listo": bool(STRIPE_PAYMENT_LINK)},
         {"n": 2, "clave": "contrato", "titulo": "Firma el contrato",
          "hecho": bool(alta.contrato_firmado_en), "bloqueado": False, "listo": True},
-        {"n": 3, "clave": "cuenta", "titulo": "Crea tu cuenta en la herramienta",
-         "hecho": bool(alta.cuenta_creada_en), "bloqueado": not abiertos, "listo": True},
-        {"n": 4, "clave": "skool", "titulo": "Entra en Skool",
+        {"n": 3, "clave": "skool", "titulo": "Regístrate en la academia",
          "hecho": bool(alta.skool_abierto_en), "bloqueado": not abiertos,
          "listo": bool(SKOOL_INVITE_URL)},
-        {"n": 5, "clave": "onboarding", "titulo": "Agenda tu llamada de onboarding",
+        {"n": 4, "clave": "onboarding", "titulo": "Onboarding con Robert",
          "hecho": bool(alta.onboarding_agendado_en), "bloqueado": not abiertos,
          "listo": bool(CALENDLY_ONBOARDING_URL)},
+        {"n": 5, "clave": "cuenta", "titulo": "Crea tu cuenta en la herramienta",
+         "hecho": bool(alta.cuenta_creada_en), "bloqueado": not abiertos, "listo": True},
     ]
+
+
+def _video_incrustado(url: Optional[str]) -> Optional[str]:
+    """La dirección para incrustar, a partir del enlace que se pega tal cual.
+
+    Se pega el enlace normal de YouTube o de Loom —el que sale al darle a
+    compartir— y aquí se traduce. Pedirle a nadie la URL de incrustar es pedir
+    que se equivoque.
+    """
+    if not url:
+        return None
+    u = url.strip()
+    m = re.search(r"(?:youtube\.com/watch\?v=|youtu\.be/)([A-Za-z0-9_-]{6,})", u)
+    if m:
+        return f"https://www.youtube.com/embed/{m.group(1)}"
+    m = re.search(r"loom\.com/(?:share|embed)/([A-Za-z0-9]{10,})", u)
+    if m:
+        return f"https://www.loom.com/embed/{m.group(1)}"
+    return None
 
 
 # ── La página ────────────────────────────────────────────────────────────────
@@ -186,6 +213,7 @@ async def portada(token: str, request: Request, db: Session = Depends(get_db)):
         "alta": alta,
         "pasos": _pasos(alta),
         "abiertos": alta.accesos_abiertos,
+        "video": _video_incrustado(VIDEO_ACADEMIA_URL),
     })
 
 
@@ -393,6 +421,7 @@ async def crear_cuenta(
         return templates.TemplateResponse("bienvenida.html", {
             "request": request, "alta": alta, "pasos": _pasos(alta),
             "abiertos": alta.accesos_abiertos, "error_cuenta": error,
+            "video": _video_incrustado(VIDEO_ACADEMIA_URL),
             "email_previo": email,
         }, status_code=400)
 
