@@ -225,8 +225,8 @@ def _pasos(alta: Alta) -> list:
     El orden no es decorativo. El contrato va primero porque es lo único que no
     puede quedarse sin hacer. La llamada con Robert antes que la herramienta
     porque en esa llamada se decide qué va a grabar, y sin eso la herramienta es
-    un generador de guiones que no sabe de qué. Y el vídeo antes del acceso
-    porque quien entra sin saber usarla no vuelve.
+    un generador de guiones que no sabe de qué. La cuenta antes que el vídeo,
+    para que lo vea con la herramienta ya abierta y pueda ir probando.
     """
     return [
         {"n": 1, "clave": "contrato", "titulo": "Firma el contrato",
@@ -235,13 +235,13 @@ def _pasos(alta: Alta) -> list:
          "hecho": bool(alta.onboarding_agendado_en),
          "bloqueado": not alta.contrato_firmado_en,
          "listo": bool(CALENDLY_ONBOARDING_URL)},
-        {"n": 3, "clave": "video", "titulo": "Cómo se usa la herramienta",
-         "hecho": bool(alta.video_visto_en),
-         "bloqueado": not alta.onboarding_agendado_en,
-         "listo": bool(VIDEO_HERRAMIENTA_URL)},
-        {"n": 4, "clave": "cuenta", "titulo": "Entra en la herramienta",
+        {"n": 3, "clave": "cuenta", "titulo": "Entra en la herramienta",
          "hecho": bool(alta.cuenta_creada_en),
-         "bloqueado": not alta.video_visto_en, "listo": True},
+         "bloqueado": not alta.onboarding_agendado_en, "listo": True},
+        {"n": 4, "clave": "video", "titulo": "Cómo se usa la herramienta",
+         "hecho": bool(alta.video_visto_en),
+         "bloqueado": not alta.cuenta_creada_en,
+         "listo": bool(VIDEO_HERRAMIENTA_URL)},
     ]
 
 
@@ -325,7 +325,7 @@ async def empieza_salir():
 async def empieza_video(request: Request, db: Session = Depends(get_db)):
     """«Ya lo he visto». Es lo que abre el último paso."""
     alta = _alta_sesion(request, db)
-    if not alta.onboarding_agendado_en:
+    if not alta.cuenta_creada_en:
         raise HTTPException(status_code=404, detail="No encontrado")
     if not alta.video_visto_en:
         alta.video_visto_en = datetime.utcnow()
@@ -582,8 +582,8 @@ async def crear_cuenta(
     def volver(error: str):
         return _pagina(request, alta, error)
 
-    if not alta.video_visto_en:
-        return volver("Antes de crear la cuenta, mira el vídeo de cómo se usa la herramienta.")
+    if not alta.onboarding_agendado_en:
+        return volver("Antes de crear la cuenta, agenda tu llamada con Robert.")
     if alta.user_id:
         return volver("Tu cuenta ya está creada. Entra desde la página de acceso.")
 
@@ -621,7 +621,10 @@ async def crear_cuenta(
 
     # Entra directo: pedirle que inicie sesión justo después de elegir la
     # contraseña es un paso de más en el momento más frágil.
-    respuesta = RedirectResponse(url="/", status_code=303)
+    # De vuelta a /empieza y no a la herramienta: le queda el vídeo, y si se
+    # le manda fuera no vuelve a verlo. La sesión de la herramienta ya queda
+    # abierta con la cookie de abajo, así que al terminar entra de un toque.
+    respuesta = RedirectResponse(url="/empieza", status_code=303)
     respuesta.set_cookie(
         key="access_token",
         value=create_access_token({"sub": str(user.id), "is_admin": False}),

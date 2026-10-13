@@ -392,8 +392,8 @@ class Alta(Base):
     codigo: Mapped[Optional[str]] = mapped_column(String(10), nullable=True,
                                                   unique=True, index=True)
 
-    # Cuándo dio por visto el vídeo de la herramienta. Es lo que abre el último
-    # paso: sin esto, entra a la herramienta sin saber usarla y no vuelve.
+    # Cuándo dio por visto el vídeo de la herramienta. Es el último paso: se ve
+    # con la cuenta ya creada, para ir probando mientras lo mira.
     video_visto_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Lo que se acordó en la llamada de venta: unico | dos_plazos | financiacion.

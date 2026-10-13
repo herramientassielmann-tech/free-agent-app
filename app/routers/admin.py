@@ -450,16 +450,15 @@ async def asesor_thread_redirect(cid: int):
 # ── Altas de alumnos (onboarding) ────────────────────────────────────────────
 
 # En el mismo orden en que los hace el alumno en /empieza, para que la fila se
-# lea de izquierda a derecha igual que avanza él. «Skool» salía aquí y ya no es
-# un paso de nada; el vídeo de la herramienta sí lo es y no salía.
+# lea de izquierda a derecha igual que avanza él.
 PASOS_ALTA = [
     ("agendado", "Agendado", "programada_para"),
     ("email", "Email", "email_enviado_en"),
     ("pago", "Pago", "pagado_en"),
     ("firma", "Firma", "contrato_firmado_en"),
     ("onboarding", "Onboarding", "onboarding_agendado_en"),
-    ("video", "Vídeo", "video_visto_en"),
     ("cuenta", "Cuenta", "cuenta_creada_en"),
+    ("video", "Vídeo", "video_visto_en"),
 ]
 
 

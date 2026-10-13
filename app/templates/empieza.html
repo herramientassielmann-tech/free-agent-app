@@ -155,12 +155,13 @@
           <a class="btn" href="/empieza/onboarding">Elegir día y hora</a>
         {% endif %}
 
-      {# ── 3 · El vídeo de la herramienta ── #}
+      {# ── 4 · El vídeo de la herramienta ── #}
       {% elif p.clave == 'video' %}
         {% if p.hecho %}
-          <p>Visto. Si quieres repasarlo, está en la herramienta.</p>
+          <p>Listo. Ya puedes empezar.</p>
+          <a class="btn" href="/">Ir a la herramienta</a>
         {% elif p.bloqueado %}
-          <p class="candado">🔒 Se abre en cuanto agendes la llamada.</p>
+          <p class="candado">🔒 Se abre en cuanto crees tu cuenta.</p>
         {% elif not p.listo %}
           <p class="nota">El vídeo todavía no está subido. Escríbenos y lo resolvemos.</p>
         {% else %}
@@ -176,13 +177,13 @@
           </form>
         {% endif %}
 
-      {# ── 4 · La cuenta ── #}
+      {# ── 3 · La cuenta ── #}
       {% elif p.clave == 'cuenta' %}
         {% if p.hecho %}
-          <p>Creada. Entras desde <a href="/login">tool.robertsielmann.com</a> con tu correo.</p>
-          <a class="btn btn--fantasma" href="/login">Ir a la herramienta</a>
+          <p>Creada. A partir de ahora entras desde
+          <a href="/login">tool.robertsielmann.com</a> con tu correo.</p>
         {% elif p.bloqueado %}
-          <p class="candado">🔒 Se abre en cuanto veas el vídeo.</p>
+          <p class="candado">🔒 Se abre en cuanto agendes la llamada.</p>
         {% else %}
           <p>Elige el correo y la contraseña con los que quieras entrar a partir
           de ahora. Sin límite de guiones.</p>
@@ -204,7 +205,7 @@
                        minlength="8" autocomplete="new-password">
               </div>
             </div>
-            <button class="btn" type="submit">Crear mi cuenta y entrar</button>
+            <button class="btn" type="submit">Crear mi cuenta</button>
           </form>
         {% endif %}
       {% endif %}

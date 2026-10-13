@@ -18,8 +18,8 @@ from app.models import Alta
 PENDIENTES = [
     ("contrato_firmado_en", "Firmar el contrato"),
     ("onboarding_agendado_en", "Agendar tu llamada de onboarding con Robert"),
-    ("video_visto_en", "Ver el vídeo de cómo se usa la herramienta"),
     ("cuenta_creada_en", "Crear tu cuenta en la herramienta"),
+    ("video_visto_en", "Ver el vídeo de cómo se usa la herramienta"),
 ]
 
 # El enlace general y el código, y no un enlace personal con token: un enlace
