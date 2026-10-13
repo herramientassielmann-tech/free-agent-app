@@ -395,6 +395,11 @@ class Alta(Base):
     # Cuándo dio por visto el vídeo de la herramienta. Es lo que abre el último
     # paso: sin esto, entra a la herramienta sin saber usarla y no vuelve.
     video_visto_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    # Lo que se acordó en la llamada de venta: unico | dos_plazos | financiacion.
+    # Lo elige quien cierra, no el alumno al firmar: se habló en la llamada y
+    # preguntárselo otra vez es una oportunidad de que conteste otra cosa.
+    modalidad: Mapped[str] = mapped_column(String(20), default="unico", nullable=False)
     token_expira: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     email_enviado_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

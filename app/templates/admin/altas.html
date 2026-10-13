@@ -30,6 +30,17 @@
       <label class="form-label" for="a-cuando">Hora de la llamada</label>
       <input class="form-input" id="a-cuando" name="cuando" type="datetime-local">
     </div>
+    <div class="form-group">
+      {# Sale impresa en la cláusula 3.2 del contrato. Se elige aquí y no al
+         firmar: se acordó en la llamada, y volver a preguntárselo al alumno es
+         darle ocasión de contestar otra cosa. #}
+      <label class="form-label" for="a-modalidad">Forma de pago acordada</label>
+      <select class="form-input" id="a-modalidad" name="modalidad">
+        <option value="unico">Pago único · 3.000 $ a la firma</option>
+        <option value="dos_plazos">Dos plazos · 1.500 $ + 1.500 $ a los 30 días</option>
+        <option value="financiacion">Financiación mensual (sólo EE. UU.)</option>
+      </select>
+    </div>
   </div>
   <div class="alta-form-botones">
     <button type="button" class="btn btn-secondary" id="alta-cancelar">Cancelar</button>

@@ -508,6 +508,7 @@ async def alta_nueva(
     nombre: str = Form(...),
     email: str = Form(...),
     cuando: str = Form(""),
+    modalidad: str = Form("unico"),
 ):
     """Alta a mano. Es el camino cuando Calendly no manda avisos (plan gratuito)
     o cuando alguien cierra por fuera del embudo."""
@@ -526,6 +527,10 @@ async def alta_nueva(
         programada_para=programada or datetime.utcnow(),
         token=nuevo_token(), token_expira=caducidad(),
         codigo=nuevo_codigo(db),
+        # Lo que se acordó en la llamada. Sale impreso en la cláusula 3.2 del
+        # contrato, así que si aquí se pone mal, el contrato dice otra cosa.
+        modalidad=(modalidad if modalidad in ("unico", "dos_plazos", "financiacion")
+                   else "unico"),
     )
     db.add(a)
     db.commit()

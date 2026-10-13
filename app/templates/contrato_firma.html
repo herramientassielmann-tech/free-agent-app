@@ -143,73 +143,30 @@
 
   <div class="hoja-papel">{% include "_contrato_cuerpo.html" %}</div>
 
-  <form class="firmar" method="post" action="/bienvenida/{{ alta.token }}/firmar">
+  <form class="firmar" method="post" action="/empieza/firmar">
     <h2>Firmar el contrato</h2>
-    <p class="sub">Completa tus datos, marca los reconocimientos y escribe tu nombre.</p>
+    <p class="sub">Dos pasos: marca la casilla y escribe tu nombre.</p>
 
+    {# Una sola casilla, pero su texto dice en voz alta lo que de verdad se
+       discute si algún día hay una reclamación. Lo que sostiene esas cláusulas
+       no es que fueran tres casillas, es que se acepten a la vista. #}
     <fieldset>
-      <legend>Tus datos</legend>
-      <div class="dos">
-        <div class="campo">
-          <label for="documento">Documento de identidad</label>
-          <input id="documento" name="documento" type="text"
-                 value="{{ previo.documento if previo else '' }}" placeholder="DNI, NIE o ID">
-        </div>
-        <div class="campo">
-          <label for="domicilio">Domicilio</label>
-          <input id="domicilio" name="domicilio" type="text"
-                 value="{{ previo.domicilio if previo else '' }}" placeholder="Calle, ciudad, país">
-        </div>
-      </div>
-    </fieldset>
-
-    <fieldset>
-      <legend>Forma de pago acordada</legend>
-      {% set m = previo.modalidad if previo else 'unico' %}
-      <label class="marca-op"><input type="radio" name="modalidad" value="unico"
-        {% if m == 'unico' %}checked{% endif %}><span>Pago único de 3.000 $ a la firma</span></label>
-      <label class="marca-op"><input type="radio" name="modalidad" value="dos_plazos"
-        {% if m == 'dos_plazos' %}checked{% endif %}><span>Dos plazos: 1.500 $ ahora y 1.500 $ a los 30 días</span></label>
-      <label class="marca-op"><input type="radio" name="modalidad" value="financiacion"
-        {% if m == 'financiacion' %}checked{% endif %}><span>Financiación mensual (sólo EE. UU.)</span></label>
-    </fieldset>
-
-    <fieldset>
-      <legend>Reconocimientos · los cuatro son obligatorios</legend>
-      {% set marcados = previo.marcados if previo else [] %}
-      {% for clave, texto in reconocimientos %}
       <label class="reconoce-op">
-        <input type="checkbox" name="r_{{ clave }}" value="1"
-               {% if clave in marcados %}checked{% endif %} required>
-        <span>{{ texto | safe }}</span>
-      </label>
-      {% endfor %}
-    </fieldset>
-
-    <fieldset>
-      <legend>Firma electrónica</legend>
-      <div class="esign">
-        <p>Este contrato se firma por medios electrónicos. <b>Tienes derecho a
-        solicitar y recibir una copia en papel sin coste</b>, y <b>puedes retirar
-        en cualquier momento tu consentimiento</b> a contratar por medios
-        electrónicos escribiéndonos, sin que ello afecte a lo ya firmado.</p>
-        <label class="marca-op" style="margin:0; background:var(--papel)">
-          <input type="checkbox" name="consentimiento" value="1" required
-                 {% if previo and previo.consentimiento %}checked{% endif %}>
-          <span><b>Consiento firmar este contrato por medios electrónicos.</b></span>
-        </label>
-      </div>
-    </fieldset>
-
-    <fieldset>
-      <legend>Opcional</legend>
-      <label class="marca-op">
-        <input type="checkbox" name="imagen" value="1"
-               {% if previo and previo.imagen %}checked{% endif %}>
-        <span>Autorizo a FA Academy a usar mi imagen, voz, nombre y testimonio con
-        fines promocionales. Puedo revocarlo por escrito cuando quiera.</span>
+        <input type="checkbox" name="acepto" value="1" required
+               {% if previo and previo.consentimiento %}checked{% endif %}>
+        <span>{{ reconocimientos[0][1] | safe }}</span>
       </label>
     </fieldset>
+
+    {# Separada de la obligatoria y nunca después del botón: ahí no la ve
+       nadie. Sigue siendo una casilla aparte porque una cesión de imagen que
+       se acepta de paso, dentro de lo obligatorio, no vale. #}
+    <label class="reconoce-op" style="margin-bottom:1.4rem">
+      <input type="checkbox" name="imagen" value="1"
+             {% if previo and previo.imagen %}checked{% endif %}>
+      <span><b>Opcional.</b> Autorizo a FA Academy a usar mi imagen, voz, nombre
+      y testimonio con fines promocionales. Puedo revocarlo cuando quiera.</span>
+    </label>
 
     <fieldset style="margin-bottom:1.8rem">
       <legend>Tu firma</legend>
@@ -222,6 +179,7 @@
     </fieldset>
 
     <button class="btn" type="submit">Firmar el contrato</button>
+
   </form>
 
   {% endif %}

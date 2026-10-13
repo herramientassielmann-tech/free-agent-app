@@ -76,6 +76,7 @@ def _migrate_db(db: Session):
         "ALTER TABLE altas ADD COLUMN codigo VARCHAR(10)",
         "CREATE UNIQUE INDEX IF NOT EXISTS ix_altas_codigo ON altas (codigo)",
         "ALTER TABLE altas ADD COLUMN video_visto_en DATETIME",
+        "ALTER TABLE altas ADD COLUMN modalidad VARCHAR(20) DEFAULT 'unico'",
     ]
     for sql in simple:
         try:

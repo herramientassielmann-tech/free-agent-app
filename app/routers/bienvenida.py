@@ -46,7 +46,8 @@ templates = Jinja2Templates(directory="app/templates")
 #   v1.1 — fuera las cláusulas 6 y 20; la 18 pasa a cubrir la jurisdicción
 #   v1.2 — la ley aplicable deja de estar pendiente: Florida (EE. UU.)
 #   v1.3 — EIN de la empresa; el domicilio deja de figurar
-VERSION_CONTRATO = "v1.3"
+#   v1.4 — se firma con un reconocimiento único; fuera documento y domicilio
+VERSION_CONTRATO = "v1.4"
 
 # Los datos de la empresa y las dos decisiones legales pendientes. Van aquí y no
 # en .env porque forman parte del texto del contrato, no de la configuración del
@@ -72,14 +73,15 @@ EMPRESA = {
 # devolución. Una cláusula de no devolución enterrada en la letra pequeña se
 # anula; firmada expresamente, aguanta.
 RECONOCIMIENTOS = [
-    ("resultados",
-     "He leído y comprendo la cláusula 5. Entiendo que <b>FA Academy no me "
-     "garantiza ningún resultado</b> y que no he contratado el Programa sobre la "
-     "base de promesa alguna de ingresos o de captación de clientes."),
-    ("devoluciones",
-     "He leído y comprendo la cláusula 6. Entiendo que <b>las cantidades abonadas "
-     "no son reembolsables</b>, sin perjuicio de los derechos que la ley imperativa "
-     "me reconozca, y que renunciar a continuar no me exime de los plazos pendientes."),
+    ("terminos",
+     "He leído el contrato y lo acepto. En particular, entiendo que <b>FA Academy "
+     "no me garantiza ningún resultado</b> y que no lo he contratado sobre ninguna "
+     "promesa de ingresos o de clientes (cláusula 5); que <b>las cantidades "
+     "abonadas no son reembolsables</b>, sin perjuicio de lo que la ley imperativa "
+     "me reconozca, y que dejarlo no me exime de los plazos pendientes (cláusula "
+     "6); y <b>consiento firmarlo por medios electrónicos</b>, sabiendo que puedo "
+     "pedir una copia en papel sin coste y retirar ese consentimiento cuando "
+     "quiera, sin que afecte a lo ya firmado (cláusula 19)."),
 ]
 
 
@@ -193,7 +195,8 @@ def _documento(alta: Alta, *, firma: Optional[FirmaContrato] = None,
         "alumno_documento": (firma.documento_id if firma else (datos or {}).get("documento", "")) or "",
         "alumno_domicilio": (firma.domicilio if firma else (datos or {}).get("domicilio", "")) or "",
         "alumno_email": alta.email,
-        "modalidad": (datos or {}).get("modalidad") or "unico",
+        # La forma de pago sale del alta, que es donde la dejó quien cerró.
+        "modalidad": (datos or {}).get("modalidad") or alta.modalidad or "unico",
         "imagen": bool((datos or {}).get("imagen")),
         "reconocimientos": [
             {"texto": texto, "marcado": clave in marcados}
@@ -424,13 +427,8 @@ async def firmar(
     request: Request,
     db: Session = Depends(get_db),
     nombre_firmante: str = Form(""),
-    documento: str = Form(""),
-    domicilio: str = Form(""),
-    modalidad: str = Form("unico"),
-    consentimiento: Optional[str] = Form(None),
+    acepto: Optional[str] = Form(None),
     imagen: Optional[str] = Form(None),
-    r_resultados: Optional[str] = Form(None),
-    r_devoluciones: Optional[str] = Form(None),
 ):
     alta = _alta_sesion(request, db)
     if alta.firma is not None:
@@ -440,30 +438,29 @@ async def firmar(
     if _huecos_legales():
         return RedirectResponse(url="/empieza/contrato", status_code=303)
 
-    marcados = [c for c, v in (("resultados", r_resultados),
-                               ("devoluciones", r_devoluciones)) if v]
+    # Una sola casilla, pero su texto dice expresamente las tres cosas que de
+    # verdad se discuten cuando alguien reclama: que no se le prometió un
+    # resultado, que no hay devolución y que acepta firmar en electrónico. Lo
+    # que sostiene esas cláusulas no es que fueran tres casillas distintas, es
+    # que se acepten de forma expresa y a la vista, y no enterradas.
+    marcados = ["terminos"] if acepto else []
 
     def volver(error: str):
         return templates.TemplateResponse("contrato_firma.html", {
             "request": request, "alta": alta, "firma": None,
-            "d": _documento(alta, datos={"documento": documento, "domicilio": domicilio,
-                                         "modalidad": modalidad, "imagen": bool(imagen),
-                                         "consentimiento": bool(consentimiento),
+            "d": _documento(alta, datos={"modalidad": alta.modalidad,
+                                         "imagen": bool(imagen),
+                                         "consentimiento": bool(acepto),
                                          "reconocimientos": marcados}),
             "reconocimientos": RECONOCIMIENTOS,
             "error": error,
-            "previo": {"nombre_firmante": nombre_firmante, "documento": documento,
-                       "domicilio": domicilio, "modalidad": modalidad,
-                       "imagen": bool(imagen), "consentimiento": bool(consentimiento),
+            "previo": {"nombre_firmante": nombre_firmante,
+                       "imagen": bool(imagen), "consentimiento": bool(acepto),
                        "marcados": marcados},
         }, status_code=400)
 
-    # El consentimiento electrónico no es una casilla más: sin él la firma es
-    # atacable, así que se valida antes que nada.
-    if not consentimiento:
-        return volver("Para firmar en electrónico tienes que dar tu consentimiento.")
-    if len(marcados) < len(RECONOCIMIENTOS):
-        return volver("Tienes que marcar los dos reconocimientos para poder firmar.")
+    if not acepto:
+        return volver("Marca la casilla de aceptación para poder firmar.")
     if len(nombre_firmante.strip()) < 5:
         return volver("Escribe tu nombre y apellidos completos para firmar.")
 
@@ -471,8 +468,10 @@ async def firmar(
     firma = FirmaContrato(
         alta_id=alta.id,
         nombre_firmante=nombre_firmante.strip()[:150],
-        documento_id=documento.strip()[:60] or None,
-        domicilio=domicilio.strip()[:300] or None,
+        # Ya no se le piden: se identifica por el correo con el que se dio de
+        # alta, más la hora, la IP y la huella del documento.
+        documento_id=None,
+        domicilio=None,
         consentimiento_electronico=True,
         consentimiento_en=ahora,
         reconocimientos=json.dumps(marcados),
@@ -486,8 +485,9 @@ async def firmar(
 
     # Se congela el documento ya ejecutado y se sella con su huella. Sin esto se
     # podría probar que firmó, pero no QUÉ firmó.
-    d = _documento(alta, firma=firma, datos={"modalidad": modalidad, "imagen": bool(imagen)})
-    d["modalidad"] = modalidad
+    d = _documento(alta, firma=firma,
+                   datos={"modalidad": alta.modalidad, "imagen": bool(imagen)})
+    d["modalidad"] = alta.modalidad or "unico"
     d["imagen"] = bool(imagen)
     html = templates.get_template("_contrato_cuerpo.html").render(d=d)
     firma.huella_documento = _huella(html)

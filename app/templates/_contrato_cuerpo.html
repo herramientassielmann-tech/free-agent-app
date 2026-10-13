@@ -356,10 +356,14 @@
     <div class="parte">
       <p class="nombre">El Alumno</p>
       <p class="dato">Nombre y apellidos: <span class="valor">{{ d.alumno_nombre }}</span></p>
+      {%- if d.alumno_documento %}
       <p class="dato">Documento de identidad:
-        <span class="valor {% if not d.alumno_documento %}valor--vacio{% endif %}">{{ d.alumno_documento }}</span></p>
+        <span class="valor">{{ d.alumno_documento }}</span></p>
+      {%- endif %}
+      {%- if d.alumno_domicilio %}
       <p class="dato">Domicilio:
-        <span class="valor {% if not d.alumno_domicilio %}valor--vacio{% endif %}">{{ d.alumno_domicilio }}</span></p>
+        <span class="valor">{{ d.alumno_domicilio }}</span></p>
+      {%- endif %}
       <p class="dato">Correo electrónico: <span class="valor">{{ d.alumno_email }}</span></p>
       <p class="dato" style="margin-top:.5rem">En adelante, <b>«el Alumno»</b>.</p>
     </div>
