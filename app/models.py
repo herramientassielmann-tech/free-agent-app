@@ -382,6 +382,19 @@ class Alta(Base):
     calendly_uri: Mapped[Optional[str]] = mapped_column(String(300), nullable=True, unique=True)
 
     token: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+
+    # Lo que se teclea en /empieza. Corto y legible por teléfono: ocho
+    # caracteres sin letras que se confundan (nada de O/0 ni I/1), porque esto
+    # se dicta por WhatsApp y se copia a mano en un móvil.
+    #
+    # Va aparte de `token` a propósito: el token es largo y viaja en una URL,
+    # y una URL se reenvía sin pensar. El código se da a una persona.
+    codigo: Mapped[Optional[str]] = mapped_column(String(10), nullable=True,
+                                                  unique=True, index=True)
+
+    # Cuándo dio por visto el vídeo de la herramienta. Es lo que abre el último
+    # paso: sin esto, entra a la herramienta sin saber usarla y no vuelve.
+    video_visto_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     token_expira: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     email_enviado_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

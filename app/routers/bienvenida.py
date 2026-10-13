@@ -15,18 +15,21 @@ import json
 import logging
 import re
 import secrets
-from datetime import datetime, timedelta
+import time
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.auth import create_access_token, hash_password
 from app.config import (
-    APP_URL, CALENDLY_ONBOARDING_URL, SKOOL_INVITE_URL, STRIPE_PAYMENT_LINK,
-    VIDEO_ACADEMIA_URL,
+    ALGORITHM, APP_URL, CALENDLY_ONBOARDING_URL, ENV, SECRET_KEY,
+    SKOOL_INVITE_URL, STRIPE_PAYMENT_LINK, VIDEO_ACADEMIA_URL,
+    VIDEO_HERRAMIENTA_URL,
 )
 from app.database import get_db
 from app.models import Alta, FirmaContrato, User
@@ -41,7 +44,8 @@ templates = Jinja2Templates(directory="app/templates")
 # podrían haber firmado documentos distintos sin que quede rastro.
 #   v1.0 — 20 cláusulas, con arbitraje y compromiso de vídeos semanales
 #   v1.1 — fuera las cláusulas 6 y 20; la 18 pasa a cubrir la jurisdicción
-VERSION_CONTRATO = "v1.1"
+#   v1.2 — la ley aplicable deja de estar pendiente: Florida (EE. UU.)
+VERSION_CONTRATO = "v1.2"
 
 # Los datos de la empresa y las dos decisiones legales pendientes. Van aquí y no
 # en .env porque forman parte del texto del contrato, no de la configuración del
@@ -55,7 +59,7 @@ EMPRESA = {
     # Se escribe tal cual va a leerse detrás de «se rige por las leyes de …»,
     # así que sin artículo delante: «Florida (EE. UU.)», no «el Estado de
     # Florida» —saldría «de el Estado de Florida»—.
-    "ley": "[pendiente: estado aplicable]",
+    "ley": "Florida (EE. UU.)",
 }
 
 # Lo que firma aparte. Son los dos puntos que de verdad se discuten cuando
@@ -78,6 +82,55 @@ RECONOCIMIENTOS = [
 
 def nuevo_token() -> str:
     return secrets.token_urlsafe(32)
+
+
+# Sin O/0 ni I/1/L: esto se dicta por teléfono y se teclea en un móvil, y esas
+# cuatro son las que siempre se escriben mal.
+_ALFABETO = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+
+
+def nuevo_codigo(db: Session) -> str:
+    """Un código corto, libre, para dárselo a una persona concreta."""
+    from app.models import Alta
+    for _ in range(40):
+        c = "".join(secrets.choice(_ALFABETO) for _ in range(8))
+        if not db.query(Alta.id).filter(Alta.codigo == c).first():
+            return c
+    # Con 31^8 combinaciones esto no pasa; si pasara, mejor fallar que repetir.
+    raise RuntimeError("No se pudo generar un código libre")
+
+
+# La sesión del alumno. Va en cookie y NO en la URL: una URL se reenvía por
+# WhatsApp sin pensarlo, y entonces el que la recibe entra. El código se le da
+# a una persona, y la cookie se queda en SU móvil.
+COOKIE_ALUMNO = "alta_sesion"
+HORAS_SESION = 72
+
+_fallos_codigo: dict[str, tuple[int, float]] = {}
+TOPE_CODIGO = 10
+CASTIGO_CODIGO = 15 * 60
+
+
+def _ficha_sesion(alta: "Alta") -> str:
+    return jwt.encode(
+        {"alta": alta.id,
+         "exp": datetime.now(timezone.utc) + timedelta(hours=HORAS_SESION)},
+        SECRET_KEY, algorithm=ALGORITHM)
+
+
+def _alta_sesion(request: Request, db: Session) -> "Alta":
+    """El alta de quien está navegando, sacada de la cookie. 404 si no hay."""
+    ficha = request.cookies.get(COOKIE_ALUMNO)
+    if not ficha:
+        raise HTTPException(status_code=404, detail="No encontrado")
+    try:
+        datos = jwt.decode(ficha, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=404, detail="No encontrado")
+    alta = db.get(Alta, datos.get("alta") or 0)
+    if alta is None:
+        raise HTTPException(status_code=404, detail="No encontrado")
+    return alta
 
 
 def caducidad() -> datetime:
@@ -159,28 +212,28 @@ def _huella(html: str) -> str:
 
 
 def _pasos(alta: Alta) -> list:
-    """Los cinco bloques y su estado, en el orden en que se hacen.
+    """Los cuatro bloques. Cada uno se abre al terminar el anterior.
 
-    Primero cobrar y firmar, que es lo que no puede quedarse a medias. Después
-    la academia y la llamada con Robert, que es donde empieza el producto. La
-    cuenta de la herramienta va al final a propósito: es la que se usa cada
-    semana a partir de entonces, y así es lo último que ve al terminar.
+    El orden no es decorativo. El contrato va primero porque es lo único que no
+    puede quedarse sin hacer. La llamada con Robert antes que la herramienta
+    porque en esa llamada se decide qué va a grabar, y sin eso la herramienta es
+    un generador de guiones que no sabe de qué. Y el vídeo antes del acceso
+    porque quien entra sin saber usarla no vuelve.
     """
-    abiertos = alta.accesos_abiertos
     return [
-        {"n": 1, "clave": "pago", "titulo": "Completa tu pago",
-         "hecho": bool(alta.pagado_en), "bloqueado": False,
-         "listo": bool(STRIPE_PAYMENT_LINK)},
-        {"n": 2, "clave": "contrato", "titulo": "Firma el contrato",
+        {"n": 1, "clave": "contrato", "titulo": "Firma el contrato",
          "hecho": bool(alta.contrato_firmado_en), "bloqueado": False, "listo": True},
-        {"n": 3, "clave": "skool", "titulo": "Regístrate en la academia",
-         "hecho": bool(alta.skool_abierto_en), "bloqueado": not abiertos,
-         "listo": bool(SKOOL_INVITE_URL)},
-        {"n": 4, "clave": "onboarding", "titulo": "Onboarding con Robert",
-         "hecho": bool(alta.onboarding_agendado_en), "bloqueado": not abiertos,
+        {"n": 2, "clave": "onboarding", "titulo": "Onboarding con Robert",
+         "hecho": bool(alta.onboarding_agendado_en),
+         "bloqueado": not alta.contrato_firmado_en,
          "listo": bool(CALENDLY_ONBOARDING_URL)},
-        {"n": 5, "clave": "cuenta", "titulo": "Crea tu cuenta en la herramienta",
-         "hecho": bool(alta.cuenta_creada_en), "bloqueado": not abiertos, "listo": True},
+        {"n": 3, "clave": "video", "titulo": "Cómo se usa la herramienta",
+         "hecho": bool(alta.video_visto_en),
+         "bloqueado": not alta.onboarding_agendado_en,
+         "listo": bool(VIDEO_HERRAMIENTA_URL)},
+        {"n": 4, "clave": "cuenta", "titulo": "Entra en la herramienta",
+         "hecho": bool(alta.cuenta_creada_en),
+         "bloqueado": not alta.video_visto_en, "listo": True},
     ]
 
 
@@ -205,16 +258,82 @@ def _video_incrustado(url: Optional[str]) -> Optional[str]:
 
 # ── La página ────────────────────────────────────────────────────────────────
 
-@router.get("/bienvenida/{token}", response_class=HTMLResponse)
-async def portada(token: str, request: Request, db: Session = Depends(get_db)):
-    alta = _alta(token, db)
-    return templates.TemplateResponse("bienvenida.html", {
+def _pagina(request: Request, alta: Alta, error: str = "") -> HTMLResponse:
+    return templates.TemplateResponse("empieza.html", {
         "request": request,
         "alta": alta,
         "pasos": _pasos(alta),
-        "abiertos": alta.accesos_abiertos,
-        "video": _video_incrustado(VIDEO_ACADEMIA_URL),
+        "video": _video_incrustado(VIDEO_HERRAMIENTA_URL),
+        "error_cuenta": error,
     })
+
+
+@router.get("/empieza", response_class=HTMLResponse)
+async def empieza(request: Request, db: Session = Depends(get_db)):
+    """La única dirección que se reparte. Sin código válido, sólo la puerta."""
+    try:
+        alta = _alta_sesion(request, db)
+    except HTTPException:
+        return templates.TemplateResponse("empieza_codigo.html", {"request": request})
+    return _pagina(request, alta)
+
+
+@router.post("/empieza/entrar")
+async def empieza_entrar(request: Request, codigo: str = Form(""),
+                         db: Session = Depends(get_db)):
+    ip = _ip(request)
+    veces, hasta = _fallos_codigo.get(ip, (0, 0.0))
+    if veces >= TOPE_CODIGO and time.time() < hasta:
+        return templates.TemplateResponse(
+            "empieza_codigo.html",
+            {"request": request, "aviso": "Demasiados intentos. Prueba dentro de un rato."},
+            status_code=429)
+
+    limpio = re.sub(r"[^A-Za-z0-9]", "", codigo or "").upper()
+    alta = (db.query(Alta).filter(Alta.codigo == limpio).first() if limpio else None)
+    if alta is None:
+        _fallos_codigo[ip] = (veces + 1, time.time() + CASTIGO_CODIGO)
+        log.warning("Código de acceso fallido desde %s", ip)
+        return templates.TemplateResponse(
+            "empieza_codigo.html",
+            {"request": request, "aviso": "Ese código no es. Revísalo o escríbenos."},
+            status_code=401)
+
+    _fallos_codigo.pop(ip, None)
+    r = RedirectResponse(url="/empieza", status_code=303)
+    r.set_cookie(COOKIE_ALUMNO, _ficha_sesion(alta), max_age=HORAS_SESION * 3600,
+                 httponly=True, samesite="lax", secure=ENV != "development")
+    return r
+
+
+@router.post("/empieza/salir")
+async def empieza_salir():
+    r = RedirectResponse(url="/empieza", status_code=303)
+    r.delete_cookie(COOKIE_ALUMNO)
+    return r
+
+
+@router.post("/empieza/video")
+async def empieza_video(request: Request, db: Session = Depends(get_db)):
+    """«Ya lo he visto». Es lo que abre el último paso."""
+    alta = _alta_sesion(request, db)
+    if not alta.onboarding_agendado_en:
+        raise HTTPException(status_code=404, detail="No encontrado")
+    if not alta.video_visto_en:
+        alta.video_visto_en = datetime.utcnow()
+        db.commit()
+    return RedirectResponse(url="/empieza", status_code=303)
+
+
+@router.get("/bienvenida/{token}", response_class=HTMLResponse)
+async def portada(token: str, db: Session = Depends(get_db)):
+    """Los enlaces largos de antes siguen funcionando: dejan la cookie puesta
+    y mandan a /empieza, para que el token no se quede en la barra del navegador."""
+    alta = _alta(token, db)
+    r = RedirectResponse(url="/empieza", status_code=303)
+    r.set_cookie(COOKIE_ALUMNO, _ficha_sesion(alta), max_age=HORAS_SESION * 3600,
+                 httponly=True, samesite="lax", secure=ENV != "development")
+    return r
 
 
 @router.get("/bienvenida/{token}/pagar")
@@ -228,10 +347,10 @@ async def pagar(token: str, db: Session = Depends(get_db)):
     return RedirectResponse(url=destino, status_code=302)
 
 
-@router.get("/bienvenida/{token}/skool")
-async def skool(token: str, db: Session = Depends(get_db)):
-    alta = _alta(token, db)
-    if not alta.accesos_abiertos or not SKOOL_INVITE_URL:
+@router.get("/empieza/academia")
+async def skool(request: Request, db: Session = Depends(get_db)):
+    alta = _alta_sesion(request, db)
+    if not alta.contrato_firmado_en or not SKOOL_INVITE_URL:
         raise HTTPException(status_code=404, detail="No encontrado")
     if not alta.skool_abierto_en:
         alta.skool_abierto_en = datetime.utcnow()
@@ -239,10 +358,12 @@ async def skool(token: str, db: Session = Depends(get_db)):
     return RedirectResponse(url=SKOOL_INVITE_URL, status_code=302)
 
 
-@router.get("/bienvenida/{token}/onboarding")
-async def onboarding(token: str, db: Session = Depends(get_db)):
-    alta = _alta(token, db)
-    if not alta.accesos_abiertos or not CALENDLY_ONBOARDING_URL:
+@router.get("/empieza/onboarding")
+async def onboarding(request: Request, db: Session = Depends(get_db)):
+    alta = _alta_sesion(request, db)
+    # La cascada, también aquí: no basta con que el botón no se vea en la
+    # página; si alguien llega a la URL directamente, tampoco pasa.
+    if not alta.contrato_firmado_en or not CALENDLY_ONBOARDING_URL:
         raise HTTPException(status_code=404, detail="No encontrado")
     if not alta.onboarding_agendado_en:
         alta.onboarding_agendado_en = datetime.utcnow()
@@ -268,9 +389,9 @@ def _huecos_legales() -> list:
 
 
 
-@router.get("/bienvenida/{token}/contrato", response_class=HTMLResponse)
-async def contrato(token: str, request: Request, db: Session = Depends(get_db)):
-    alta = _alta(token, db)
+@router.get("/empieza/contrato", response_class=HTMLResponse)
+async def contrato(request: Request, db: Session = Depends(get_db)):
+    alta = _alta_sesion(request, db)
     firma = alta.firma
     # Si ya está firmado se enseña siempre: es su copia, y se guardó con los
     # datos que hubiera en ese momento. Lo que se corta es firmar de nuevo.
@@ -293,9 +414,8 @@ async def contrato(token: str, request: Request, db: Session = Depends(get_db)):
     })
 
 
-@router.post("/bienvenida/{token}/firmar")
+@router.post("/empieza/firmar")
 async def firmar(
-    token: str,
     request: Request,
     db: Session = Depends(get_db),
     nombre_firmante: str = Form(""),
@@ -307,13 +427,13 @@ async def firmar(
     r_resultados: Optional[str] = Form(None),
     r_devoluciones: Optional[str] = Form(None),
 ):
-    alta = _alta(token, db)
+    alta = _alta_sesion(request, db)
     if alta.firma is not None:
-        return RedirectResponse(url=f"/bienvenida/{token}/contrato", status_code=303)
+        return RedirectResponse(url="/empieza/contrato", status_code=303)
     # La misma puerta que en el GET: sin esto, un formulario ya cargado antes de
     # que faltaran datos podría enviarse igual.
     if _huecos_legales():
-        return RedirectResponse(url=f"/bienvenida/{token}/contrato", status_code=303)
+        return RedirectResponse(url="/empieza/contrato", status_code=303)
 
     marcados = [c for c, v in (("resultados", r_resultados),
                                ("devoluciones", r_devoluciones)) if v]
@@ -373,7 +493,7 @@ async def firmar(
     db.commit()
 
     _mandar_copia(alta, firma)
-    return RedirectResponse(url=f"/bienvenida/{token}/contrato", status_code=303)
+    return RedirectResponse(url="/empieza/contrato", status_code=303)
 
 
 def _mandar_copia(alta: Alta, firma: FirmaContrato) -> None:
@@ -406,18 +526,19 @@ def _mandar_copia(alta: Alta, firma: FirmaContrato) -> None:
 
 # ── Cuenta ───────────────────────────────────────────────────────────────────
 
-@router.post("/bienvenida/{token}/cuenta")
+@router.post("/empieza/cuenta")
 async def crear_cuenta(
-    token: str,
     request: Request,
     db: Session = Depends(get_db),
     email: str = Form(""),
     password: str = Form(""),
     password2: str = Form(""),
 ):
-    alta = _alta(token, db)
+    alta = _alta_sesion(request, db)
 
     def volver(error: str):
+        return _pagina(request, alta, error)
+    if False:
         return templates.TemplateResponse("bienvenida.html", {
             "request": request, "alta": alta, "pasos": _pasos(alta),
             "abiertos": alta.accesos_abiertos, "error_cuenta": error,
@@ -425,7 +546,7 @@ async def crear_cuenta(
             "email_previo": email,
         }, status_code=400)
 
-    if not alta.accesos_abiertos:
+    if not alta.video_visto_en:
         return volver("Todavía no podemos abrirte la cuenta: falta confirmar el pago.")
     if alta.user_id:
         return volver("Tu cuenta ya está creada. Entra desde la página de acceso.")

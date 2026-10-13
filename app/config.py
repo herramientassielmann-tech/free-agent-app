@@ -65,6 +65,10 @@ CALENDLY_WEBHOOK_SECRET = get_env("CALENDLY_WEBHOOK_SECRET", default=None, requi
 VIDEO_ACADEMIA_URL = get_env("VIDEO_ACADEMIA_URL", default=None, required=False)
 
 
+# Vídeo que explica cómo se usa la herramienta, en el paso previo a entrar.
+VIDEO_HERRAMIENTA_URL = get_env("VIDEO_HERRAMIENTA_URL", default=None, required=False)
+
+
 # ── Panel de tareas de una colaboradora ───────────────────────────────────
 # Una sola página, fuera de la app, con su propia contraseña: ve sus tareas,
 # las marca, las anota y puede apuntarse alguna. No llega a nada más, y por eso

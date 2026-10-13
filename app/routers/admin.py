@@ -512,7 +512,7 @@ async def alta_nueva(
     """Alta a mano. Es el camino cuando Calendly no manda avisos (plan gratuito)
     o cuando alguien cierra por fuera del embudo."""
     from app.models import Alta
-    from app.routers.bienvenida import caducidad, nuevo_token
+    from app.routers.bienvenida import caducidad, nuevo_codigo, nuevo_token
     programada = None
     if cuando:
         for formato in ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
@@ -525,6 +525,7 @@ async def alta_nueva(
         nombre=nombre.strip()[:150], email=email.strip().lower()[:255],
         programada_para=programada or datetime.utcnow(),
         token=nuevo_token(), token_expira=caducidad(),
+        codigo=nuevo_codigo(db),
     )
     db.add(a)
     db.commit()

@@ -87,8 +87,11 @@
           <a class="alta-btn" href="/admin/altas/{{ f.alta.id }}/contrato"
              target="_blank" rel="noopener" title="Ver el contrato firmado">📄</a>
           {% endif %}
+          {# El código es lo que se le pasa a la persona, junto al enlace
+             general. El enlace largo queda sólo para mirarlo desde aquí. #}
+          <span class="alta-codigo" title="Su código para /empieza">{{ f.alta.codigo or '—' }}</span>
           <a class="alta-btn" href="/bienvenida/{{ f.alta.token }}"
-             target="_blank" rel="noopener" title="Abrir su página de bienvenida">↗</a>
+             target="_blank" rel="noopener" title="Abrir su página como la ve él">↗</a>
         </td>
       </tr>
       {% endfor %}

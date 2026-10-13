@@ -3250,3 +3250,12 @@ body:has(.mov-fondo:not([hidden])) .rb-hello {
   .lla-buscar { flex-direction: column; align-items: stretch; }
   .lla-buscar .btn { width: 100%; height: 48px; }
 }
+
+/* El código de acceso del alumno, en la lista de altas. Monoespaciado y
+   seleccionable de un golpe: se copia para pegarlo en un WhatsApp. */
+.alta-codigo {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .82rem; font-weight: 600; letter-spacing: .06em;
+  background: var(--c-azul-luz, #E8F1FC); color: var(--c-azul, #0A6FD4);
+  padding: 3px 9px; border-radius: 6px; user-select: all; white-space: nowrap;
+}

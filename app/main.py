@@ -73,6 +73,9 @@ def _migrate_db(db: Session):
         "DROP INDEX IF EXISTS ix_tareas_equipo_fija_semana",
         ("CREATE UNIQUE INDEX IF NOT EXISTS ix_tareas_equipo_fija_periodo "
          "ON tareas_equipo (fija_id, periodo)"),
+        "ALTER TABLE altas ADD COLUMN codigo VARCHAR(10)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS ix_altas_codigo ON altas (codigo)",
+        "ALTER TABLE altas ADD COLUMN video_visto_en DATETIME",
     ]
     for sql in simple:
         try:
@@ -151,6 +154,18 @@ def _migrate_db(db: Session):
         logger.info("tareas_equipo migrada: el responsable pasa a ser un nombre")
 
 
+def _codigos_pendientes(db: Session):
+    """Le da un código a las altas que vienen de antes de que existieran."""
+    from app.models import Alta
+    from app.routers.bienvenida import nuevo_codigo
+    sin = db.query(Alta).filter(Alta.codigo.is_(None)).all()
+    for alta in sin:
+        alta.codigo = nuevo_codigo(db)
+    if sin:
+        db.commit()
+        logger.info("Códigos de acceso generados para %d alta(s)", len(sin))
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     Base.metadata.create_all(bind=engine)
@@ -158,6 +173,7 @@ async def lifespan(_app: FastAPI):
     try:
         _migrate_db(db)          # primero columnas nuevas
         _create_admin_if_missing(db)
+        _codigos_pendientes(db)
     finally:
         db.close()
     yield
