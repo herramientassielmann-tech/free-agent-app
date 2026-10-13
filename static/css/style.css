@@ -2249,7 +2249,7 @@ a:hover { color: #3d9eff; }
    pudre en dos semanas y deja de mirarse.
    Va con la paleta oscura de la app: no es una zona clara como el CRM. */
 .alta-tabla-envoltura { overflow-x: auto; }
-.alta-tabla th.alta-col, .alta-tabla td.alta-col { text-align: center; width: 74px; }
+.alta-tabla th.alta-col, .alta-tabla td.alta-col { text-align: center; width: 54px; }
 .alta-tabla th.alta-col { font-size: .66rem; letter-spacing: .04em; }
 .alta-email { display: block; font-size: .78rem; color: var(--t2); }
 .alta-metodo {
@@ -2267,7 +2267,16 @@ a:hover { color: #3d9eff; }
 }
 .alta-fila--ok td { background: rgba(48,209,88,.04); }
 
-.alta-acciones { display: flex; gap: 5px; align-items: center; }
+/* Los botones se quedan pegados al borde derecho mientras las columnas de
+   estado se deslizan por debajo. Antes, en un portátil, quedaban fuera del
+   recuadro y había que arrastrar la tabla a ciegas para encontrarlos. */
+.alta-tabla th:last-child, .alta-tabla td:last-child {
+  position: sticky; right: 0; background: var(--s1);
+  box-shadow: -10px 0 12px -8px rgba(0,0,0,.75);
+}
+.alta-fila--ok td:last-child { background: #0F1A12; }
+.alta-acciones { white-space: nowrap; vertical-align: middle; }
+.alta-acciones-fila { display: flex; gap: 5px; align-items: center; justify-content: flex-end; }
 .alta-acciones form { display: inline; margin: 0; }
 .alta-btn {
   border: 1px solid var(--border); background: var(--s2); color: var(--t2);

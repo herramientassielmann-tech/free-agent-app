@@ -89,23 +89,28 @@
           {% endif %}
         </td>
         <td class="alta-acciones">
-          <form method="post" action="/admin/altas/{{ f.alta.id }}/reenviar">
-            <button class="alta-btn" title="Reenviar el correo de bienvenida">✉</button>
-          </form>
-          <form method="post" action="/admin/altas/{{ f.alta.id }}/pago-manual">
-            <button class="alta-btn {% if f.alta.pagado_en %}alta-btn--on{% endif %}"
-                    title="Marcar el pago a mano (50/50 o transferencia)">€</button>
-          </form>
-          <form method="post" action="/admin/altas/{{ f.alta.id }}/desbloquear">
-            <button class="alta-btn {% if f.alta.desbloqueado_a_mano %}alta-btn--on{% endif %}"
-                    title="Abrirle los accesos sin esperar al pago">🔓</button>
-          </form>
-          {% if f.alta.contrato_firmado_en %}
-          <a class="alta-btn" href="/admin/altas/{{ f.alta.id }}/contrato"
-             target="_blank" rel="noopener" title="Ver el contrato firmado">📄</a>
-          {% endif %}
-          <a class="alta-btn" href="/bienvenida/{{ f.alta.token }}"
-             target="_blank" rel="noopener" title="Abrir su página como la ve él">↗</a>
+          {# El flex va en un div, no en la celda: un <td> con display:flex
+             deja de comportarse como celda y los botones se descuelgan de
+             su fila. #}
+          <div class="alta-acciones-fila">
+            <form method="post" action="/admin/altas/{{ f.alta.id }}/reenviar">
+              <button class="alta-btn" title="Reenviar el correo de bienvenida">✉</button>
+            </form>
+            <form method="post" action="/admin/altas/{{ f.alta.id }}/pago-manual">
+              <button class="alta-btn {% if f.alta.pagado_en %}alta-btn--on{% endif %}"
+                      title="Marcar el pago a mano (50/50 o transferencia)">€</button>
+            </form>
+            <form method="post" action="/admin/altas/{{ f.alta.id }}/desbloquear">
+              <button class="alta-btn {% if f.alta.desbloqueado_a_mano %}alta-btn--on{% endif %}"
+                      title="Abrirle los accesos sin esperar al pago">🔓</button>
+            </form>
+            {% if f.alta.contrato_firmado_en %}
+            <a class="alta-btn" href="/admin/altas/{{ f.alta.id }}/contrato"
+               target="_blank" rel="noopener" title="Ver el contrato firmado">📄</a>
+            {% endif %}
+            <a class="alta-btn" href="/bienvenida/{{ f.alta.token }}"
+               target="_blank" rel="noopener" title="Abrir su página como la ve él">↗</a>
+          </div>
         </td>
       </tr>
       {% endfor %}
