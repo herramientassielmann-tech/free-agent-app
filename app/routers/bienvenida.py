@@ -47,7 +47,9 @@ templates = Jinja2Templates(directory="app/templates")
 #   v1.2 — la ley aplicable deja de estar pendiente: Florida (EE. UU.)
 #   v1.3 — EIN de la empresa; el domicilio deja de figurar
 #   v1.4 — se firma con un reconocimiento único; fuera documento y domicilio
-VERSION_CONTRATO = "v1.4"
+#   v1.5 — 7.3: sin pago a la firma, se puede denegar todo el acceso; la
+#          antigua 7.3 (resolver y reclamar a los 30 días) pasa a ser la 7.4
+VERSION_CONTRATO = "v1.5"
 
 # Los datos de la empresa y las dos decisiones legales pendientes. Van aquí y no
 # en .env porque forman parte del texto del contrato, no de la configuración del
