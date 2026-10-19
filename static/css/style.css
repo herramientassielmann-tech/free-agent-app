@@ -1578,6 +1578,50 @@ a:hover { color: #3d9eff; }
 .ed-estado[data-ed-estado="pendiente"] { color: var(--orange); background: rgba(255,159,10,.12); }
 .ed-estado[data-ed-estado="error"]     { color: var(--red);   background: rgba(255,69,58,.12); }
 
+/* ── Tu guion / Vídeo de referencia ───────────────────────────────────────
+   Un selector de dos posiciones encima del guion. Va a todo el ancho de la
+   columna para que se vea nada más entrar: es la primera cosa del guion. */
+.ed-vista {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  padding: 4px; background: var(--s2);
+  border: 1px solid var(--border); border-radius: var(--r-md);
+}
+/* Con display:grid, el atributo `hidden` deja de esconder: hay que decirlo. */
+.ed-vista[hidden] { display: none; }
+.ed-vista-btn {
+  height: 40px; padding: 0 10px; border: 0; border-radius: var(--r-sm);
+  background: transparent; color: var(--t3);
+  font: inherit; font-size: .88rem; font-weight: 600; cursor: pointer;
+  white-space: nowrap; transition: background .15s, color .15s, box-shadow .15s;
+}
+/* El activo en azul de marca: con dos grises parecidos no se distinguía qué
+   estaba seleccionado, sobre todo en la posición de la derecha. */
+.ed-vista-btn[aria-selected="true"] {
+  background: var(--blue-dim); color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(10,132,255,.55);
+}
+/* :hover solo con ratón: en el móvil se queda pegado al tocar. */
+@media (hover: hover) {
+  .ed-vista-btn[aria-selected="false"]:hover { color: var(--t1); background: var(--s3); }
+}
+.ed-vista-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+/* La transcripción: gris, para que no se confunda con las secciones del guion,
+   que llevan cada una su color. */
+.ed-trans-card { border-left: 3px solid var(--t3); }
+.ed-trans-texto { color: var(--t1); }
+
+/* Qué se ve, según el selector. Solo cambia data-mostrando, en el contenedor. */
+.script-sections[data-mostrando="referencia"] .ed-card { display: none; }
+.script-sections:not([data-mostrando="referencia"]) .ed-trans-card { display: none; }
+
+/* El PDF es siempre el guion, aunque se imprima con la transcripción a la
+   vista. Lo marcado ed-no-print (el caption, el selector, la transcripción)
+   sigue fuera: por eso el :not(). */
+@media print {
+  .script-sections[data-mostrando] .ed-card:not(.ed-no-print) { display: block !important; }
+}
+
 /* Secciones editables */
 .ed-card { transition: border-color .15s; }
 .ed-edit {

@@ -93,7 +93,9 @@
       </div>
 
       {# Right: Script sections #}
-      <div class="script-sections">
+      <div class="script-sections" data-mostrando="guion">
+        {% set transcripcion = '' %}
+        {% include "_editor_vista.html" %}
         {% include "_editor_secciones.html" %}
       </div>
     </div>
@@ -209,6 +211,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/editor.js?v=4"></script>
-<script src="/static/js/app.js?v=8"></script>
+<script src="/static/js/editor.js?v=5"></script>
+<script src="/static/js/app.js?v=9"></script>
 {% endblock %}

@@ -144,6 +144,8 @@ function fillResult(data, url) {
   if (editorGuion) {
     editorGuion.recalcular();
     if (data.script_id) editorGuion.activarGuardado('/editor/guion/' + data.script_id + '/guardar');
+    // Lo que dice el vídeo de referencia, para el selector de arriba
+    editorGuion.ponerTranscripcion(data.transcripcion || '');
   }
 
   // Source URL (enlace clicable)

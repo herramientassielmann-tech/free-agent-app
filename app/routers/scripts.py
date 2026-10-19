@@ -135,6 +135,8 @@ async def generate(
         "estructura_detectada": estructura,
         "script_id": script.id,
         "thumbnail_path": thumbnail_path,
+        # Para el selector «Tu guion / Vídeo de referencia» del resultado.
+        "transcripcion": transcript,
         "used": used_now,
         "remaining": remaining,
         "limit": current_user.monthly_limit,

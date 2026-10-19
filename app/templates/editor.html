@@ -33,7 +33,8 @@
       </div>
     </div>
 
-    <div class="script-sections">
+    <div class="script-sections" data-mostrando="guion">
+      {% if transcripcion is defined %}{% include "_editor_vista.html" %}{% endif %}
       {% include "_editor_secciones.html" %}
     </div>
   </div>
@@ -41,7 +42,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/editor.js?v=4"></script>
+<script src="/static/js/editor.js?v=5"></script>
 <script>
   EditorGuiones.init({
     raiz:         document.getElementById("ed-raiz"),

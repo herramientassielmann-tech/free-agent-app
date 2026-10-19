@@ -25,6 +25,16 @@ window.EditorGuiones = (function () {
       : Math.floor(seg / 60) + "m " + Math.round(seg % 60) + "s";
   }
 
+  /* «¡Copiado!» un momento y vuelta al botón de antes. Se guarda y se restaura
+     el innerHTML, no el textContent: el botón lleva dentro un
+     <span class="solo-ancho"> que el móvil esconde, y textContent lo aplanaba,
+     así que después de copiar la palabra reaparecía en el teléfono. */
+  function avisarCopiado(boton) {
+    const antes = boton.innerHTML;
+    boton.textContent = "¡Copiado!";
+    setTimeout(() => { boton.innerHTML = antes; }, 1500);
+  }
+
   function init(cfg) {
     const raiz = cfg.raiz;
     if (!raiz) return null;
@@ -165,9 +175,7 @@ window.EditorGuiones = (function () {
           `🎣 HOOK\n${t("hook")}\n\n📖 DESARROLLO\n${t("development")}\n\n` +
           `✅ CTA\n${t("conclusion")}\n\n📲 CAPTION\n${t("caption")}`
         );
-        const orig = btnCopiar.textContent;
-        btnCopiar.textContent = "¡Copiado!";
-        setTimeout(() => btnCopiar.textContent = orig, 1500);
+        avisarCopiado(btnCopiar);
       });
     }
 
@@ -179,10 +187,60 @@ window.EditorGuiones = (function () {
       });
     }
 
+    /* ── Tu guion / Vídeo de referencia ─────────────────────────────
+       Un selector de dos posiciones. No hay más estado que el atributo
+       data-mostrando del contenedor (no data-vista, que es el de los botones:
+       con el mismo nombre, el contenedor se colaba en los selectores de ellos): el CSS enseña una cosa u otra a partir de
+       ahí, y la impresión fuerza siempre el guion, así que el PDF sale bien
+       aunque se le dé a imprimir con la transcripción a la vista. */
+    const contenedor = raiz.querySelector(".script-sections");
+    const selector = raiz.querySelector("[data-ed-vista]");
+    const transTexto = raiz.querySelector("[data-ed-trans-texto]");
+
+    function mostrar(vista) {
+      if (!contenedor || !selector) return;
+      contenedor.dataset.mostrando = vista;
+      selector.querySelectorAll("[data-vista]").forEach(b =>
+        b.setAttribute("aria-selected", b.dataset.vista === vista ? "true" : "false"));
+    }
+
+    if (selector) {
+      selector.addEventListener("click", e => {
+        const b = e.target.closest("[data-vista]");
+        if (b) mostrar(b.dataset.vista);
+      });
+      // Flechas izquierda y derecha, como cualquier grupo de pestañas.
+      selector.addEventListener("keydown", e => {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+        const destino = contenedor.dataset.mostrando === "guion" ? "referencia" : "guion";
+        mostrar(destino);
+        selector.querySelector(`[data-vista="${destino}"]`).focus();
+        e.preventDefault();
+      });
+    }
+
+    const btnCopiarTrans = raiz.querySelector("[data-ed-copiar-trans]");
+    if (btnCopiarTrans && transTexto) {
+      btnCopiarTrans.addEventListener("click", () => {
+        navigator.clipboard.writeText((transTexto.textContent || "").trim());
+        avisarCopiado(btnCopiarTrans);
+      });
+    }
+
+    /* El generador no tiene la transcripción hasta que la IA responde: se la
+       pasa aquí. Sin texto, el selector no se enseña (no hay nada que ver). */
+    function ponerTranscripcion(texto) {
+      if (!transTexto || !selector) return;
+      transTexto.textContent = texto || "";
+      selector.hidden = !texto;
+      mostrar("guion");
+    }
+
     recalcular();
 
     return {
       recalcular,
+      ponerTranscripcion,
       // El generador no conoce el id del guión hasta que la IA responde
       activarGuardado(url) { urlGuardar = url; marcar("Editable", "listo", " — escribe encima"); },
     };

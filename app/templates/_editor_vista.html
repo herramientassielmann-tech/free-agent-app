@@ -1,0 +1,29 @@
+{# Selector entre el guion adaptado y lo que dice el vídeo de referencia.
+
+   Solo lo incluyen los guiones (el generador y /editor/guion). Las ideas
+   iniciales no: ellas mismas ya son la transcripción del vídeo de referencia.
+
+   Ojo con el nombre: en este editor «original» ya significa otra cosa —el guion
+   tal como lo generó la IA, antes de que el alumno lo toque, que es lo que trae
+   el botón de restaurar—. Por eso esto se llama «vídeo de referencia». #}
+<div class="ed-vista ed-no-print" role="tablist" aria-label="Qué quieres ver" data-ed-vista
+     {% if not transcripcion %}hidden{% endif %}>
+  <button type="button" role="tab" class="ed-vista-btn" data-vista="guion" aria-selected="true">
+    ✍️ Tu guion
+  </button>
+  <button type="button" role="tab" class="ed-vista-btn" data-vista="referencia" aria-selected="false">
+    🎬 Vídeo de referencia
+  </button>
+</div>
+
+<div class="script-card ed-trans-card ed-no-print" role="tabpanel">
+  <div class="script-card-header">
+    <div class="script-meta">
+      <span class="badge badge-dark">TRANSCRIPCIÓN</span>
+      <span class="script-subtitle">Lo que se dice en el vídeo, tal cual</span>
+    </div>
+    <button type="button" class="btn btn-ghost btn-sm" data-ed-copiar-trans>📋<span class="solo-ancho"> Copiar</span></button>
+  </div>
+  {# Sin |safe a propósito: viene de Whisper y se pinta como texto, no como HTML. #}
+  <div class="script-content ed-trans-texto" data-ed-trans-texto>{{ transcripcion or '' }}</div>
+</div>

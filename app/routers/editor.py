@@ -151,6 +151,10 @@ async def editar_guion(
         "url_guardar": f"/editor/guion/{script.id}/guardar",
         "url_restaurar": f"/editor/guion/{script.id}/restaurar",
         "url_volver": "/history",
+        # Lo que dice el vídeo de referencia, tal cual lo transcribió Whisper.
+        # Solo en los guiones: las ideas iniciales no lo pasan, y sin esta
+        # variable la plantilla no pinta el selector.
+        "transcripcion": script.original_transcript or "",
     })
 
 
