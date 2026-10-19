@@ -1606,14 +1606,21 @@ a:hover { color: #3d9eff; }
 }
 .ed-vista-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
-/* La transcripción: gris, para que no se confunda con las secciones del guion,
-   que llevan cada una su color. */
+/* El vídeo de referencia: las mismas tarjetas y colores que el guion (hook,
+   desarrollo, CTA), para comparar sección con sección. De un bloque y en gris
+   solo mientras se parte o si no se ha podido partir. */
+.ed-trans { display: flex; flex-direction: column; gap: 10px; }
+.ed-trans [hidden] { display: none; }
+.ed-trans-cabecera {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 2px 4px 0;
+}
 .ed-trans-card { border-left: 3px solid var(--t3); }
-.ed-trans-texto { color: var(--t1); }
+.ed-trans-texto { color: var(--t1); white-space: pre-line; }
 
 /* Qué se ve, según el selector. Solo cambia data-mostrando, en el contenedor. */
 .script-sections[data-mostrando="referencia"] .ed-card { display: none; }
-.script-sections:not([data-mostrando="referencia"]) .ed-trans-card { display: none; }
+.script-sections:not([data-mostrando="referencia"]) .ed-trans { display: none; }
 
 /* El PDF es siempre el guion, aunque se imprima con la transcripción a la
    vista. Lo marcado ed-no-print (el caption, el selector, la transcripción)

@@ -227,16 +227,53 @@ window.EditorGuiones = (function () {
       });
     }
 
+    /* La transcripción partida en hook / desarrollo / CTA. Se pide nada más
+       cargar, sin esperar al clic, para que al cambiar ya esté ordenada; la
+       primera vez la parte la IA (un par de segundos) y luego queda guardada.
+       Mientras tanto, o si no se puede partir, se ve de un bloque. */
+    const trans = raiz.querySelector("[data-ed-trans]");
+
+    function pintarPartes(partes) {
+      if (!trans) return;
+      const hay = !!(partes && partes.hook);
+      trans.querySelectorAll("[data-ed-parte]").forEach(el => {
+        const texto = hay ? (partes[el.dataset.edParte] || "") : "";
+        el.textContent = texto;
+        el.closest("[data-ed-parte-card]").hidden = !texto;
+      });
+      trans.querySelector("[data-ed-trans-entero]").hidden = hay;
+      trans.dataset.partida = hay ? "si" : "no";
+    }
+
+    async function pedirPartes() {
+      if (!trans || !trans.dataset.url || trans.dataset.partida === "si") return;
+      if (!(transTexto.textContent || "").trim()) return;
+      const estado = trans.querySelector("[data-ed-trans-estado]");
+      if (estado) estado.textContent = "Ordenando por secciones…";
+      try {
+        const r = await fetch(trans.dataset.url, { credentials: "same-origin" });
+        pintarPartes(r.ok ? (await r.json()).partes : null);
+      } catch (_) {
+        pintarPartes(null);
+      }
+      if (estado) estado.textContent = "Lo que se dice en el vídeo, tal cual";
+    }
+
     /* El generador no tiene la transcripción hasta que la IA responde: se la
-       pasa aquí. Sin texto, el selector no se enseña (no hay nada que ver). */
-    function ponerTranscripcion(texto) {
+       pasa aquí, con la ruta para partirla. Sin texto, el selector no se
+       enseña (no hay nada que ver). */
+    function ponerTranscripcion(texto, url) {
       if (!transTexto || !selector) return;
       transTexto.textContent = texto || "";
       selector.hidden = !texto;
+      if (trans) trans.dataset.url = url || "";
+      pintarPartes(null);
       mostrar("guion");
+      pedirPartes();
     }
 
     recalcular();
+    pedirPartes();
 
     return {
       recalcular,

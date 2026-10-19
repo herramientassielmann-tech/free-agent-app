@@ -94,6 +94,9 @@ class Script(Base):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
     source_url: Mapped[str] = mapped_column(String(500), nullable=False)
     original_transcript: Mapped[Optional[str]] = mapped_column(Text)
+    # La transcripción partida en hook / desarrollo / CTA, para enseñarla
+    # ordenada en el editor. JSON; "{}" si no se pudo partir. NULL: sin intentar.
+    transcripcion_partes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     hook: Mapped[Optional[str]] = mapped_column(Text)
     promesa: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     development: Mapped[Optional[str]] = mapped_column(Text)

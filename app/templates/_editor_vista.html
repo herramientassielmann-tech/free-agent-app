@@ -16,14 +16,42 @@
   </button>
 </div>
 
-<div class="script-card ed-trans-card ed-no-print" role="tabpanel">
-  <div class="script-card-header">
-    <div class="script-meta">
-      <span class="badge badge-dark">TRANSCRIPCIÓN</span>
-      <span class="script-subtitle">Lo que se dice en el vídeo, tal cual</span>
-    </div>
-    <button type="button" class="btn btn-ghost btn-sm" data-ed-copiar-trans>📋<span class="solo-ancho"> Copiar</span></button>
+{# Lo que dice el vídeo, partido en hook / desarrollo / CTA como el guion, para
+   compararlos sección con sección. El texto es el original, sin tocar: la IA
+   solo decide dónde se corta. Mientras se parte (o si no se puede), se ve de
+   un bloque. Sin |safe a propósito: viene de Whisper, se pinta como texto. #}
+{% set p = transcripcion_partes if transcripcion_partes is defined and transcripcion_partes else {} %}
+<div class="ed-trans ed-no-print" role="tabpanel" data-ed-trans
+     data-url="{{ url_referencia if url_referencia is defined else '' }}"
+     data-partida="{{ 'si' if p else 'no' }}">
+  <div class="ed-trans-cabecera">
+    <span class="script-subtitle">🎬 Lo que se dice en el vídeo original, tal cual</span>
+    <button type="button" class="btn btn-ghost btn-sm" data-ed-copiar-trans>📋<span class="solo-ancho"> Copiar todo</span></button>
   </div>
-  {# Sin |safe a propósito: viene de Whisper y se pinta como texto, no como HTML. #}
-  <div class="script-content ed-trans-texto" data-ed-trans-texto>{{ transcripcion or '' }}</div>
+
+  {% for clave, clase, badge, etiqueta, sub in [
+       ('hook', 'hook-card', 'badge-blue', 'HOOK', 'Cómo engancha'),
+       ('desarrollo', 'dev-card', 'badge-orange', 'DESARROLLO', 'El cuerpo del vídeo'),
+       ('cta', 'conc-card', 'badge-green', 'CTA', 'Cómo cierra'),
+     ] %}
+  <div class="script-card {{ clase }}" data-ed-parte-card="{{ clave }}" {% if not p.get(clave) %}hidden{% endif %}>
+    <div class="script-card-header">
+      <div class="script-meta">
+        <span class="badge {{ badge }}">{{ etiqueta }}</span>
+        <span class="script-subtitle">{{ sub }}</span>
+      </div>
+    </div>
+    <div class="script-content ed-trans-texto" data-ed-parte="{{ clave }}">{{ p.get(clave, '') }}</div>
+  </div>
+  {% endfor %}
+
+  <div class="script-card ed-trans-card" data-ed-trans-entero {% if p %}hidden{% endif %}>
+    <div class="script-card-header">
+      <div class="script-meta">
+        <span class="badge badge-dark">TRANSCRIPCIÓN</span>
+        <span class="script-subtitle" data-ed-trans-estado>Lo que se dice en el vídeo, tal cual</span>
+      </div>
+    </div>
+    <div class="script-content ed-trans-texto" data-ed-trans-texto>{{ transcripcion or '' }}</div>
+  </div>
 </div>

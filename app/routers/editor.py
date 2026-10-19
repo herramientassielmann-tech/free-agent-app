@@ -19,12 +19,14 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User, Script, StarterScript, StarterScriptEdit
 from app.auth import get_current_user
+from app.services import referencia
 
 router = APIRouter(prefix="/editor")
 templates = Jinja2Templates(directory="app/templates")
@@ -155,7 +157,40 @@ async def editar_guion(
         # Solo en los guiones: las ideas iniciales no lo pasan, y sin esta
         # variable la plantilla no pinta el selector.
         "transcripcion": script.original_transcript or "",
+        # Partida en hook / desarrollo / CTA si ya se hizo; si no, la pide el JS
+        # a la ruta de abajo nada más cargar, antes de que se le dé al selector.
+        "transcripcion_partes": _leer_partes(script.transcripcion_partes),
+        "url_referencia": f"/editor/guion/{script.id}/referencia",
     })
+
+
+def _leer_partes(raw: Optional[str]) -> Optional[dict]:
+    try:
+        datos = json.loads(raw) if raw else None
+    except ValueError:
+        return None
+    return datos or None
+
+
+@router.get("/guion/{sid}/referencia")
+async def referencia_guion(
+    sid: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """La transcripción partida en secciones. Se parte una vez y se guarda; el
+    texto es siempre el original, solo cambia dónde se corta."""
+    script = _mi_script(sid, current_user, db)
+    if script.transcripcion_partes is None and script.original_transcript:
+        try:
+            partes = await run_in_threadpool(referencia.partir, script.original_transcript)
+        except Exception:
+            # La API ha fallado: no se guarda nada y se reintenta la próxima vez.
+            # Mientras tanto se ve de un bloque, que es como se veía antes.
+            return JSONResponse({"partes": None})
+        script.transcripcion_partes = json.dumps(partes or {}, ensure_ascii=False)
+        db.commit()
+    return JSONResponse({"partes": _leer_partes(script.transcripcion_partes)})
 
 
 @router.post("/guion/{sid}/guardar")
