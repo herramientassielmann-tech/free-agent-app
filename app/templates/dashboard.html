@@ -120,7 +120,8 @@
        data-id="{{ s.id }}"
        data-url="{{ s.source_url or '' }}"
        data-thumb="{{ s.thumbnail_path or '' }}"
-       data-estructura="{{ s.estructura_detectada or '' }}">
+       data-estructura="{{ s.estructura_detectada or '' }}"
+       data-trans="{{ s.original_transcript or '' }}">
     <div class="recent-thumb">
       {% if s.thumbnail_path %}
       <img src="{{ s.thumbnail_path }}" alt="thumb" />
@@ -212,5 +213,5 @@
 
 {% block scripts %}
 <script src="/static/js/editor.js?v=6"></script>
-<script src="/static/js/app.js?v=10"></script>
+<script src="/static/js/app.js?v=11"></script>
 {% endblock %}

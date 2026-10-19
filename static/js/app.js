@@ -228,6 +228,9 @@ document.querySelectorAll('.recent-item--clickable').forEach(item => {
       script_id:            item.dataset.id         || '',
       thumbnail_path:       item.dataset.thumb      || '',
       estructura_detectada: item.dataset.estructura || '',
+      // Sin esto, al reabrir un guión de la lista desaparecía el selector
+      // «Tu guion / Vídeo de referencia».
+      transcripcion:        item.dataset.trans      || '',
     };
     const url = item.dataset.url || '';
     hideError();
