@@ -1615,6 +1615,8 @@ a:hover { color: #3d9eff; }
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 2px 4px 0;
 }
+.ed-trans-botones { display: flex; gap: 6px; flex-shrink: 0; }
+.ed-trans [data-ed-parte]:empty::before { content: attr(data-vacio); }
 .ed-trans-card { border-left: 3px solid var(--t3); }
 .ed-trans-texto { color: var(--t1); white-space: pre-line; }
 

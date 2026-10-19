@@ -159,9 +159,13 @@ async def editar_guion(
         "transcripcion": script.original_transcript or "",
         # Partida en hook / desarrollo / CTA si ya se hizo; si no, la pide el JS
         # a la ruta de abajo nada más cargar, antes de que se le dé al selector.
-        "transcripcion_partes": _leer_partes(script.transcripcion_partes),
+        "transcripcion_partes": _referencia_visible(script),
+        "transcripcion_editada": bool(script.transcripcion_edicion),
         "url_referencia": f"/editor/guion/{script.id}/referencia",
     })
+
+
+PARTES_REFERENCIA = ("hook", "desarrollo", "cta")
 
 
 def _leer_partes(raw: Optional[str]) -> Optional[dict]:
@@ -169,7 +173,29 @@ def _leer_partes(raw: Optional[str]) -> Optional[dict]:
         datos = json.loads(raw) if raw else None
     except ValueError:
         return None
-    return datos or None
+    return datos if isinstance(datos, dict) and datos else None
+
+
+def _referencia_visible(script: Script) -> Optional[dict]:
+    """La edición del realtor si la hay; si no, la transcripción partida. None
+    mientras no se haya partido todavía.
+
+    Si la IA no pudo partirla ("{}"), va entera al desarrollo: así se sigue
+    viendo en tarjetas y se puede editar igual, hook y CTA incluidos."""
+    editada = _leer_partes(script.transcripcion_edicion)
+    if editada:
+        return editada
+    if script.transcripcion_partes is None:
+        return None
+    return _leer_partes(script.transcripcion_partes) or {
+        "hook": "", "desarrollo": (script.original_transcript or "").strip(), "cta": "",
+    }
+
+
+class GuardarReferenciaRequest(BaseModel):
+    hook: str = ""
+    desarrollo: str = ""
+    cta: str = ""
 
 
 @router.get("/guion/{sid}/referencia")
@@ -190,7 +216,38 @@ async def referencia_guion(
             return JSONResponse({"partes": None})
         script.transcripcion_partes = json.dumps(partes or {}, ensure_ascii=False)
         db.commit()
-    return JSONResponse({"partes": _leer_partes(script.transcripcion_partes)})
+    return JSONResponse({"partes": _referencia_visible(script),
+                         "editada": bool(script.transcripcion_edicion)})
+
+
+@router.post("/guion/{sid}/referencia/guardar")
+async def guardar_referencia(
+    sid: int,
+    payload: GuardarReferenciaRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Guarda lo que el realtor cambie de la transcripción. Texto plano: se
+    pinta siempre con textContent, nunca como HTML."""
+    script = _mi_script(sid, current_user, db)
+    script.transcripcion_edicion = json.dumps(
+        {p: (getattr(payload, p) or "").strip()[:20000] for p in PARTES_REFERENCIA},
+        ensure_ascii=False,
+    )
+    db.commit()
+    return JSONResponse({"ok": True})
+
+
+@router.post("/guion/{sid}/referencia/restaurar")
+async def restaurar_referencia(
+    sid: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    script = _mi_script(sid, current_user, db)
+    script.transcripcion_edicion = None
+    db.commit()
+    return JSONResponse({"partes": _referencia_visible(script), "editada": False})
 
 
 @router.post("/guion/{sid}/guardar")

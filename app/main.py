@@ -78,6 +78,7 @@ def _migrate_db(db: Session):
         "ALTER TABLE altas ADD COLUMN video_visto_en DATETIME",
         "ALTER TABLE altas ADD COLUMN modalidad VARCHAR(20) DEFAULT 'unico'",
         "ALTER TABLE scripts ADD COLUMN transcripcion_partes TEXT",
+        "ALTER TABLE scripts ADD COLUMN transcripcion_edicion TEXT",
     ]
     for sql in simple:
         try:

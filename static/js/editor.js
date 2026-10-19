@@ -219,30 +219,24 @@ window.EditorGuiones = (function () {
       });
     }
 
-    const btnCopiarTrans = raiz.querySelector("[data-ed-copiar-trans]");
-    if (btnCopiarTrans && transTexto) {
-      btnCopiarTrans.addEventListener("click", () => {
-        navigator.clipboard.writeText((transTexto.textContent || "").trim());
-        avisarCopiado(btnCopiarTrans);
-      });
-    }
-
     /* La transcripción partida en hook / desarrollo / CTA. Se pide nada más
        cargar, sin esperar al clic, para que al cambiar ya esté ordenada; la
        primera vez la parte la IA (un par de segundos) y luego queda guardada.
-       Mientras tanto, o si no se puede partir, se ve de un bloque. */
+       Mientras tanto se ve de un bloque, sin editar. */
     const trans = raiz.querySelector("[data-ed-trans]");
+    const partesEl = trans ? [...trans.querySelectorAll("[data-ed-parte]")] : [];
+    const btnRestaurarTrans = raiz.querySelector("[data-ed-restaurar-trans]");
 
-    function pintarPartes(partes) {
+    function pintarPartes(partes, editada) {
       if (!trans) return;
-      const hay = !!(partes && partes.hook);
-      trans.querySelectorAll("[data-ed-parte]").forEach(el => {
-        const texto = hay ? (partes[el.dataset.edParte] || "") : "";
-        el.textContent = texto;
-        el.closest("[data-ed-parte-card]").hidden = !texto;
+      const hay = !!partes;
+      partesEl.forEach(el => {
+        el.textContent = hay ? (partes[el.dataset.edParte] || "") : "";
+        el.closest("[data-ed-parte-card]").hidden = !hay;
       });
       trans.querySelector("[data-ed-trans-entero]").hidden = hay;
       trans.dataset.partida = hay ? "si" : "no";
+      if (btnRestaurarTrans) btnRestaurarTrans.hidden = !editada;
     }
 
     async function pedirPartes() {
@@ -252,18 +246,97 @@ window.EditorGuiones = (function () {
       if (estado) estado.textContent = "Ordenando por secciones…";
       try {
         const r = await fetch(trans.dataset.url, { credentials: "same-origin" });
-        pintarPartes(r.ok ? (await r.json()).partes : null);
+        const d = r.ok ? await r.json() : {};
+        pintarPartes(d.partes || null, d.editada);
       } catch (_) {
         pintarPartes(null);
       }
       if (estado) estado.textContent = "Lo que se dice en el vídeo, tal cual";
     }
 
+    /* Editar la transcripción. Se guarda sola, aparte del guion y con su
+       propia ruta: el original sigue en la base y «Restaurar original» lo trae. */
+    let tempTrans = null;
+    let transSinGuardar = false;
+
+    async function guardarTrans() {
+      if (!trans || !trans.dataset.url) return;
+      clearTimeout(tempTrans);
+      const url = trans.dataset.url;
+      const cuerpo = {};
+      partesEl.forEach(el => { cuerpo[el.dataset.edParte] = (el.innerText || "").trim(); });
+      marcar("Guardando…", "guardando");
+      try {
+        const res = await fetch(url + "/guardar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(cuerpo),
+        });
+        if (!res.ok) throw new Error();
+        transSinGuardar = false;
+        if (btnRestaurarTrans && trans.dataset.url === url) btnRestaurarTrans.hidden = false;
+        marcar("Guardado ✓", "guardado");
+        setTimeout(() => { if (!transSinGuardar && !sinGuardar) marcar("Guardado ✓", "editado"); }, 2000);
+      } catch (e) {
+        marcar("No se pudo guardar", "error");
+      }
+    }
+
+    partesEl.forEach(el => {
+      el.addEventListener("input", () => {
+        transSinGuardar = true;
+        marcar("Sin guardar…", "pendiente");
+        clearTimeout(tempTrans);
+        tempTrans = setTimeout(guardarTrans, 1200);
+      });
+      // Pegar siempre en plano, como en el guion
+      el.addEventListener("paste", e => {
+        e.preventDefault();
+        const txt = (e.clipboardData || window.clipboardData).getData("text/plain");
+        document.execCommand("insertText", false, txt);
+      });
+    });
+
+    window.addEventListener("beforeunload", e => {
+      if (transSinGuardar) { e.preventDefault(); e.returnValue = ""; }
+    });
+
+    if (btnRestaurarTrans) {
+      btnRestaurarTrans.addEventListener("click", async () => {
+        if (!confirm("Se perderán tus cambios y volverá la transcripción original del vídeo. ¿Seguro?")) return;
+        clearTimeout(tempTrans);
+        try {
+          const res = await fetch(trans.dataset.url + "/restaurar", { method: "POST" });
+          if (!res.ok) throw new Error();
+          const d = await res.json();
+          transSinGuardar = false;
+          pintarPartes(d.partes || null, false);
+          marcar("Original restaurado", "guardado");
+        } catch (e) {
+          marcar("No se pudo restaurar", "error");
+        }
+      });
+    }
+
+    // Copia lo que se ve: con los cambios, si los hay.
+    const btnCopiarTrans = raiz.querySelector("[data-ed-copiar-trans]");
+    if (btnCopiarTrans && transTexto) {
+      btnCopiarTrans.addEventListener("click", () => {
+        const texto = trans && trans.dataset.partida === "si"
+          ? partesEl.map(el => (el.innerText || "").trim()).filter(Boolean).join("\n\n")
+          : (transTexto.textContent || "").trim();
+        navigator.clipboard.writeText(texto);
+        avisarCopiado(btnCopiarTrans);
+      });
+    }
+
     /* El generador no tiene la transcripción hasta que la IA responde: se la
        pasa aquí, con la ruta para partirla. Sin texto, el selector no se
-       enseña (no hay nada que ver). */
+       enseña (no hay nada que ver). Si había un cambio pendiente en el guion
+       anterior, se guarda antes de cambiar de ruta. */
     function ponerTranscripcion(texto, url) {
       if (!transTexto || !selector) return;
+      if (transSinGuardar) guardarTrans();
       transTexto.textContent = texto || "";
       selector.hidden = !texto;
       if (trans) trans.dataset.url = url || "";

@@ -97,6 +97,9 @@ class Script(Base):
     # La transcripción partida en hook / desarrollo / CTA, para enseñarla
     # ordenada en el editor. JSON; "{}" si no se pudo partir. NULL: sin intentar.
     transcripcion_partes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Lo que el realtor haya cambiado de esa transcripción, con las mismas
+    # claves. Aparte, igual que `edicion`: el original nunca se pisa.
+    transcripcion_edicion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     hook: Mapped[Optional[str]] = mapped_column(Text)
     promesa: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     development: Mapped[Optional[str]] = mapped_column(Text)
