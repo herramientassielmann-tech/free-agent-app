@@ -5,11 +5,12 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, RealtorProfile
-from app.auth import get_current_user
+from app.auth import get_current_user, solo_equipo
 from app.services.ig_optimizer import optimize_ig_profile, ig_handle_from_link
 from app.services.lead_questions import LEAD_QUESTIONS
 
-router = APIRouter()
+# Todo lo de aquí (Mi Perfil, Optimizar IG, Cualificar Leads) es solo del equipo
+router = APIRouter(dependencies=[Depends(solo_equipo)])
 templates = Jinja2Templates(directory="app/templates")
 
 

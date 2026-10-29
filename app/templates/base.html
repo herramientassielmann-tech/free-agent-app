@@ -35,7 +35,10 @@
      (cuatro destinos y el botón de «Más»), así que añadir uno obliga a sacar
      otro. El Asesor se queda fuera porque el botón flotante de Robert ya está
      en todas las pantallas; Leads, no: es de uso diario y no está en ningún
-     otro sitio. #}
+     otro sitio.
+
+     Los realtors no ven Asesor, Optimizar IG, Cualificar Leads ni Mi Perfil:
+     no los usaba nadie. Siguen en el menú del admin (ver solo_equipo). #}
   {% set enlaces = (
     [
       {'url': '/admin',           'icono': '🛠',  'texto': 'Admin',     'abajo': true,
@@ -79,14 +82,6 @@
        'activo': '/crm' in request.url.path},
       {'url': '/history',         'icono': '📋',  'texto': 'Historial', 'abajo': true,
        'activo': request.url.path == '/history'},
-      {'url': '/chatbot',         'icono': '💬',  'texto': 'Asesor',    'abajo': false,
-       'activo': '/chatbot' in request.url.path},
-      {'url': '/optimizar-ig',    'icono': '🚀',  'texto': 'Optimizar IG', 'abajo': false,
-       'activo': request.url.path == '/optimizar-ig'},
-      {'url': '/cualificar-leads','icono': '🎯',  'texto': 'Cualificar Leads', 'abajo': false,
-       'activo': request.url.path == '/cualificar-leads'},
-      {'url': '/profile',         'icono': '👤',  'texto': 'Mi Perfil', 'abajo': false,
-       'activo': request.url.path == '/profile'},
     ]
   ) %}
 

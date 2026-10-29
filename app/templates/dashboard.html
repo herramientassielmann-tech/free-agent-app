@@ -20,7 +20,8 @@
   {% endif %}
 </div>
 
-{% if not user.profile or not user.profile.display_name %}
+{# Mi Perfil ya no está en el menú de los realtors: el aviso, solo al equipo #}
+{% if user.is_admin and (not user.profile or not user.profile.display_name) %}
 <div class="profile-nudge">
   <span>💡</span>
   <span>Completa tu <a href="/profile">perfil de realtor</a> para obtener guiones más personalizados.</span>

@@ -5,10 +5,11 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, LeadConversation, LeadMessage
-from app.auth import get_current_user
+from app.auth import get_current_user, solo_equipo
 from app.services.lead_chat import suggest_reply
 
-router = APIRouter()
+# El Asesor es solo del equipo: los realtors tienen el chat flotante de Robert
+router = APIRouter(dependencies=[Depends(solo_equipo)])
 templates = Jinja2Templates(directory="app/templates")
 
 

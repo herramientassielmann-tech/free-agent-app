@@ -84,6 +84,16 @@ def get_real_user(
     return user
 
 
+def solo_equipo(current_user: User = Depends(get_current_user)) -> User:
+    """Secciones que los realtors ya no ven (Asesor, Optimizar IG, Cualificar
+    Leads, Mi Perfil). Las usa el equipo: el admin, también cuando entra como
+    un realtor. A un realtor que llegue por un enlace viejo se le manda al
+    generador, sin error. Sus datos siguen en la base, sin tocar."""
+    if current_user.is_admin or getattr(current_user, "impersonated", False):
+        return current_user
+    raise HTTPException(status_code=303, headers={"Location": "/"})
+
+
 def require_admin(current_user: User = Depends(get_current_user)) -> User:
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Acceso restringido a administradores.")
