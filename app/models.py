@@ -100,6 +100,10 @@ class Script(Base):
     # Lo que el realtor haya cambiado de esa transcripción, con las mismas
     # claves. Aparte, igual que `edicion`: el original nunca se pisa.
     transcripcion_edicion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # El guion por tomas, según el formato del vídeo (lista, pares, diálogo,
+    # adivina, historia). JSON; ver app/services/formato.py. NULL: guion de los
+    # de siempre, en tres párrafos.
+    formato: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     hook: Mapped[Optional[str]] = mapped_column(Text)
     promesa: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     development: Mapped[Optional[str]] = mapped_column(Text)

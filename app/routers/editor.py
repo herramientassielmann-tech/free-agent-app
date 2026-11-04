@@ -26,7 +26,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Script, StarterScript, StarterScriptEdit
 from app.auth import get_current_user
-from app.services import referencia
+from app.services import referencia, formato as formato_svc
 
 router = APIRouter(prefix="/editor")
 templates = Jinja2Templates(directory="app/templates")
@@ -87,6 +87,10 @@ class GuardarRequest(BaseModel):
     development: str = ""
     conclusion: str = ""
     caption: str = ""
+    # Solo en los guiones por tomas: los bloques editados. Si viene, manda: las
+    # tres secciones se derivan de él y lo que llegue en hook/development/
+    # conclusion se ignora.
+    formato: Optional[dict] = None
 
     def as_dict(self) -> dict:
         return {s: limpiar_html(getattr(self, s) or "") for s in SECCIONES}
@@ -162,6 +166,9 @@ async def editar_guion(
         "transcripcion_partes": _referencia_visible(script),
         "transcripcion_editada": bool(script.transcripcion_edicion),
         "url_referencia": f"/editor/guion/{script.id}/referencia",
+        # Por tomas, si el guion se generó así: el editado si lo hay, si no el
+        # original. None en los guiones de siempre.
+        "formato": (edicion or {}).get("formato") or _leer_partes(script.formato),
     })
 
 
@@ -258,7 +265,12 @@ async def guardar_guion(
     db: Session = Depends(get_db),
 ):
     script = _mi_script(sid, current_user, db)
-    script.edicion = json.dumps(payload.as_dict(), ensure_ascii=False)
+    datos = payload.as_dict()
+    fm = formato_svc.normalizar(payload.formato) if payload.formato else None
+    if fm:
+        datos.update(formato_svc.derivar_secciones(fm))
+        datos["formato"] = fm
+    script.edicion = json.dumps(datos, ensure_ascii=False)
     script.edited_at = datetime.utcnow()
     db.commit()
     return JSONResponse({"guardado": True, "editado": True})
@@ -282,6 +294,7 @@ async def restaurar_guion(
             "conclusion": script.conclusion or "",
             "caption": script.caption or "",
         },
+        "formato": _leer_partes(script.formato),
     })
 
 

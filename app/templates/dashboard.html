@@ -97,7 +97,7 @@
       <div class="script-sections" data-mostrando="guion">
         {% set transcripcion = '' %}
         {% include "_editor_vista.html" %}
-        {% include "_editor_secciones.html" %}
+        {% include "_editor_formato.html" %}{% include "_editor_secciones.html" %}
       </div>
     </div>
   </div>
@@ -122,7 +122,8 @@
        data-url="{{ s.source_url or '' }}"
        data-thumb="{{ s.thumbnail_path or '' }}"
        data-estructura="{{ s.estructura_detectada or '' }}"
-       data-trans="{{ s.original_transcript or '' }}">
+       data-trans="{{ s.original_transcript or '' }}"
+       data-formato="{{ s.formato or '' }}">
     <div class="recent-thumb">
       {% if s.thumbnail_path %}
       <img src="{{ s.thumbnail_path }}" alt="thumb" />
@@ -137,7 +138,9 @@
         </span>
         <span class="recent-date">{{ s.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
       </div>
-      <div class="recent-hook">{{ (s.hook or '')[:90] }}{{ '…' if s.hook and s.hook|length > 90 else '' }}</div>
+      {# Una lista por tomas puede no tener hook: entonces, su primera toma #}
+      {% set vista = s.hook or (s.development or '').split('\n')[0] %}
+      <div class="recent-hook">{{ vista[:90] }}{{ '…' if vista|length > 90 else '' }}</div>
     </div>
     <div class="recent-copy">
       <button class="btn btn-ghost btn-sm recent-copy-btn"
@@ -213,6 +216,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/editor.js?v=7"></script>
-<script src="/static/js/app.js?v=11"></script>
+<script src="/static/js/editor.js?v=8"></script>
+<script src="/static/js/app.js?v=12"></script>
 {% endblock %}

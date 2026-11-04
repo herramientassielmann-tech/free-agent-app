@@ -35,6 +35,7 @@
 
     <div class="script-sections" data-mostrando="guion">
       {% if transcripcion is defined %}{% include "_editor_vista.html" %}{% endif %}
+      {% include "_editor_formato.html" %}
       {% include "_editor_secciones.html" %}
     </div>
   </div>
@@ -42,12 +43,14 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/editor.js?v=7"></script>
+<script src="/static/js/editor.js?v=8"></script>
 <script>
   EditorGuiones.init({
     raiz:         document.getElementById("ed-raiz"),
     urlGuardar:   {{ url_guardar | tojson }},
     urlRestaurar: {{ url_restaurar | tojson }},
+    // Solo en los guiones por tomas; las ideas iniciales no lo pasan
+    formato:      {{ (formato if formato is defined else none) | tojson }},
   });
 </script>
 {% endblock %}

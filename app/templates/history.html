@@ -44,7 +44,8 @@
     {# Body #}
     <div class="history-body">
       <span class="history-date">{{ script.created_at.strftime('%d/%m/%Y · %H:%M') }}</span>
-      <p class="history-hook">{{ script.hook or '—' }}</p>
+      {# Una lista por tomas puede no tener hook: entonces, su primera toma #}
+      <p class="history-hook">{{ script.hook or (script.development or '').split('\n')[0] or '—' }}</p>
     </div>
 
     {# Actions #}

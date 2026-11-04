@@ -3,6 +3,7 @@ from typing import Optional
 import anthropic
 from app.config import ANTHROPIC_API_KEY
 from app.models import User, RealtorProfile
+from app.services import formato
 
 TONE_DESCRIPTIONS = {
     "formal": "profesional y formal, con vocabulario técnico del sector inmobiliario",
@@ -53,8 +54,60 @@ Está TERMINANTEMENTE PROHIBIDO sustituirlos por equivalentes de otro sector, re
 """
 
 
+# Cómo se entrega el guion cuando va por tomas (ver app/services/formato.py).
+# Texto plano, no f-string: lleva llaves de JSON. {seccion_datos} se sustituye.
+COLA_POR_TOMAS = """════════════════════════════════════════
+CÓMO SE GRABA (esto manda en cómo lo entregas)
+════════════════════════════════════════
+El realtor graba así: lee un trozo corto, lo dice de memoria a cámara y pasa al siguiente. Por eso no entregas párrafos sino BLOQUES, y cada bloque es UNA TOMA: una sola idea que se dice de una vez, de 1 a 2 frases cortas.
+
+LÍMITE DURO: NINGÚN bloque pasa de 20 palabras (contando "texto" y "extra" juntos). Si una frase del original es más larga, pártela por una coma o por un punto en dos o más bloques seguidos de la misma parte. Partir no es resumir: no quites ni una palabra.
+
+Puntúa con normalidad (mayúsculas, comas, puntos, interrogaciones), aunque la transcripción venga sin puntuar.
+
+════════════════════════════════════════
+EL FORMATO DEL VÍDEO
+════════════════════════════════════════
+Mira la forma del vídeo original y elige UNO de estos tipos. Respeta su forma: mismo número de elementos y mismo orden.
+
+1) "lista" — una enumeración o un top: cosas, errores, pasos, consejos. Cada elemento es un bloque de desarrollo con "texto" (el concepto, corto) y "extra" (lo que se dice de él). Si el vídeo arranca DIRECTAMENTE con el primer elemento, NO pongas bloque de hook: el elemento 1 es el elemento 1, no el hook. Un comentario que sigue a un elemento (una explicación, una reflexión) NO es un elemento nuevo: va en un bloque de desarrollo aparte, SIN "extra", justo después de su elemento.
+   Ejemplo: {"parte":"desarrollo","texto":"Oro","extra":"invierte."}
+
+2) "pares" — situaciones con su respuesta: "esto sí / esto no", "si te pasa X → haz Y", "tipo de cliente → qué hacer". Cada par es un bloque de desarrollo con "texto" (la situación) y "extra" (la respuesta). Añade "columnas" con los dos títulos cortos en mayúsculas. Igual que en la lista: si el vídeo arranca directamente con el primer par, NO hay hook, y una reflexión que no es un par va en un bloque aparte SIN "extra".
+   Ejemplo: "columnas":["SITUACIÓN","QUÉ HACER"], {"parte":"desarrollo","texto":"Cliente lento, pero con ganas","extra":"Acompáñalo."}
+
+3) "dialogo" — hay dos voces: alguien pregunta y el protagonista responde, o hay texto en pantalla que da la réplica. Cada intervención es un bloque con "quien": "tu" (lo dice el realtor a cámara) u "otro" (lo dice otra persona o va escrito en pantalla).
+   Ejemplo: {"parte":"hook","quien":"otro","texto":"¿Mejor el dinero en el banco o en un piso?"}
+
+4) "adivina" — se plantea una pregunta o un reto ("¿cuánto vale?", "¿adivinas…?"), se dan pistas y al final se revela. La pregunta es el hook; cada pista es un bloque de desarrollo con "rol":"pista"; la revelación es un bloque de desarrollo con "rol":"respuesta".
+
+5) "historia" — todo lo demás: una opinión, una historia, una explicación. Hook, el desarrollo partido en tomas, y el CTA.
+
+En todos: "parte" es "hook" (el arranque), "desarrollo" (el cuerpo) o "cta" (el cierre o llamada a la acción). No escribas etiquetas como "1.", "Toma 2" o "Pista:" dentro del texto: eso lo pone la aplicación.
+
+Aparte, genera un "caption" corto para el post (esto sí es nuevo; no forma parte de lo que se dice).
+
+{seccion_datos}
+════════════════════════════════════════
+FORMATO DE RESPUESTA (JSON estricto, sin texto adicional)
+════════════════════════════════════════
+
+{
+  "estructura_detectada": "1 línea: de qué va el vídeo original y a qué tema inmobiliario lo has adaptado",
+  "formato": {
+    "tipo": "lista | pares | dialogo | adivina | historia",
+    "columnas": ["SOLO", "EN PARES"],
+    "bloques": [
+      {"parte": "hook | desarrollo | cta", "texto": "una toma", "extra": "solo en lista y pares", "quien": "solo en dialogo: tu | otro", "rol": "solo en adivina: pista | respuesta"}
+    ]
+  },
+  "caption": "Caption corto con emojis y hashtags inmobiliarios en español"
+}"""
+
+
 def _build_system_prompt(profile: Optional[RealtorProfile], user: User,
-                        ambito: str = "otro", datos: list = None) -> str:
+                        ambito: str = "otro", datos: list = None,
+                        por_formato: bool = False) -> str:
     name = (profile.display_name if profile and profile.display_name else user.name) or "Realtor"
     market = (profile.market if profile else None) or "España"
     tone_key = (profile.tone if profile else "cercano") or "cercano"
@@ -94,7 +147,7 @@ def _build_system_prompt(profile: Optional[RealtorProfile], user: User,
     regla_tema = REGLA_YA_ES_DEL_SECTOR if ambito == "real_estate" else REGLA_OTRO_MUNDO
     seccion_datos = _bloque_datos(datos)
 
-    return f"""Eres el adaptador de guiones de vídeo de Free Agent Academy. Tu trabajo NO es crear un guión nuevo ni "mejorar" el vídeo: es ADAPTAR, palabra por palabra, una transcripción que ya existe, al mundo del realtor. Piénsalo como un doblaje o una localización: coges el vídeo original y lo "traduces" al negocio del realtor, respetando EXACTAMENTE su longitud, su estructura y su ritmo. Lo único que cambias son las palabras.
+    cabeza = f"""Eres el adaptador de guiones de vídeo de Free Agent Academy. Tu trabajo NO es crear un guión nuevo ni "mejorar" el vídeo: es ADAPTAR, palabra por palabra, una transcripción que ya existe, al mundo del realtor. Piénsalo como un doblaje o una localización: coges el vídeo original y lo "traduces" al negocio del realtor, respetando EXACTAMENTE su longitud, su estructura y su ritmo. Lo único que cambias son las palabras.
 
 {profile_section}
 
@@ -112,7 +165,12 @@ LA REGLA DE ORO: ADAPTACIÓN 1:1, NO REESCRITURA
 - NO inventes contenido nuevo: si algo no está en el original, no está en tu adaptación.
 - NO cambies el número de frases ni el orden de las ideas.
 
-════════════════════════════════════════
+"""
+    # Por tomas (piloto del admin): cambia cómo se entrega, no qué se adapta.
+    if por_formato:
+        return cabeza + COLA_POR_TOMAS.replace("{seccion_datos}", seccion_datos)
+
+    return cabeza + f"""════════════════════════════════════════
 LEGIBILIDAD (formato, no contenido)
 ════════════════════════════════════════
 Las transcripciones automáticas llegan a menudo sin puntuación y todo seguido. Tu guión SÍ tiene que estar bien escrito y ser fácil de leer a cámara: puntúa las frases con normalidad (mayúsculas, comas, puntos, interrogaciones).
@@ -203,6 +261,7 @@ def generate_script(
     user: User,
     profile: Optional[RealtorProfile],
     custom_instructions: str = "",
+    por_formato: bool = False,
 ) -> dict:
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
@@ -239,10 +298,12 @@ Mismo número de frases, mismo orden y misma longitud (aproximadamente {palabras
 
     message = client.messages.create(
         model="claude-opus-4-8",
-        max_tokens=4000,
+        # Por tomas el JSON es más largo (un objeto por bloque)
+        max_tokens=6000 if por_formato else 4000,
         system=_build_system_prompt(profile, user,
                                     ambito=clasificacion["ambito"],
-                                    datos=clasificacion["datos"]),
+                                    datos=clasificacion["datos"],
+                                    por_formato=por_formato),
         messages=[{"role": "user", "content": user_message}],
     )
 
@@ -257,6 +318,19 @@ Mismo número de frases, mismo orden y misma longitud (aproximadamente {palabras
         raise ValueError("La respuesta de Claude no contiene JSON válido.")
 
     parsed = json.loads(raw[json_start:json_end])
+
+    if por_formato:
+        # Los bloques mandan; hook, desarrollo y CTA salen de ellos, así no
+        # pueden contradecirse y lo que ya lee esos campos sigue funcionando.
+        fm = formato.normalizar(parsed.get("formato"))
+        if fm is None:
+            raise ValueError("La respuesta de Claude no trae los bloques del guion.")
+        secciones = formato.derivar_secciones(fm)
+        parsed["formato"] = fm
+        parsed["hook"] = secciones["hook"]
+        parsed["desarrollo"] = secciones["development"]
+        parsed["conclusion"] = secciones["conclusion"]
+        parsed.setdefault("caption", "")
 
     required_keys = {"hook", "desarrollo", "conclusion", "caption"}
     if not required_keys.issubset(parsed.keys()):

@@ -50,6 +50,8 @@ window.EditorGuiones = (function () {
     let urlGuardar = cfg.urlGuardar || null;
     let temporizador = null;
     let sinGuardar = false;
+    // Los bloques del guion por tomas (ver pintarFormato); null en los de siempre
+    let formatoActual = null;
 
     /* `resto` es la parte que sólo se lee en pantalla grande: va dentro de un
        <span class="solo-ancho">, que el móvil esconde. Antes esto escribía con
@@ -83,12 +85,15 @@ window.EditorGuiones = (function () {
         // El hook, según la metodología, va entre 1 y 3 segundos
         marca.classList.toggle("ed-dur--alerta", s === "hook" && seg > 3.5);
       });
+      duracionFormato();
     }
 
     async function guardar() {
       if (!urlGuardar) return;
       const cuerpo = {};
       SECCIONES.forEach(s => { if (campos[s]) cuerpo[s] = campos[s].innerHTML; });
+      // Por tomas mandan los bloques: el servidor saca de ellos las secciones
+      if (formatoActual) cuerpo.formato = formatoActual;
       marcar("Guardando…", "guardando");
       try {
         const res = await fetch(urlGuardar, {
@@ -158,6 +163,7 @@ window.EditorGuiones = (function () {
           SECCIONES.forEach(s => {
             if (campos[s]) campos[s].textContent = data.secciones[s] || "";
           });
+          ponerFormato(data.formato || null);
           sinGuardar = false;
           marcar("Original restaurado", "guardado");
           recalcular();
@@ -170,7 +176,10 @@ window.EditorGuiones = (function () {
     const btnCopiar = raiz.querySelector("[data-ed-copiar]");
     if (btnCopiar) {
       btnCopiar.addEventListener("click", () => {
-        const t = s => campos[s] ? (campos[s].innerText || "").trim() : "";
+        const porTomas = formatoActual ? lineasFormato(formatoActual) : null;
+        const t = s => porTomas && s !== "caption"
+          ? porTomas[s]
+          : (campos[s] ? (campos[s].innerText || "").trim() : "");
         navigator.clipboard.writeText(
           `🎣 HOOK\n${t("hook")}\n\n📖 DESARROLLO\n${t("development")}\n\n` +
           `✅ CTA\n${t("conclusion")}\n\n📲 CAPTION\n${t("caption")}`
@@ -345,12 +354,156 @@ window.EditorGuiones = (function () {
       pedirPartes();
     }
 
+    /* ── Guion por tomas ─────────────────────────────────────────────
+       El realtor graba leyendo un trozo corto, diciéndolo de memoria y
+       pasando al siguiente. Cada bloque es una toma, y el diseño cambia con el
+       formato del vídeo. Las etiquetas (1, 2, TOMA, PISTA, 🎤 TÚ…) las pone
+       esto, no la IA: el bloque solo trae parte, texto y, según el tipo,
+       extra / quien / rol. Ver app/services/formato.py. */
+    const fmRaiz = raiz.querySelector("[data-ed-formato]");
+    const NOMBRE_TIPO = { lista: "Lista", pares: "Pares", dialogo: "Diálogo",
+                          adivina: "Adivina", historia: "Historia" };
+    const COLOR_PARTE = { hook: "badge-blue", desarrollo: "badge-orange", cta: "badge-green" };
+
+    // Lo que dice el propio realtor (en un diálogo, lo de la otra voz no)
+    const loDiceEl = (fm, b) => !(fm.tipo === "dialogo" && b.quien === "otro");
+    // En lista y pares, un elemento es lo que trae las dos columnas
+    const esElemento = (fm, b) => (fm.tipo === "lista" || fm.tipo === "pares") && !!b.extra;
+
+    /* Las mismas líneas que derivar_secciones() en el servidor, para Copiar */
+    function lineasFormato(fm) {
+      const l = { hook: [], development: [], conclusion: [] };
+      const clave = { hook: "hook", desarrollo: "development", cta: "conclusion" };
+      fm.bloques.forEach(b => {
+        let t = b.texto || "";
+        if (b.extra) t = t ? t + (fm.tipo === "pares" ? " → " : ": ") + b.extra : b.extra;
+        else if (fm.tipo === "dialogo" && b.quien === "otro") t = "— " + t;
+        l[clave[b.parte]].push(t);
+      });
+      return { hook: l.hook.join("\n"), development: l.development.join("\n"),
+               conclusion: l.conclusion.join("\n") };
+    }
+
+    function el(tag, clase, texto) {
+      const e = document.createElement(tag);
+      if (clase) e.className = clase;
+      if (texto != null) e.textContent = texto;
+      return e;
+    }
+
+    function editable(i, campo, texto, clase) {
+      const e = el("div", "fm-edit " + (clase || ""), texto || "");
+      e.setAttribute("contenteditable", "plaintext-only");
+      e.setAttribute("role", "textbox");
+      e.dataset.i = i;
+      e.dataset.campo = campo;
+      return e;
+    }
+
+    function duracionFormato() {
+      const marca = fmRaiz && fmRaiz.querySelector("[data-fm-dur]");
+      if (!marca || !formatoActual) return;
+      const palabras = formatoActual.bloques
+        .filter(b => loDiceEl(formatoActual, b))
+        .reduce((n, b) => n + ((b.texto || "") + " " + (b.extra || "")).trim().split(/\s+/).filter(Boolean).length, 0);
+      marca.textContent = "≈ " + pinta(palabras / PALABRAS_POR_SEG);
+    }
+
+    function pintarFormato(fm) {
+      fmRaiz.replaceChildren();
+      const tomas = fm.bloques.filter(b => loDiceEl(fm, b)).length;
+
+      const cab = el("div", "fm-cabecera ed-no-print");
+      cab.append(el("span", "fm-tipo", "Formato: " + (NOMBRE_TIPO[fm.tipo] || "Historia")),
+                 el("span", null, tomas + (tomas === 1 ? " toma" : " tomas")));
+      const dur = el("span"); dur.dataset.fmDur = ""; cab.append(dur);
+      cab.append(el("span", "fm-ayuda", "Lee una toma, dila de memoria a cámara y pasa a la siguiente."));
+      fmRaiz.append(cab);
+
+      const deLista = fm.tipo === "lista" || fm.tipo === "pares";
+      if (deLista && !fm.bloques.some(b => b.parte === "hook" && !b.extra)) {
+        fmRaiz.append(el("div", "fm-aviso", "▶ Sin frase de entrada: empieza directo con el 1."));
+      }
+
+      let nTomas = 0, nElem = 0, nPista = 0, cabeceraPuesta = false;
+      fm.bloques.forEach((b, i) => {
+        const dice = loDiceEl(fm, b);
+        const elem = esElemento(fm, b);
+        const fila = el("div", "fm-toma fm-toma--" + b.parte);
+
+        let num = "", etiqueta = "", color = COLOR_PARTE[b.parte];
+        if (deLista) {
+          if (elem) num = String(++nElem);
+          else if (b.parte === "desarrollo") { num = "↳"; fila.classList.add("fm-toma--sigue"); }
+          else etiqueta = b.parte === "hook" ? "ENTRADA" : "CTA";
+        } else if (fm.tipo === "dialogo") {
+          if (dice) { num = String(++nTomas); etiqueta = b.parte === "cta" ? "🎤 TÚ · CTA" : "🎤 TÚ"; }
+          else { num = "💬"; etiqueta = "OTRA PERSONA O TEXTO EN PANTALLA"; color = "badge-dark";
+                 fila.classList.add("fm-toma--otro"); }
+        } else {
+          num = String(++nTomas);
+          if (fm.tipo === "adivina" && b.parte === "hook") etiqueta = "PREGUNTA";
+          else if (b.rol === "pista") etiqueta = "PISTA " + (++nPista);
+          else if (b.rol === "respuesta") { etiqueta = "RESPUESTA"; color = "badge-purple";
+                                           fila.classList.add("fm-toma--respuesta"); }
+          else etiqueta = { hook: "HOOK", desarrollo: "TOMA", cta: "CTA" }[b.parte];
+        }
+
+        // Los títulos de las dos columnas, encima del primer par
+        if (fm.tipo === "pares" && elem && !cabeceraPuesta) {
+          cabeceraPuesta = true;
+          const cols = el("div", "fm-cols");
+          const par = el("div", "fm-par");
+          par.append(el("span", null, (fm.columnas || [])[0] || ""), el("span"),
+                     el("span", null, (fm.columnas || [])[1] || ""));
+          cols.append(el("span"), par);
+          fmRaiz.append(cols);
+        }
+
+        fila.append(el("div", "fm-num", num));
+        const cuerpo = el("div", "fm-cuerpo");
+        if (etiqueta) cuerpo.append(el("span", "badge " + color + " fm-etq", etiqueta));
+        if (elem) {
+          const par = el("div", "fm-par");
+          par.append(editable(i, "texto", b.texto, "fm-concepto"), el("span", "fm-flecha", "→"),
+                     editable(i, "extra", b.extra, "fm-extra"));
+          cuerpo.append(par);
+        } else {
+          cuerpo.append(editable(i, "texto", b.texto, "fm-texto"));
+        }
+        fila.append(cuerpo);
+        fmRaiz.append(fila);
+      });
+      duracionFormato();
+    }
+
+    function ponerFormato(fm) {
+      formatoActual = fm && Array.isArray(fm.bloques) && fm.bloques.length
+        ? JSON.parse(JSON.stringify(fm)) : null;
+      if (!fmRaiz) return;
+      fmRaiz.hidden = !formatoActual;
+      if (contenedor) contenedor.toggleAttribute("data-con-formato", !!formatoActual);
+      if (formatoActual) pintarFormato(formatoActual);
+      else fmRaiz.replaceChildren();
+    }
+
+    if (fmRaiz) {
+      fmRaiz.addEventListener("input", e => {
+        const campo = e.target.closest("[data-campo]");
+        if (!campo || !formatoActual) return;
+        formatoActual.bloques[+campo.dataset.i][campo.dataset.campo] = (campo.innerText || "").trim();
+        alEscribir();
+      });
+    }
+
+    ponerFormato(cfg.formato || null);
     recalcular();
     pedirPartes();
 
     return {
       recalcular,
       ponerTranscripcion,
+      ponerFormato,
       // El generador no conoce el id del guión hasta que la IA responde
       activarGuardado(url) { urlGuardar = url; marcar("Editable", "listo", " — escribe encima"); },
     };

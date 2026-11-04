@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -9,6 +10,7 @@ from app.models import User, Script
 from app.auth import get_current_user, hash_password
 from app.services.transcription import get_transcript
 from app.services.generator import generate_script
+from app.services.formato import usa_formato
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -98,6 +100,8 @@ async def generate(
             user=current_user,
             profile=current_user.profile,
             custom_instructions=payload.custom_instructions,
+            # Por tomas y según el formato del vídeo: de momento, solo el admin
+            por_formato=usa_formato(current_user),
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al generar el guión: {str(e)}")
@@ -115,6 +119,7 @@ async def generate(
         custom_instructions=payload.custom_instructions.strip() or None,
         thumbnail_path=thumbnail_path,
         estructura_detectada=estructura,
+        formato=json.dumps(result["formato"], ensure_ascii=False) if result.get("formato") else None,
     )
     db.add(script)
     db.commit()
@@ -137,6 +142,8 @@ async def generate(
         "thumbnail_path": thumbnail_path,
         # Para el selector «Tu guion / Vídeo de referencia» del resultado.
         "transcripcion": transcript,
+        # Los bloques por tomas; null en los guiones de siempre
+        "formato": result.get("formato"),
         "used": used_now,
         "remaining": remaining,
         "limit": current_user.monthly_limit,

@@ -142,6 +142,8 @@ function fillResult(data, url) {
 
   // El guión nace editable: en cuanto existe en la BD, se puede guardar encima
   if (editorGuion) {
+    // Por tomas según el formato del vídeo; null = el guión de siempre
+    editorGuion.ponerFormato(data.formato || null);
     editorGuion.recalcular();
     if (data.script_id) editorGuion.activarGuardado('/editor/guion/' + data.script_id + '/guardar');
     // Lo que dice el vídeo de referencia, para el selector de arriba
@@ -216,6 +218,11 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
 });
 
 
+/* Los bloques por tomas del guión, si se generó así (null si no) */
+function leerFormato(texto) {
+  try { return texto ? JSON.parse(texto) : null; } catch (_) { return null; }
+}
+
 /* ── Click en guión reciente → abrir en sección de resultado ── */
 document.querySelectorAll('.recent-item--clickable').forEach(item => {
   item.addEventListener('click', (e) => {
@@ -231,6 +238,7 @@ document.querySelectorAll('.recent-item--clickable').forEach(item => {
       // Sin esto, al reabrir un guión de la lista desaparecía el selector
       // «Tu guion / Vídeo de referencia».
       transcripcion:        item.dataset.trans      || '',
+      formato:              leerFormato(item.dataset.formato),
     };
     const url = item.dataset.url || '';
     hideError();
