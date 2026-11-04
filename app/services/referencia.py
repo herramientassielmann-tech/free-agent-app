@@ -169,6 +169,14 @@ def _cortar(texto: str, tipo: str, respuesta: list, guia: Optional[list] = None,
         pos = 0 if not cortes else _buscar(texto, _ancla(b.get("inicio") or b.get("texto")), desde)
         if pos < 0:
             continue
+        # En los diálogos con raya («…¿o esta? —¿Y vos cuál querés?»), la raya
+        # abre la frase siguiente: va al principio de su toma, no al final de
+        # la anterior.
+        k = pos
+        while k > desde and texto[k - 1].isspace():
+            k -= 1
+        if cortes and k > desde and texto[k - 1] in "—–":
+            pos = k - 1
         meta = guia[n] if mismas else b
         con_extra = bool(guia[n].get("extra")) if mismas else bool(b.get("inicio_extra") or b.get("extra"))
         cortes.append((pos, {**b, "parte": meta.get("parte"), "quien": meta.get("quien"),
