@@ -80,6 +80,7 @@ def _migrate_db(db: Session):
         "ALTER TABLE scripts ADD COLUMN transcripcion_partes TEXT",
         "ALTER TABLE scripts ADD COLUMN transcripcion_edicion TEXT",
         "ALTER TABLE scripts ADD COLUMN formato TEXT",
+        "ALTER TABLE scripts ADD COLUMN referencia_formato TEXT",
     ]
     for sql in simple:
         try:

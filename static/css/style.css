@@ -1642,7 +1642,7 @@ a:hover { color: #3d9eff; }
    Va con !important y después de la regla de impresión de arriba, que si no
    las volvería a sacar en el PDF. */
 .script-sections[data-con-formato] .ed-card:not(.caption-card) { display: none !important; }
-.script-sections[data-mostrando="referencia"] .fm { display: none; }
+.script-sections[data-mostrando="referencia"] [data-ed-formato] { display: none; }
 
 .fm-cabecera {
   display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px;
@@ -1712,7 +1712,7 @@ a:hover { color: #3d9eff; }
 
 /* En papel, las tomas también: es como mejor se graba con la hoja delante */
 @media print {
-  .script-sections[data-con-formato] .fm { display: flex !important; }
+  .script-sections[data-con-formato] [data-ed-formato] { display: flex !important; }
   .fm-toma { background: #fff !important; border-color: #ccc !important; break-inside: avoid; }
   .fm-toma--hook      { border-left-color: #0A84FF !important; }
   .fm-toma--desarrollo{ border-left-color: #FF9F0A !important; }

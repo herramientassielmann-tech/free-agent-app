@@ -163,8 +163,10 @@ async def editar_guion(
         "transcripcion": script.original_transcript or "",
         # Partida en hook / desarrollo / CTA si ya se hizo; si no, la pide el JS
         # a la ruta de abajo nada más cargar, antes de que se le dé al selector.
-        "transcripcion_partes": _referencia_visible(script),
-        "transcripcion_editada": bool(script.transcripcion_edicion),
+        # En los guiones por tomas, el original también va por tomas y lo pide
+        # el JS; las tres tarjetas no se pintan para que no aparezcan un momento.
+        "transcripcion_partes": None if script.formato else _referencia_visible(script),
+        "transcripcion_editada": bool(script.transcripcion_edicion) and not script.formato,
         "url_referencia": f"/editor/guion/{script.id}/referencia",
         # Por tomas, si el guion se generó así: el editado si lo hay, si no el
         # original. None en los guiones de siempre.
@@ -193,7 +195,7 @@ def _referencia_visible(script: Script) -> Optional[dict]:
     Si la IA no pudo partirla ("{}"), va entera al desarrollo: así se sigue
     viendo en tarjetas y se puede editar igual, hook y CTA incluidos."""
     editada = _leer_partes(script.transcripcion_edicion)
-    if editada:
+    if editada and "formato" not in editada:
         return editada
     if script.transcripcion_partes is None:
         return None
@@ -206,6 +208,29 @@ class GuardarReferenciaRequest(BaseModel):
     hook: str = ""
     desarrollo: str = ""
     cta: str = ""
+    # Solo en los guiones por tomas: el original editado, por tomas
+    formato: Optional[dict] = None
+
+
+async def _referencia_por_tomas(script: Script, db: Session) -> Optional[dict]:
+    """El original por tomas, como el guion adaptado: el editado si lo hay; si
+    no, el partido (se parte una vez y se guarda). None si el guion no va por
+    tomas o no se pudo partir: entonces, hook / desarrollo / CTA de siempre."""
+    adaptado = formato_svc.normalizar(_leer_partes(script.formato))
+    if not adaptado or not script.original_transcript:
+        return None
+    editada = _leer_partes(script.transcripcion_edicion)
+    if editada and editada.get("formato"):
+        return formato_svc.normalizar(editada["formato"])
+    if script.referencia_formato is None:
+        try:
+            tomas = await run_in_threadpool(
+                referencia.partir_en_tomas, script.original_transcript, adaptado)
+        except Exception:
+            return None  # la API ha fallado: se reintenta la próxima vez
+        script.referencia_formato = json.dumps(tomas or {}, ensure_ascii=False)
+        db.commit()
+    return formato_svc.normalizar(_leer_partes(script.referencia_formato))
 
 
 @router.get("/guion/{sid}/referencia")
@@ -217,6 +242,9 @@ async def referencia_guion(
     """La transcripción partida en secciones. Se parte una vez y se guarda; el
     texto es siempre el original, solo cambia dónde se corta."""
     script = _mi_script(sid, current_user, db)
+    tomas = await _referencia_por_tomas(script, db)
+    if tomas:
+        return JSONResponse({"formato": tomas, "editada": bool(script.transcripcion_edicion)})
     if script.transcripcion_partes is None and script.original_transcript:
         try:
             partes = await run_in_threadpool(referencia.partir, script.original_transcript)
@@ -240,10 +268,14 @@ async def guardar_referencia(
     """Guarda lo que el realtor cambie de la transcripción. Texto plano: se
     pinta siempre con textContent, nunca como HTML."""
     script = _mi_script(sid, current_user, db)
-    script.transcripcion_edicion = json.dumps(
-        {p: (getattr(payload, p) or "").strip()[:20000] for p in PARTES_REFERENCIA},
-        ensure_ascii=False,
-    )
+    tomas = formato_svc.normalizar(payload.formato) if payload.formato else None
+    if tomas:
+        script.transcripcion_edicion = json.dumps({"formato": tomas}, ensure_ascii=False)
+    else:
+        script.transcripcion_edicion = json.dumps(
+            {p: (getattr(payload, p) or "").strip()[:20000] for p in PARTES_REFERENCIA},
+            ensure_ascii=False,
+        )
     db.commit()
     return JSONResponse({"ok": True})
 
@@ -257,6 +289,9 @@ async def restaurar_referencia(
     script = _mi_script(sid, current_user, db)
     script.transcripcion_edicion = None
     db.commit()
+    tomas = await _referencia_por_tomas(script, db)
+    if tomas:
+        return JSONResponse({"formato": tomas, "editada": False})
     return JSONResponse({"partes": _referencia_visible(script), "editada": False})
 
 

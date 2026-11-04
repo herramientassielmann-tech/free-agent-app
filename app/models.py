@@ -104,6 +104,9 @@ class Script(Base):
     # adivina, historia). JSON; ver app/services/formato.py. NULL: guion de los
     # de siempre, en tres párrafos.
     formato: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # El vídeo de referencia por tomas, con la misma forma que `formato`, para
+    # comparar toma con toma. JSON; "{}" si no se pudo partir. NULL: sin intentar.
+    referencia_formato: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     hook: Mapped[Optional[str]] = mapped_column(Text)
     promesa: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     development: Mapped[Optional[str]] = mapped_column(Text)

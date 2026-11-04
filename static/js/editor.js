@@ -236,8 +236,25 @@ window.EditorGuiones = (function () {
     const partesEl = trans ? [...trans.querySelectorAll("[data-ed-parte]")] : [];
     const btnRestaurarTrans = raiz.querySelector("[data-ed-restaurar-trans]");
 
+    // En los guiones por tomas, el original también va por tomas (misma forma
+    // que el adaptado, para compararlos toma con toma). null si no.
+    const refRaiz = trans ? trans.querySelector("[data-ed-trans-formato]") : null;
+    let formatoRef = null;
+
+    function pintarRefFormato(fm, editada) {
+      formatoRef = JSON.parse(JSON.stringify(fm));
+      partesEl.forEach(el => { el.closest("[data-ed-parte-card]").hidden = true; });
+      trans.querySelector("[data-ed-trans-entero]").hidden = true;
+      refRaiz.hidden = false;
+      pintarFormato(formatoRef, refRaiz, false);
+      trans.dataset.partida = "si";
+      if (btnRestaurarTrans) btnRestaurarTrans.hidden = !editada;
+    }
+
     function pintarPartes(partes, editada) {
       if (!trans) return;
+      formatoRef = null;
+      if (refRaiz) { refRaiz.hidden = true; refRaiz.replaceChildren(); }
       const hay = !!partes;
       partesEl.forEach(el => {
         el.textContent = hay ? (partes[el.dataset.edParte] || "") : "";
@@ -256,7 +273,8 @@ window.EditorGuiones = (function () {
       try {
         const r = await fetch(trans.dataset.url, { credentials: "same-origin" });
         const d = r.ok ? await r.json() : {};
-        pintarPartes(d.partes || null, d.editada);
+        if (d.formato && refRaiz) pintarRefFormato(d.formato, d.editada);
+        else pintarPartes(d.partes || null, d.editada);
       } catch (_) {
         pintarPartes(null);
       }
@@ -273,7 +291,8 @@ window.EditorGuiones = (function () {
       clearTimeout(tempTrans);
       const url = trans.dataset.url;
       const cuerpo = {};
-      partesEl.forEach(el => { cuerpo[el.dataset.edParte] = (el.innerText || "").trim(); });
+      if (formatoRef) cuerpo.formato = formatoRef;
+      else partesEl.forEach(el => { cuerpo[el.dataset.edParte] = (el.innerText || "").trim(); });
       marcar("Guardando…", "guardando");
       try {
         const res = await fetch(url + "/guardar", {
@@ -291,13 +310,24 @@ window.EditorGuiones = (function () {
       }
     }
 
-    partesEl.forEach(el => {
-      el.addEventListener("input", () => {
-        transSinGuardar = true;
-        marcar("Sin guardar…", "pendiente");
-        clearTimeout(tempTrans);
-        tempTrans = setTimeout(guardarTrans, 1200);
+    function alEscribirTrans() {
+      transSinGuardar = true;
+      marcar("Sin guardar…", "pendiente");
+      clearTimeout(tempTrans);
+      tempTrans = setTimeout(guardarTrans, 1200);
+    }
+
+    if (refRaiz) {
+      refRaiz.addEventListener("input", e => {
+        const campo = e.target.closest("[data-campo]");
+        if (!campo || !formatoRef) return;
+        formatoRef.bloques[+campo.dataset.i][campo.dataset.campo] = (campo.innerText || "").trim();
+        alEscribirTrans();
       });
+    }
+
+    partesEl.forEach(el => {
+      el.addEventListener("input", alEscribirTrans);
       // Pegar siempre en plano, como en el guion
       el.addEventListener("paste", e => {
         e.preventDefault();
@@ -319,7 +349,8 @@ window.EditorGuiones = (function () {
           if (!res.ok) throw new Error();
           const d = await res.json();
           transSinGuardar = false;
-          pintarPartes(d.partes || null, false);
+          if (d.formato && refRaiz) pintarRefFormato(d.formato, false);
+          else pintarPartes(d.partes || null, false);
           marcar("Original restaurado", "guardado");
         } catch (e) {
           marcar("No se pudo restaurar", "error");
@@ -331,7 +362,9 @@ window.EditorGuiones = (function () {
     const btnCopiarTrans = raiz.querySelector("[data-ed-copiar-trans]");
     if (btnCopiarTrans && transTexto) {
       btnCopiarTrans.addEventListener("click", () => {
-        const texto = trans && trans.dataset.partida === "si"
+        const texto = formatoRef
+          ? formatoRef.bloques.map(b => [b.texto, b.extra].filter(Boolean).join(" ")).join("\n\n")
+          : trans && trans.dataset.partida === "si"
           ? partesEl.map(el => (el.innerText || "").trim()).filter(Boolean).join("\n\n")
           : (transTexto.textContent || "").trim();
         navigator.clipboard.writeText(texto);
@@ -409,8 +442,11 @@ window.EditorGuiones = (function () {
       marca.textContent = "≈ " + pinta(palabras / PALABRAS_POR_SEG);
     }
 
-    function pintarFormato(fm) {
-      fmRaiz.replaceChildren();
+    /* Pinta un guion por tomas en `destino`: el adaptado (con su cabecera de
+       formato, tomas y duración) o el original del vídeo de referencia, que
+       usa la misma forma para compararlos toma con toma. */
+    function pintarFormato(fm, destino = fmRaiz, conCabecera = true) {
+      destino.replaceChildren();
       const tomas = fm.bloques.filter(b => loDiceEl(fm, b)).length;
 
       const cab = el("div", "fm-cabecera ed-no-print");
@@ -420,11 +456,11 @@ window.EditorGuiones = (function () {
       cab.append(el("span", "fm-ayuda", fm.tipo === "dialogo"
         ? "Las tomas con número las dices tú; las 💬 las dice otra persona o van en pantalla."
         : "Lee una toma, dila de memoria a cámara y pasa a la siguiente."));
-      fmRaiz.append(cab);
+      if (conCabecera) destino.append(cab);
 
       const deLista = fm.tipo === "lista" || fm.tipo === "pares";
       if (deLista && !fm.bloques.some(b => b.parte === "hook" && !b.extra)) {
-        fmRaiz.append(el("div", "fm-aviso", "▶ Sin frase de entrada: empieza directo con el 1."));
+        destino.append(el("div", "fm-aviso", "▶ Sin frase de entrada: empieza directo con el 1."));
       }
 
       let nTomas = 0, nElem = 0, nPista = 0, cabeceraPuesta = false;
@@ -461,7 +497,7 @@ window.EditorGuiones = (function () {
           par.append(el("span", null, (fm.columnas || [])[0] || ""), el("span"),
                      el("span", null, (fm.columnas || [])[1] || ""));
           cols.append(el("span"), par);
-          fmRaiz.append(cols);
+          destino.append(cols);
         }
 
         fila.append(el("div", "fm-num", num));
@@ -476,9 +512,9 @@ window.EditorGuiones = (function () {
           cuerpo.append(editable(i, "texto", b.texto, "fm-texto"));
         }
         fila.append(cuerpo);
-        fmRaiz.append(fila);
+        destino.append(fila);
       });
-      duracionFormato();
+      if (destino === fmRaiz) duracionFormato();
     }
 
     function ponerFormato(fm) {
