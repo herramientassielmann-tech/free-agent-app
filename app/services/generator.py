@@ -24,9 +24,13 @@ SPECIALIZATION_DESCRIPTIONS = {
 # ── Qué se toca según de qué vaya el vídeo original ────────────────────────
 
 REGLA_YA_ES_DEL_SECTOR = """- NO CAMBIES EL TEMA. Este vídeo ya habla del mundo del realtor (inmobiliario, dinero, inversión, patrimonio, impuestos, vivienda o mentalidad financiera). El guión debe quedar PRÁCTICAMENTE IGUAL que el original.
-- Lo ÚNICO que puedes cambiar: un nombre propio ajeno por el del realtor, la ciudad o zona por la suya, y el CTA final por el suyo. Nada más.
+- Lo que SÍ cambias siempre: un nombre propio ajeno por el del realtor, la ciudad o zona por la suya, y el CTA final por el suyo.
+- RETOQUE DEL 5 %: si el vídeo original está en ESPAÑOL, el guión NO puede ser una copia exacta. Tiene que quedar igual en un 95 %: retoca más o menos 1 de cada 20 palabras, repartidas por todo el guión y no amontonadas en una frase, y solo CONECTORES y PALABRAS EQUIVALENTES que no cambien nada del vídeo. Primero los conectores: "entonces" → "así que", "porque" → "ya que", "por ejemplo" → "pongamos", "pero" → "aunque" o "eso sí" (solo si la frase sigue funcionando), "también" → "además", "hoy en día" → "ahora mismo". Después, palabras igual de coloquiales: "mucho" → "bastante". Respeta el español del vídeo: si dice "carro", no lo cambies por "coche". No repitas el mismo cambio más de dos veces.
+- Tiene que sonar EXACTAMENTE igual de hablado que el original, como lo diría esa persona a cámara. Nunca más formal ni más rebuscado: "hay" sigue siendo "hay", "explico" sigue siendo "explico", "comprar" sigue siendo "comprar".
+- Eso NUNCA toca: las cifras y los datos, los nombres de conceptos y términos del sector, la idea de cada frase, el orden, el número de frases, las preguntas (siguen siendo preguntas), la fuerza del hook ni los verbos de la llamada a la acción ("sígueme", "comenta", "escríbeme"). No exageres ni suavices: "muchas" no es "mil", "gusta" no es "enamora". Si un cambio altera aunque sea un matiz, no lo hagas.
+- Si el vídeo original está en otro idioma, tradúcelo con naturalidad y fiel al original: la traducción ya lo hace distinto, no hace falta retocar más.
 - NO fuerces su especialización sobre el tema. Si el original habla de "los ricos", habla de los ricos; no lo conviertas en "los inversores". Si habla de una subida de impuestos, habla de esa subida.
-- Ante la duda, deja la frase como está. Cambiar de menos es el error barato; cambiar de más rompe el vídeo."""
+- Ante la duda entre dos cambios, el más pequeño. Cambiar de más rompe el vídeo; copiarlo tal cual tampoco vale."""
 
 REGLA_OTRO_MUNDO = """- El vídeo es de otro mundo (fitness, comida, viajes, rutinas, motivación genérica...). Llévalo al terreno inmobiliario manteniendo la misma función de cada frase. Ejemplo: si el original dice "cuando compres un coche, mira bien el motor", tú dices con la misma forma "cuando compres un piso, mira bien las cuotas".
 - Llévalo a un REAL ESTATE GENERAL —comprar, vender, alquilar, invertir en vivienda—, NO al nicho concreto del realtor. El tema va a inmobiliario genérico; su voz, su tono y su zona sí son suyos.
@@ -65,7 +69,7 @@ El realtor graba así: lee una toma, se la aprende, la dice de memoria a cámara
 - Junta en el mismo bloque las frases seguidas que forman una sola idea: una afirmación y su explicación, una pregunta y su respuesta inmediata, un dato y lo que significa. Lo normal es de 1 a 3 frases y entre 10 y 35 palabras por bloque.
 - Solo si una idea pasa de unas 40 palabras, pártela en dos bloques, y siempre por el final de una frase.
 - Menos bloques es mejor, siempre que cada uno se pueda aprender: un vídeo de 30 segundos suele quedar en 4 a 7 tomas; uno de un minuto, en 7 a 12.
-- Juntar o separar no es resumir: no quites ni añadas una sola palabra.
+- Juntar o separar no es resumir: al partir en tomas no quites ni añadas ninguna frase.
 
 Puntúa con normalidad (mayúsculas, comas, puntos, interrogaciones), aunque la transcripción venga sin puntuar.
 
@@ -98,6 +102,7 @@ FORMATO DE RESPUESTA (JSON estricto, sin texto adicional)
 
 {
   "estructura_detectada": "1 línea: de qué va el vídeo original y a qué tema inmobiliario lo has adaptado",
+  "retoques": ["si te los he pedido, cada cambio de conector o palabra: pero → aunque"],
   "formato": {
     "tipo": "lista | pares | dialogo | adivina | historia",
     "columnas": ["SOLO", "EN PARES"],
@@ -210,7 +215,7 @@ FORMATO DE RESPUESTA (JSON estricto, sin texto adicional)
 }}"""
 
 
-SISTEMA_CLASIFICADOR = """Lees la transcripción de un vídeo corto y decides dos cosas. Nada más.
+SISTEMA_CLASIFICADOR = """Lees la transcripción de un vídeo corto y decides tres cosas. Nada más.
 
 1) ÁMBITO — ¿de qué mundo es el vídeo?
    "real_estate" si habla de inmobiliario, dinero, inversión, patrimonio, ahorro,
@@ -225,8 +230,11 @@ SISTEMA_CLASIFICADOR = """Lees la transcripción de un vídeo corto y decides do
    Si el vídeo no da ningún dato concreto, devuelve una lista vacía.
    Una frase como "es más barato" NO es un dato; "cuesta 700.000 euros" sí.
 
+3) IDIOMA — el idioma en el que se habla en el vídeo, en código de dos letras:
+   "es" si es español, "en" si es inglés, etc.
+
 Responde SOLO con este JSON:
-{"ambito": "real_estate", "motivo": "media frase", "datos": ["...", "..."]}"""
+{"ambito": "real_estate", "motivo": "media frase", "datos": ["...", "..."], "idioma": "es"}"""
 
 
 def clasificar_video(transcript: str) -> dict:
@@ -252,12 +260,13 @@ def clasificar_video(transcript: str) -> dict:
             "ambito": ambito if ambito in ("real_estate", "otro") else "real_estate",
             "motivo": (datos.get("motivo") or "")[:200],
             "datos": [str(d)[:200] for d in (datos.get("datos") or [])][:15],
+            "idioma": str(datos.get("idioma") or "es").lower()[:2],
         }
     except Exception:
         # Si la clasificación falla, se toca lo MENOS posible: pasarse de
         # conservador deja el vídeo parecido al original; pasarse de creativo
         # lo rompe, que es justo el fallo que estamos corrigiendo.
-        return {"ambito": "real_estate", "motivo": "", "datos": []}
+        return {"ambito": "real_estate", "motivo": "", "datos": [], "idioma": "es"}
 
 
 def generate_script(
@@ -285,11 +294,22 @@ Ten en cuenta estas instrucciones al adaptar el guión.
     palabras = len(transcript.split())
     encargo = (
         "Este vídeo YA es del mundo del realtor, así que el guión sale casi idéntico: "
-        "mantén el tema y cambia solo el nombre, la zona y el CTA."
+        "mantén el tema y cambia el nombre, la zona y el CTA. Si está en español, retoca además "
+        "conectores y palabras equivalentes, sin ser una copia."
         if ya_es_del_sector else
         "Este vídeo es de otro mundo: llévalo a real estate GENERAL —comprar, vender, "
         "alquilar, invertir en vivienda—, sin forzar la especialización del realtor."
     )
+    # El 95 %: pedido como un número y no como un porcentaje. Con «un 5 %» el
+    # modelo, que tiene un prompt entero diciéndole que no toque nada, se quedaba
+    # en un cambio o ninguno y el guion salía igual que el vídeo.
+    if ya_es_del_sector and clasificacion["idioma"] == "es":
+        retoques = max(3, round(palabras * 0.04))
+        encargo += (f" Este vídeo está en español y tiene {palabras} palabras: haz exactamente "
+                    f"{retoques} retoques de conectores o palabras equivalentes, repartidos por "
+                    f"todas las tomas, y apúntalos todos en \"retoques\". El nombre, la zona y el "
+                    f"CTA no cuentan como retoques.")
+
     user_message = f"""Transcripción del vídeo original ({palabras} palabras):
 
 ---
