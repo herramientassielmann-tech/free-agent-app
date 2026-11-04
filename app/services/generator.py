@@ -25,7 +25,8 @@ SPECIALIZATION_DESCRIPTIONS = {
 
 REGLA_YA_ES_DEL_SECTOR = """- NO CAMBIES EL TEMA. Este vídeo ya habla del mundo del realtor (inmobiliario, dinero, inversión, patrimonio, impuestos, vivienda o mentalidad financiera). El guión debe quedar PRÁCTICAMENTE IGUAL que el original.
 - Lo que SÍ cambias siempre: un nombre propio ajeno por el del realtor, la ciudad o zona por la suya, y el CTA final por el suyo.
-- RETOQUE DEL 5 %: si el vídeo original está en ESPAÑOL, el guión NO puede ser una copia exacta. Tiene que quedar igual en un 95 %: retoca más o menos 1 de cada 20 palabras, repartidas por todo el guión y no amontonadas en una frase, y solo CONECTORES y PALABRAS EQUIVALENTES que no cambien nada del vídeo. Primero los conectores: "entonces" → "así que", "porque" → "ya que", "pero" → "aunque" (solo entre dos ideas de una misma frase), "también" → "además", "hoy en día" → "ahora mismo". Después, palabras igual de coloquiales: "mucho" → "bastante". Respeta el español del vídeo: si dice "carro", no lo cambies por "coche". No repitas el mismo cambio más de dos veces.
+- RETOQUE DEL 5 %: si el vídeo original está en ESPAÑOL, el guión NO puede ser una copia exacta. Tiene que quedar igual en un 95 %: retoca más o menos 1 de cada 20 palabras, repartidas por todo el guión y no amontonadas en una frase, y solo CONECTORES y PALABRAS EQUIVALENTES que no cambien nada del vídeo. Primero los conectores: "entonces" → "así que", "porque" → "ya que", "pero" → "aunque" (solo entre dos ideas de una misma frase), "también" → "además", "hoy en día" → "ahora mismo". Después, palabras pequeñas que no llevan la idea: muletillas ("bueno" → "a ver", "o sea" → "es decir"), cantidades ("mucho" → "bastante") y refuerzos ("muy", "ya", "justo"). Respeta el español del vídeo: si dice "carro", no lo cambies por "coche". No repitas el mismo cambio más de dos veces.
+- NO TOQUES los verbos, sustantivos y adjetivos que llevan la idea: "invierte", "generado", "comprarte" o "sencilla" se quedan como están. "He generado" no es "he movido". Tampoco metas jerga que el original no usa ("pillarte", "sin líos"). Si no llegas al número de retoques sin tocar estas palabras, quédate corto: es mejor un retoque de menos que uno que cambie el sentido.
 - Un conector solo se cambia por otro con la MISMA función. "Así que" indica consecuencia: nunca lo pongas donde el original añade o contrasta ("Y la deuda buena es…" no puede ser "Así que la deuda buena es…"). "Además" solo va al empezar una idea nueva, nunca en medio de una enumeración ("…o además para irte" está mal). Si la frase retocada no suena perfecta dicha en voz alta, deja la original y retoca otra.
 - Tiene que sonar EXACTAMENTE igual de hablado que el original, como lo diría esa persona a cámara. Nunca más formal ni más rebuscado: "hay" sigue siendo "hay", "explico" sigue siendo "explico", "comprar" sigue siendo "comprar".
 - Eso NUNCA toca: las cifras y los datos, los nombres de conceptos y términos del sector, la idea de cada frase, el orden, el número de frases, las preguntas (siguen siendo preguntas), la fuerza del hook ni los verbos de la llamada a la acción ("sígueme", "comenta", "escríbeme"). No exageres ni suavices: "muchas" no es "mil", "gusta" no es "enamora". Si un cambio altera aunque sea un matiz, no lo hagas.
@@ -270,6 +271,51 @@ def clasificar_video(transcript: str) -> dict:
         return {"ambito": "real_estate", "motivo": "", "datos": [], "idioma": "es"}
 
 
+SISTEMA_REVISOR = """Te paso la transcripción ORIGINAL de un vídeo y el GUION adaptado, numerado por tomas. El guion dice lo mismo que el vídeo con pequeños retoques de conectores y palabras, y tiene que ser así: el objetivo es que NO sea una copia del original. La mayoría de los retoques están bien y se quedan aunque tú no lo hubieras escrito así ("mucha" → "bastante", "Y entonces" → "Así que", "por supuesto" → "cómo no").
+
+Corrige SOLO los errores claros, los que notaría cualquiera al oírlo:
+- cambia lo que se dice ("no sabía nada" no es "no sabía bastante"; "he generado" no es "he movido"),
+- no tiene sentido o está mal construido ("simple aunque sencilla", "¿Así que qué haces?", "Aunque espera"),
+- dice lo contrario de lo que une ("Así que" donde el original contrasta dos ideas).
+
+En cada error, deja en ese trozo las palabras del ORIGINAL y conserva el resto de la toma tal como está. NO toques el nombre de la persona, la ciudad o zona, ni un CTA que se haya cambiado a propósito. Si no hay errores claros, no devuelvas nada.
+
+Responde SOLO con este JSON:
+{"arreglos": [{"toma": 3, "texto": "la toma entera ya corregida", "extra": "solo si la toma tiene segunda columna"}]}"""
+
+
+def revisar_retoques(transcript: str, fm: dict) -> dict:
+    """Segunda pasada sobre los retoques del 95 %. Por muchas reglas que lleve el
+    prompt, siempre se colaba alguno que cambiaba el sentido; aquí otra llamada
+    lo compara con el original y lo devuelve a sus palabras. Si falla, el guion
+    se queda como estaba: esta pasada solo puede mejorarlo."""
+    tomas = "\n".join(
+        f'{n}. {b.get("texto", "")}{" ‖ " + b["extra"] if b.get("extra") else ""}'
+        for n, b in enumerate(fm["bloques"], 1))
+    try:
+        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+        msg = client.messages.create(
+            model="claude-opus-4-8",
+            max_tokens=3000,
+            system=SISTEMA_REVISOR,
+            messages=[{"role": "user", "content":
+                       f"ORIGINAL:\n{transcript[:12000]}\n\nGUION:\n{tomas}"}],
+        )
+        bloque = next((b for b in msg.content if b.type == "text"), None)
+        bruto = bloque.text if bloque else ""
+        datos = json.loads(bruto[bruto.find("{"): bruto.rfind("}") + 1])
+        nuevo = json.loads(json.dumps(fm))
+        for a in datos.get("arreglos") or []:
+            n = int(a.get("toma", 0)) - 1
+            if 0 <= n < len(nuevo["bloques"]) and str(a.get("texto") or "").strip():
+                nuevo["bloques"][n]["texto"] = str(a["texto"])
+                if nuevo["bloques"][n].get("extra") and str(a.get("extra") or "").strip():
+                    nuevo["bloques"][n]["extra"] = str(a["extra"])
+        return formato.normalizar(nuevo) or fm
+    except Exception:
+        return fm
+
+
 def generate_script(
     transcript: str,
     user: User,
@@ -304,7 +350,8 @@ Ten en cuenta estas instrucciones al adaptar el guión.
     # El 95 %: pedido como un número y no como un porcentaje. Con «un 5 %» el
     # modelo, que tiene un prompt entero diciéndole que no toque nada, se quedaba
     # en un cambio o ninguno y el guion salía igual que el vídeo.
-    if ya_es_del_sector and clasificacion["idioma"] == "es":
+    con_retoques = ya_es_del_sector and clasificacion["idioma"] == "es"
+    if con_retoques:
         retoques = max(3, round(palabras * 0.04))
         encargo += (f" Este vídeo está en español y tiene {palabras} palabras: haz exactamente "
                     f"{retoques} retoques de conectores o palabras equivalentes, repartidos por "
@@ -350,6 +397,8 @@ Mismo número de frases, mismo orden y misma longitud (aproximadamente {palabras
         fm = formato.normalizar(parsed.get("formato"))
         if fm is None:
             raise ValueError("La respuesta de Claude no trae los bloques del guion.")
+        if con_retoques:
+            fm = revisar_retoques(transcript, fm)
         secciones = formato.derivar_secciones(fm)
         parsed["formato"] = fm
         parsed["hook"] = secciones["hook"]
