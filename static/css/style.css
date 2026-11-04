@@ -1689,24 +1689,11 @@ a:hover { color: #3d9eff; }
   .fm-edit:hover:not(:focus) { background: rgba(255,255,255,.03); }
 }
 
-/* Lista y pares: concepto → lo que se dice de él */
-.fm-par {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.4fr);
-  gap: 6px 12px; align-items: start;
-}
+/* Lista y pares: el concepto arriba, en negrita, y lo que se dice de él
+   justo debajo. De arriba abajo, sin columnas ni flechas. */
+.fm-par { display: flex; flex-direction: column; gap: 2px; }
 .fm-concepto { font-weight: 700; }
-.fm-flecha { color: var(--t3); line-height: 1.6; }
-/* Los títulos de las dos columnas en los pares */
-.fm-cols {
-  display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px;
-  padding: 4px 16px 0 10px;
-  font-size: .7rem; font-weight: 700; letter-spacing: .06em; color: var(--t2);
-}
 @media (max-width: 600px) {
-  .fm-par { grid-template-columns: minmax(0, 1fr); }
-  .fm-flecha { display: none; }
-  .fm-extra { color: var(--t2); }
-  .fm-cols { display: none; }
   .fm-toma--sigue { margin-left: 12px; }
 }
 
@@ -1717,7 +1704,7 @@ a:hover { color: #3d9eff; }
   .fm-toma--hook      { border-left-color: #0A84FF !important; }
   .fm-toma--desarrollo{ border-left-color: #FF9F0A !important; }
   .fm-toma--cta       { border-left-color: #30D158 !important; }
-  .fm-edit, .fm-num, .fm-cols { color: #000 !important; }
+  .fm-edit, .fm-num { color: #000 !important; }
   .fm-toma--otro .fm-edit { color: #555 !important; }
   .fm-aviso { color: #000 !important; background: none !important; padding: 0 !important; }
   /* La marca y el título van en _editor_secciones, que en el HTML va después

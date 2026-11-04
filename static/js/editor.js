@@ -463,7 +463,7 @@ window.EditorGuiones = (function () {
         destino.append(el("div", "fm-aviso", "▶ Sin frase de entrada: empieza directo con el 1."));
       }
 
-      let nTomas = 0, nElem = 0, nPista = 0, cabeceraPuesta = false;
+      let nTomas = 0, nElem = 0, nPista = 0;
       // Cada parte (HOOK, DESARROLLO, CTA) se nombra en su primera toma: el
       // color sigue en todas, y la palabra deja claro dónde empieza cada una
       // sin gastar una línea más en cada toma.
@@ -496,23 +496,14 @@ window.EditorGuiones = (function () {
           else etiqueta = nombre(b.parte);
         }
 
-        // Los títulos de las dos columnas, encima del primer par
-        if (fm.tipo === "pares" && elem && !cabeceraPuesta) {
-          cabeceraPuesta = true;
-          const cols = el("div", "fm-cols");
-          const par = el("div", "fm-par");
-          par.append(el("span", null, (fm.columnas || [])[0] || ""), el("span"),
-                     el("span", null, (fm.columnas || [])[1] || ""));
-          cols.append(el("span"), par);
-          destino.append(cols);
-        }
-
         fila.append(el("div", "fm-num", num));
         const cuerpo = el("div", "fm-cuerpo");
         if (etiqueta) cuerpo.append(el("span", "badge " + color + " fm-etq", etiqueta));
         if (elem) {
+          // El concepto arriba y lo que se dice de él debajo: se lee de arriba
+          // abajo, como se graba, sin saltar de una columna a otra
           const par = el("div", "fm-par");
-          par.append(editable(i, "texto", b.texto, "fm-concepto"), el("span", "fm-flecha", "→"),
+          par.append(editable(i, "texto", b.texto, "fm-concepto"),
                      editable(i, "extra", b.extra, "fm-extra"));
           cuerpo.append(par);
         } else {
