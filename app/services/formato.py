@@ -112,6 +112,7 @@ def derivar_secciones(formato: dict) -> dict:
 
 
 def usa_formato(user) -> bool:
-    """Quién genera ya por tomas. De momento solo el admin, como piloto: para
-    abrirlo a todos, se cambia aquí y en ningún otro sitio."""
-    return bool(user.is_admin)
+    """Quién genera por tomas. Empezó como piloto solo del admin; desde el
+    4 de noviembre de 2026, todos. Si hubiera que volver atrás o limitarlo a
+    unos pocos, se cambia aquí y en ningún otro sitio."""
+    return True
