@@ -464,6 +464,15 @@ window.EditorGuiones = (function () {
       }
 
       let nTomas = 0, nElem = 0, nPista = 0, cabeceraPuesta = false;
+      // Cada parte (HOOK, DESARROLLO, CTA) se nombra en su primera toma: el
+      // color sigue en todas, y la palabra deja claro dónde empieza cada una
+      // sin gastar una línea más en cada toma.
+      const nombrada = new Set();
+      const nombre = parte => {
+        if (nombrada.has(parte)) return "";
+        nombrada.add(parte);
+        return { hook: "HOOK", desarrollo: "DESARROLLO", cta: "CTA" }[parte];
+      };
       fm.bloques.forEach((b, i) => {
         const dice = loDiceEl(fm, b);
         const elem = esElemento(fm, b);
@@ -475,9 +484,8 @@ window.EditorGuiones = (function () {
           else if (b.parte === "desarrollo") { num = "↳"; fila.classList.add("fm-toma--sigue"); }
           else etiqueta = b.parte === "hook" ? "ENTRADA" : "CTA";
         } else if (fm.tipo === "dialogo") {
-          // Lo tuyo lleva número y nada más (la etiqueta, solo en hook y CTA):
-          // una línea menos por toma es mucho menos que bajar en el móvil
-          if (dice) { num = String(++nTomas); etiqueta = { hook: "HOOK", cta: "CTA" }[b.parte] || ""; }
+          // Lo tuyo lleva número; la parte, en la primera toma de cada una
+          if (dice) { num = String(++nTomas); etiqueta = nombre(b.parte); }
           else { num = "💬"; fila.classList.add("fm-toma--otro"); }
         } else {
           num = String(++nTomas);
@@ -485,8 +493,7 @@ window.EditorGuiones = (function () {
           else if (b.rol === "pista") etiqueta = "PISTA " + (++nPista);
           else if (b.rol === "respuesta") { etiqueta = "RESPUESTA"; color = "badge-purple";
                                            fila.classList.add("fm-toma--respuesta"); }
-          // Las tomas del desarrollo no llevan etiqueta: ya las dice el número
-          else etiqueta = { hook: "HOOK", cta: "CTA" }[b.parte] || "";
+          else etiqueta = nombre(b.parte);
         }
 
         // Los títulos de las dos columnas, encima del primer par
