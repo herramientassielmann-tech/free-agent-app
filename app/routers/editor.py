@@ -114,6 +114,18 @@ def _secciones(original: dict, edicion: Optional[dict]) -> dict:
     return {s: edicion.get(s, original.get(s, "")) or "" for s in SECCIONES}
 
 
+def formato_de_idea(idea: StarterScript, edicion: Optional[dict]) -> Optional[dict]:
+    """Qué versión por tomas de una idea ve un realtor. Si ya la editó por
+    tomas, la suya. Si la editó antes de que la idea pasara a tomas (su copia
+    está en hook / desarrollo / CTA), ninguna: sigue viendo su versión tal
+    cual la dejó, que es lo que escribió. Si no la ha tocado, la de la idea."""
+    if edicion and edicion.get("formato"):
+        return formato_svc.normalizar(edicion["formato"])
+    if edicion:
+        return None
+    return formato_svc.normalizar(_leer_partes(idea.formato))
+
+
 def _mi_script(sid: int, user: User, db: Session) -> Script:
     script = (
         db.query(Script)
@@ -379,6 +391,7 @@ async def editar_idea(
         "url_guardar": f"/editor/idea/{idea.id}/guardar",
         "url_restaurar": f"/editor/idea/{idea.id}/restaurar",
         "url_volver": f"/ideas-iniciales/{idea.id}",
+        "formato": formato_de_idea(idea, edicion),
     })
 
 
@@ -401,7 +414,12 @@ async def guardar_idea(
         )
         .first()
     )
-    contenido = json.dumps(payload.as_dict(), ensure_ascii=False)
+    datos = payload.as_dict()
+    fm = formato_svc.normalizar(payload.formato) if payload.formato else None
+    if fm:
+        datos.update(formato_svc.derivar_secciones(fm))
+        datos["formato"] = fm
+    contenido = json.dumps(datos, ensure_ascii=False)
     if fila:
         fila.edicion = contenido
     else:
@@ -444,4 +462,6 @@ async def restaurar_idea(
             "conclusion": idea.conclusion or "",
             "caption": idea.caption or "",
         },
+        # Sin copia propia, la idea se ve como todos: por tomas, si ya lo está
+        "formato": formato_de_idea(idea, None),
     })

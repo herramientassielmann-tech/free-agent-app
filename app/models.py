@@ -141,6 +141,10 @@ class StarterScript(Base):
     caption: Mapped[Optional[str]] = mapped_column(Text)
     estructura_detectada: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     thumbnail_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    # La idea por tomas, con su formato (ver app/services/formato.py). El texto
+    # es el mismo de hook/development/conclusion, solo cortado en tomas.
+    # NULL: todavía no se ha pasado y se ve en tres partes.
+    formato: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     checks: Mapped[List["StarterScriptCheck"]] = relationship(

@@ -139,27 +139,40 @@ def partir_en_tomas(transcripcion: str, formato_adaptado: dict) -> Optional[dict
     except ValueError:
         return None
 
-    # Dónde empieza cada toma. Las que no se encuentren, o vayan hacia atrás,
-    # se saltan: su texto queda dentro de la toma anterior y no se pierde nada.
-    # El ancla: las primeras palabras de lo que devuelva (aunque mande la toma
-    # entera en vez de su inicio), para que una palabra cambiada al final no
-    # impida encontrarla.
-    def ancla(valor, n=6):
-        return " ".join(str(valor or "").split()[:n])
-
     respuesta = [b for b in (datos.get("bloques") or []) if isinstance(b, dict)]
-    # Con el mismo número de tomas, la parte, la voz y el rol se copian de la
-    # adaptada, que es la que manda; si no, los que diga el modelo.
-    mismas = len(respuesta) == len(guia)
+    return _cortar(texto, tipo, respuesta, guia, formato_adaptado.get("columnas"))
+
+
+def _ancla(valor, n=6) -> str:
+    """Las primeras palabras de lo que devuelva el modelo (aunque mande la toma
+    entera en vez de su inicio), para que una palabra cambiada al final no
+    impida encontrarla en el texto."""
+    return " ".join(str(valor or "").split()[:n])
+
+
+def _cortar(texto: str, tipo: str, respuesta: list, guia: Optional[list] = None,
+            columnas=None) -> Optional[dict]:
+    """Corta `texto` por donde el modelo dice que empieza cada toma. El texto de
+    las tomas sale del original, no del modelo: juntas son exactamente él.
+
+    Las tomas que no se encuentren, o vayan hacia atrás, se saltan: su texto
+    queda dentro de la anterior y no se pierde nada. Con `guia` (las tomas del
+    guion adaptado) y el mismo número de tomas, la parte, la voz y el rol se
+    copian de ella, que es la que manda; si no, los que diga el modelo."""
+    from app.services import formato as formato_svc
+
+    guia = guia or []
+    mismas = bool(guia) and len(respuesta) == len(guia)
     cortes = []
     for n, b in enumerate(respuesta):
         desde = cortes[-1][0] + 1 if cortes else 0
-        pos = 0 if not cortes else _buscar(texto, ancla(b.get("inicio") or b.get("texto")), desde)
+        pos = 0 if not cortes else _buscar(texto, _ancla(b.get("inicio") or b.get("texto")), desde)
         if pos < 0:
             continue
         meta = guia[n] if mismas else b
+        con_extra = bool(guia[n].get("extra")) if mismas else bool(b.get("inicio_extra") or b.get("extra"))
         cortes.append((pos, {**b, "parte": meta.get("parte"), "quien": meta.get("quien"),
-                             "rol": meta.get("rol"), "con_extra": bool(guia[n].get("extra")) if mismas else bool(b.get("inicio_extra") or b.get("extra"))}))
+                             "rol": meta.get("rol"), "con_extra": con_extra}))
     if not cortes:
         return None
 
@@ -169,16 +182,77 @@ def partir_en_tomas(transcripcion: str, formato_adaptado: dict) -> Optional[dict
         trozo = texto[pos:fin].strip()
         nuevo = {"parte": b.get("parte"), "quien": b.get("quien"), "rol": b.get("rol"), "texto": trozo}
         if tipo in ("lista", "pares") and b["con_extra"]:
-            # El concepto es la primera frase de la toma («Bitcoin.» | «Si no te
-            # gusta arriesgar…»): más fiable que el ancla del modelo, que a veces
-            # corta a media frase. Si no hay punto, entonces sí, el ancla.
-            fin = re.search(r"[.!?…:](\s+)", trozo)
-            i = fin.end() if fin else _buscar(trozo, ancla(b.get("inicio_extra") or b.get("extra"), 3))
+            # Dónde acaba el concepto y empieza lo que se dice de él. El ancla
+            # del modelo, solo si cae justo después de un final de frase («…en
+            # el banco. Clase media. | Comprar un piso…»): a veces la pone a
+            # media frase. Si no, la primera frase es el concepto («Bitcoin.» |
+            # «Si no te gusta arriesgar…»).
+            j = _buscar(trozo, _ancla(b.get("inicio_extra") or b.get("extra"), 4))
+            if j > 0 and re.search(r"[.!?…:][»\"')\]]*$", trozo[:j].rstrip()):
+                i = j
+            else:
+                punto = re.search(r"[.!?…:](\s+)", trozo)
+                i = punto.end() if punto else j
             if 0 < i < len(trozo):
                 nuevo["texto"], nuevo["extra"] = trozo[:i].strip(), trozo[i:].strip()
         bloques.append(nuevo)
 
     crudo = {"tipo": tipo, "bloques": bloques}
     if tipo == "pares":
-        crudo["columnas"] = formato_adaptado.get("columnas")
+        crudo["columnas"] = columnas
     return formato_svc.normalizar(crudo)
+
+
+# ───────────── Una transcripción suelta (las ideas iniciales) por tomas ─────────────
+
+SISTEMA_IDEA = """Te paso la transcripción de un vídeo corto. Hay que partirla en TOMAS para grabarla: el realtor lee una toma, se la aprende, la dice de memoria a cámara y pasa a la siguiente.
+
+NO reescribas ni traduzcas nada. Para cada toma solo dices DÓNDE empieza, copiando LITERALMENTE, carácter por carácter, sus primeras 4 a 8 palabras tal como aparecen en el texto.
+
+CÓMO SON LAS TOMAS
+- Cada toma es una idea completa, que se entiende sola y que alguien se puede aprender de una vez.
+- NUNCA empieces una toma a mitad de frase: cada toma empieza al principio de una frase.
+- Junta en la misma toma las frases seguidas que forman una sola idea (una afirmación y su explicación, una pregunta y su respuesta inmediata). Lo normal: de 1 a 3 frases, entre 10 y 35 palabras.
+- Solo si una idea pasa de unas 40 palabras, pártela en dos tomas, siempre por el final de una frase.
+- Menos tomas es mejor, siempre que cada una se pueda aprender: un vídeo de 30 segundos suele quedar en 4 a 7 tomas; uno de un minuto, en 7 a 12.
+
+EL FORMATO DEL VÍDEO (elige UNO)
+1) "lista": una enumeración o un top (cosas, errores, pasos, países…). Cada elemento es una toma de "desarrollo"; si el elemento tiene un concepto y lo que se dice de él, pon en "inicio_extra" dónde empieza lo que se dice. Si el vídeo arranca DIRECTAMENTE con el primer elemento, no hay toma de "hook". Un comentario que sigue a un elemento y no es un elemento nuevo va en su propia toma, sin "inicio_extra".
+2) "pares": situaciones con su respuesta ("esto sí / esto no", "si te pasa X → haz Y"). Como la lista: cada par, una toma con "inicio_extra" donde empieza la respuesta.
+3) "dialogo": hay dos voces (alguien pregunta y el protagonista responde, o hay texto en pantalla que da la réplica). Cada intervención es una toma con "quien": "tu" (el protagonista, a cámara) u "otro". Las frases seguidas de una misma voz van en la misma toma.
+4) "adivina": se plantea una pregunta o reto ("¿cuánto vale?"), se dan pistas y se revela. La pregunta es el "hook"; cada pista, una toma de "desarrollo" con "rol": "pista"; la revelación, "rol": "respuesta".
+5) "historia": todo lo demás (opinión, historia, explicación). Hook, el desarrollo en tomas y el CTA.
+
+En todos: "parte" es "hook" (el arranque), "desarrollo" (el cuerpo) o "cta" (el cierre o llamada a la acción: sígueme, escríbeme, comenta…; puede no haberlo).
+
+Responde SOLO con este JSON:
+{"tipo": "lista | pares | dialogo | adivina | historia", "columnas": ["SOLO EN", "PARES"], "bloques": [{"inicio": "primeras palabras literales", "parte": "hook | desarrollo | cta", "quien": "solo en dialogo", "rol": "solo en adivina", "inicio_extra": "solo en lista y pares"}]}"""
+
+
+def partir_idea(texto: str) -> Optional[dict]:
+    """Una transcripción literal (las ideas iniciales lo son) por tomas, con su
+    formato. El texto no cambia ni una palabra: la IA decide el formato y dónde
+    empieza cada toma, y el corte se hace aquí. None si no se pudo.
+
+    Lanza la excepción si falla la llamada a la API."""
+    from app.services import formato as formato_svc
+
+    texto = (texto or "").strip()
+    if not texto:
+        return None
+    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    msg = client.messages.create(
+        model="claude-opus-4-8",
+        max_tokens=3000,
+        system=SISTEMA_IDEA,
+        messages=[{"role": "user", "content": texto[:12000]}],
+    )
+    bloque = next((b for b in msg.content if b.type == "text"), None)
+    bruto = bloque.text if bloque else ""
+    try:
+        datos = json.loads(bruto[bruto.find("{"): bruto.rfind("}") + 1])
+    except ValueError:
+        return None
+    tipo = datos.get("tipo") if datos.get("tipo") in formato_svc.TIPOS else "historia"
+    respuesta = [b for b in (datos.get("bloques") or []) if isinstance(b, dict)]
+    return _cortar(texto, tipo, respuesta, columnas=datos.get("columnas"))

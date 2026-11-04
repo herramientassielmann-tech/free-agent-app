@@ -42,8 +42,10 @@
 
       <div class="idea-info">
         <div class="idea-num">Idea {{ loop.index }}</div>
-        <div class="idea-title">{{ s.titulo or (s.hook or '')[:60] }}</div>
-        <div class="idea-preview">{{ (s.hook or '')|replace('\n', ' ') }}</div>
+        {# Una lista por tomas puede no tener hook: entonces, su primera toma #}
+        {% set vista = s.hook or (s.development or '').split('\n')[0] %}
+        <div class="idea-title">{{ s.titulo or vista[:60] }}</div>
+        <div class="idea-preview">{{ vista|replace('\n', ' ') }}</div>
       </div>
 
       <span class="idea-arrow">→</span>

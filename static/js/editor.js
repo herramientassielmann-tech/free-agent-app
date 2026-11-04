@@ -400,8 +400,6 @@ window.EditorGuiones = (function () {
 
     // Lo que dice el propio realtor (en un diálogo, lo de la otra voz no)
     const loDiceEl = (fm, b) => !(fm.tipo === "dialogo" && b.quien === "otro");
-    // En lista y pares, un elemento es lo que trae las dos columnas
-    const esElemento = (fm, b) => (fm.tipo === "lista" || fm.tipo === "pares") && !!b.extra;
 
     /* Las mismas líneas que derivar_secciones() en el servidor, para Copiar */
     function lineasFormato(fm) {
@@ -464,6 +462,19 @@ window.EditorGuiones = (function () {
       }
 
       let nTomas = 0, nElem = 0, nPista = 0;
+      // En lista y pares, qué es un elemento numerado. Lo que trae concepto y
+      // explicación, siempre. Lo que no: si la lista no tiene ninguna
+      // explicación (cada elemento es una frase entera), todo el desarrollo es
+      // elemento; si la tiene, solo lo que va antes del primer elemento, y lo
+      // que viene después es un comentario del anterior (↳).
+      const hayExplicaciones = fm.bloques.some(b => b.extra);
+      let vistoElemento = false;
+      const esElemento = b => {
+        if (!deLista) return false;
+        const es = !!b.extra || (b.parte === "desarrollo" && (!hayExplicaciones || !vistoElemento));
+        if (es) vistoElemento = true;
+        return es;
+      };
       // Cada parte (HOOK, DESARROLLO, CTA) se nombra en su primera toma: el
       // color sigue en todas, y la palabra deja claro dónde empieza cada una
       // sin gastar una línea más en cada toma.
@@ -475,14 +486,15 @@ window.EditorGuiones = (function () {
       };
       fm.bloques.forEach((b, i) => {
         const dice = loDiceEl(fm, b);
-        const elem = esElemento(fm, b);
+        const elem = esElemento(b);
         const fila = el("div", "fm-toma fm-toma--" + b.parte);
 
         let num = "", etiqueta = "", color = COLOR_PARTE[b.parte];
         if (deLista) {
           if (elem) num = String(++nElem);
           else if (b.parte === "desarrollo") { num = "↳"; fila.classList.add("fm-toma--sigue"); }
-          else etiqueta = b.parte === "hook" ? "ENTRADA" : "CTA";
+          // La entrada y el CTA, nombrados en su primera toma, como en el resto
+          else { const n = nombre(b.parte); etiqueta = n === "HOOK" ? "ENTRADA" : n; }
         } else if (fm.tipo === "dialogo") {
           // Lo tuyo lleva número; la parte, en la primera toma de cada una
           if (dice) { num = String(++nTomas); etiqueta = nombre(b.parte); }
@@ -499,7 +511,7 @@ window.EditorGuiones = (function () {
         fila.append(el("div", "fm-num", num));
         const cuerpo = el("div", "fm-cuerpo");
         if (etiqueta) cuerpo.append(el("span", "badge " + color + " fm-etq", etiqueta));
-        if (elem) {
+        if (elem && b.extra) {
           // El concepto arriba y lo que se dice de él debajo: se lee de arriba
           // abajo, como se graba, sin saltar de una columna a otra
           const par = el("div", "fm-par");

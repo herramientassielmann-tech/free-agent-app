@@ -63,7 +63,7 @@ async def idea_detalle(
     idx = next((i for i, s in enumerate(todos) if s.id == sid), 0)
 
     # Su versión, si ya la ha tocado; si no, el guión tal cual
-    from app.routers.editor import _leer_edicion, _secciones
+    from app.routers.editor import _leer_edicion, _secciones, formato_de_idea
     # Las CUATRO secciones. El caption faltaba aquí, y como la plantilla pinta
     # `secciones.caption`, las 23 ideas enseñaban la tarjeta de caption vacía
     # aunque el texto estuviera guardado en la columna todo el tiempo.
@@ -95,6 +95,7 @@ async def idea_detalle(
             "editado": bool(edicion),
             "url_guardar": f"/editor/idea/{script.id}/guardar",
             "url_restaurar": f"/editor/idea/{script.id}/restaurar",
+            "formato": formato_de_idea(script, edicion),
         },
     )
 
