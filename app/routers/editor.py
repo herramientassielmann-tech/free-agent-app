@@ -168,7 +168,10 @@ async def editar_guion(
         "url_referencia": f"/editor/guion/{script.id}/referencia",
         # Por tomas, si el guion se generó así: el editado si lo hay, si no el
         # original. None en los guiones de siempre.
-        "formato": (edicion or {}).get("formato") or _leer_partes(script.formato),
+        # Normalizado también al leer: los guiones del piloto anterior traían
+        # tomas cortadas a mitad de frase y así salen unidas.
+        "formato": formato_svc.normalizar(
+            (edicion or {}).get("formato") or _leer_partes(script.formato)),
     })
 
 
@@ -294,7 +297,7 @@ async def restaurar_guion(
             "conclusion": script.conclusion or "",
             "caption": script.caption or "",
         },
-        "formato": _leer_partes(script.formato),
+        "formato": formato_svc.normalizar(_leer_partes(script.formato)),
     })
 
 

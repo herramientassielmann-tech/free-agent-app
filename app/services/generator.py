@@ -59,9 +59,13 @@ Está TERMINANTEMENTE PROHIBIDO sustituirlos por equivalentes de otro sector, re
 COLA_POR_TOMAS = """════════════════════════════════════════
 CÓMO SE GRABA (esto manda en cómo lo entregas)
 ════════════════════════════════════════
-El realtor graba así: lee un trozo corto, lo dice de memoria a cámara y pasa al siguiente. Por eso no entregas párrafos sino BLOQUES, y cada bloque es UNA TOMA: una sola idea que se dice de una vez, de 1 a 2 frases cortas.
+El realtor graba así: lee una toma, se la aprende, la dice de memoria a cámara y pasa a la siguiente. Por eso no entregas párrafos sino BLOQUES, y cada bloque es UNA TOMA: una idea completa, que se entiende sola y que alguien se puede aprender de una vez.
 
-LÍMITE DURO: NINGÚN bloque pasa de 20 palabras (contando "texto" y "extra" juntos). Si una frase del original es más larga, pártela por una coma o por un punto en dos o más bloques seguidos de la misma parte. Partir no es resumir: no quites ni una palabra.
+- NUNCA cortes una frase por la mitad. Cada bloque empieza al principio de una frase y termina con su punto, su interrogación o su exclamación. Nunca termines un bloque en una coma.
+- Junta en el mismo bloque las frases seguidas que forman una sola idea: una afirmación y su explicación, una pregunta y su respuesta inmediata, un dato y lo que significa. Lo normal es de 1 a 3 frases y entre 10 y 35 palabras por bloque.
+- Solo si una idea pasa de unas 40 palabras, pártela en dos bloques, y siempre por el final de una frase.
+- Menos bloques es mejor, siempre que cada uno se pueda aprender: un vídeo de 30 segundos suele quedar en 4 a 7 tomas; uno de un minuto, en 7 a 12.
+- Juntar o separar no es resumir: no quites ni añadas una sola palabra.
 
 Puntúa con normalidad (mayúsculas, comas, puntos, interrogaciones), aunque la transcripción venga sin puntuar.
 
@@ -76,7 +80,7 @@ Mira la forma del vídeo original y elige UNO de estos tipos. Respeta su forma: 
 2) "pares" — situaciones con su respuesta: "esto sí / esto no", "si te pasa X → haz Y", "tipo de cliente → qué hacer". Cada par es un bloque de desarrollo con "texto" (la situación) y "extra" (la respuesta). Añade "columnas" con los dos títulos cortos en mayúsculas. Igual que en la lista: si el vídeo arranca directamente con el primer par, NO hay hook, y una reflexión que no es un par va en un bloque aparte SIN "extra".
    Ejemplo: "columnas":["SITUACIÓN","QUÉ HACER"], {"parte":"desarrollo","texto":"Cliente lento, pero con ganas","extra":"Acompáñalo."}
 
-3) "dialogo" — hay dos voces: alguien pregunta y el protagonista responde, o hay texto en pantalla que da la réplica. Cada intervención es un bloque con "quien": "tu" (lo dice el realtor a cámara) u "otro" (lo dice otra persona o va escrito en pantalla).
+3) "dialogo" — hay dos voces: alguien pregunta y el protagonista responde, o hay texto en pantalla que da la réplica. Cada intervención es un bloque con "quien": "tu" (lo dice el realtor a cámara) u "otro" (lo dice otra persona o va escrito en pantalla). Las frases seguidas de una misma voz van JUNTAS en un solo bloque: una respuesta tuya es una toma, no una por frase (salvo que pase de unas 40 palabras).
    Ejemplo: {"parte":"hook","quien":"otro","texto":"¿Mejor el dinero en el banco o en un piso?"}
 
 4) "adivina" — se plantea una pregunta o un reto ("¿cuánto vale?", "¿adivinas…?"), se dan pistas y al final se revela. La pregunta es el hook; cada pista es un bloque de desarrollo con "rol":"pista"; la revelación es un bloque de desarrollo con "rol":"respuesta".

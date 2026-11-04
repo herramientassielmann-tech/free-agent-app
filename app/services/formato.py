@@ -13,6 +13,7 @@ cada uno una toma, y con un diseño distinto según el formato del vídeo:
 El modelo devuelve los bloques; hook, desarrollo y CTA se DERIVAN de ellos, para
 que todo lo que ya lee esos tres campos (historial, copiar, recientes, el chat
 de Robert) siga funcionando sin enterarse de nada."""
+import re
 from typing import Optional
 
 TIPOS = ("lista", "pares", "dialogo", "adivina", "historia")
@@ -53,6 +54,7 @@ def normalizar(raw) -> Optional[dict]:
             bloque["rol"] = b["rol"]
         bloques.append(bloque)
 
+    bloques = _unir_cortadas(bloques)
     if not bloques:
         return None
     formato = {"tipo": tipo, "bloques": bloques}
@@ -60,6 +62,30 @@ def normalizar(raw) -> Optional[dict]:
         cols = [_texto(c)[:40] for c in (raw.get("columnas") or [])][:2]
         formato["columnas"] = cols if len(cols) == 2 and all(cols) else ["SITUACIÓN", "QUÉ HACER"]
     return formato
+
+
+# Cómo acaba una frase entera (con su comilla o paréntesis de cierre, si lo hay)
+_FIN_DE_FRASE = re.compile(r"[.!?…:][»\"')\]]*$")
+
+
+def _unir_cortadas(bloques: list) -> list:
+    """Si un bloque acaba a mitad de frase (en coma o sin puntuar), se une con
+    el siguiente: una toma tiene que ser una frase entera que alguien se pueda
+    aprender, nunca medio pensamiento. Solo entre bloques que se pintan igual
+    (misma parte, misma voz, mismo rol y sin segunda columna); los elementos
+    de una lista no se tocan."""
+    unidos = []
+    for b in bloques:
+        prev = unidos[-1] if unidos else None
+        if (prev and not prev.get("extra") and not b.get("extra")
+                and prev["parte"] == b["parte"]
+                and prev.get("quien") == b.get("quien")
+                and prev.get("rol") == b.get("rol")
+                and not _FIN_DE_FRASE.search(prev["texto"])):
+            prev["texto"] = f'{prev["texto"]} {b["texto"]}'.strip()[:MAX_TEXTO]
+            continue
+        unidos.append(dict(b))
+    return unidos
 
 
 def _linea(tipo: str, b: dict) -> str:

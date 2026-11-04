@@ -417,7 +417,9 @@ window.EditorGuiones = (function () {
       cab.append(el("span", "fm-tipo", "Formato: " + (NOMBRE_TIPO[fm.tipo] || "Historia")),
                  el("span", null, tomas + (tomas === 1 ? " toma" : " tomas")));
       const dur = el("span"); dur.dataset.fmDur = ""; cab.append(dur);
-      cab.append(el("span", "fm-ayuda", "Lee una toma, dila de memoria a cámara y pasa a la siguiente."));
+      cab.append(el("span", "fm-ayuda", fm.tipo === "dialogo"
+        ? "Las tomas con número las dices tú; las 💬 las dice otra persona o van en pantalla."
+        : "Lee una toma, dila de memoria a cámara y pasa a la siguiente."));
       fmRaiz.append(cab);
 
       const deLista = fm.tipo === "lista" || fm.tipo === "pares";
@@ -437,16 +439,18 @@ window.EditorGuiones = (function () {
           else if (b.parte === "desarrollo") { num = "↳"; fila.classList.add("fm-toma--sigue"); }
           else etiqueta = b.parte === "hook" ? "ENTRADA" : "CTA";
         } else if (fm.tipo === "dialogo") {
-          if (dice) { num = String(++nTomas); etiqueta = b.parte === "cta" ? "🎤 TÚ · CTA" : "🎤 TÚ"; }
-          else { num = "💬"; etiqueta = "OTRA PERSONA O TEXTO EN PANTALLA"; color = "badge-dark";
-                 fila.classList.add("fm-toma--otro"); }
+          // Lo tuyo lleva número y nada más (la etiqueta, solo en hook y CTA):
+          // una línea menos por toma es mucho menos que bajar en el móvil
+          if (dice) { num = String(++nTomas); etiqueta = { hook: "HOOK", cta: "CTA" }[b.parte] || ""; }
+          else { num = "💬"; fila.classList.add("fm-toma--otro"); }
         } else {
           num = String(++nTomas);
           if (fm.tipo === "adivina" && b.parte === "hook") etiqueta = "PREGUNTA";
           else if (b.rol === "pista") etiqueta = "PISTA " + (++nPista);
           else if (b.rol === "respuesta") { etiqueta = "RESPUESTA"; color = "badge-purple";
                                            fila.classList.add("fm-toma--respuesta"); }
-          else etiqueta = { hook: "HOOK", desarrollo: "TOMA", cta: "CTA" }[b.parte];
+          // Las tomas del desarrollo no llevan etiqueta: ya las dice el número
+          else etiqueta = { hook: "HOOK", cta: "CTA" }[b.parte] || "";
         }
 
         // Los títulos de las dos columnas, encima del primer par

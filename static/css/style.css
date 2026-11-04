@@ -1636,7 +1636,7 @@ a:hover { color: #3d9eff; }
    El número grande es lo que se busca con la vista al volver al móvil; el
    color del borde dice en qué parte del vídeo estás (azul hook, naranja
    desarrollo, verde CTA), como en las tarjetas de siempre. */
-.fm { display: flex; flex-direction: column; gap: 8px; }
+.fm { display: flex; flex-direction: column; gap: 6px; }
 .fm[hidden], .fm [hidden] { display: none; }
 /* Con tomas, las tres secciones de siempre sobran (el caption se queda).
    Va con !important y después de la regla de impresión de arriba, que si no
@@ -1658,7 +1658,7 @@ a:hover { color: #3d9eff; }
 .fm-toma {
   display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: start;
   background: var(--s1); border: 1px solid var(--border); border-left: 3px solid var(--orange);
-  border-radius: var(--r-md); padding: 14px 16px 14px 10px;
+  border-radius: var(--r-md); padding: 11px 14px 11px 8px;
 }
 .fm-toma--hook      { border-left-color: var(--blue); }
 .fm-toma--cta       { border-left-color: var(--green); }
@@ -1667,7 +1667,7 @@ a:hover { color: #3d9eff; }
 .fm-toma--otro      { background: transparent; border-style: dashed; border-left: 3px solid var(--t3); }
 .fm-toma--otro .fm-edit { color: var(--t2); font-style: italic; }
 /* El comentario que sigue a un elemento de la lista: pegado a él y sin número */
-.fm-toma--sigue     { margin-top: -4px; margin-left: 24px; padding-top: 10px; padding-bottom: 10px; }
+.fm-toma--sigue     { margin-top: -2px; margin-left: 24px; padding-top: 8px; padding-bottom: 8px; }
 .fm-toma--sigue .fm-num { font-size: 1rem; color: var(--t3); }
 
 .fm-num {
@@ -1675,7 +1675,7 @@ a:hover { color: #3d9eff; }
   color: var(--t2); font-variant-numeric: tabular-nums;
 }
 .fm-cuerpo { min-width: 0; }
-.fm-etq { margin-bottom: 6px; }
+.fm-etq { margin-bottom: 4px; }
 
 .fm-edit {
   outline: none; border-radius: 6px; padding: 2px 6px; margin: -2px -6px;
